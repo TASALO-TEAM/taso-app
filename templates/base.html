@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}TASALO{% endblock %}</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- TASALO Design System -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tasalo.css') }}">
+  
+  <!-- Configurar Tailwind con colores TASALO -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            accent: '#5b8aff',
+            'tasalo-bg': '#09091e',
+            'tasalo-bg-glass': 'rgba(16, 16, 42, 0.92)',
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'monospace'],
+            ui: ['Space Grotesk', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-tasalo-bg text-gray-100 font-ui min-h-screen">
+  <!-- Telegram Web App Init -->
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    
+    // Sincronizar colores con tema de Telegram
+    const bgColor = getComputedStyle(document.body).getPropertyValue('--bg') || '#09091e';
+    tg.setHeaderColor(bgColor.trim());
+    tg.setBackgroundColor(bgColor.trim());
+    
+    // Detectar tema y aplicar clase
+    if (tg.colorScheme === 'light') {
+      document.body.classList.add('theme-light');
+    }
+    
+    // Inyectar variable de entorno para fetch
+    window.TASALO_API_URL = "{{ tasalo_api_url }}";
+  </script>
+  
+  <div class="container mx-auto px-4 py-4 max-w-lg">
+    {% block content %}{% endblock %}
+  </div>
+  
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,203 @@
+/* TASALO Design System */
+
+/* CSS Variables */
+:root {
+  --accent:       #5b8aff;
+  --bg:           #09091e;
+  --bg-glass:     rgba(16, 16, 42, 0.92);
+  --border:       rgba(255, 255, 255, 0.1);
+  --text:         #eeeef8;
+  --text2:        #9090c0;
+  --text3:        #585878;
+  --up:           #ff6b6b;
+  --down:         #4ade80;
+  --neutral:      #9898b8;
+  --mono:         'JetBrains Mono', monospace;
+  --ui:           'Space Grotesk', system-ui, sans-serif;
+  --r:            12px;
+  --glass-blur:   20px;
+}
+
+/* Light Mode */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:           #f5f5fa;
+    --bg-glass:     rgba(255, 255, 255, 0.92);
+    --text:         #1a1a2e;
+    --text2:        #5a5a80;
+    --text3:        #8888a0;
+    --border:       rgba(0, 0, 0, 0.1);
+  }
+  
+  body.theme-light {
+    --bg:           #f5f5fa;
+    --bg-glass:     rgba(255, 255, 255, 0.92);
+    --text:         #1a1a2e;
+    --text2:        #5a5a80;
+    --text3:        #8888a0;
+    --border:       rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Base Styles */
+body {
+  font-family: var(--ui);
+  background-color: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Glass Card Component */
+.glass-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1rem;
+}
+
+/* Rate Row Component */
+.rate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rate-row:last-child {
+  border-bottom: none;
+}
+
+.rate-currency {
+  font-family: var(--ui);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rate-value {
+  font-family: var(--mono);
+  font-size: 1.125rem;
+  color: var(--text);
+}
+
+/* Change Indicators */
+.indicator-up {
+  color: var(--up);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.indicator-down {
+  color: var(--down);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.indicator-neutral {
+  color: var(--neutral);
+}
+
+/* Section Divider */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+  opacity: 0.5;
+}
+
+/* Section Header */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.section-header::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 1rem;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* Ticker Bar (decorativa) */
+.ticker-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    var(--accent) 0%, 
+    var(--accent) 25%, 
+    transparent 25%, 
+    transparent 75%, 
+    var(--accent) 75%, 
+    var(--accent) 100%
+  );
+  background-size: 200% 100%;
+  animation: ticker 2s linear infinite;
+  opacity: 0.3;
+}
+
+@keyframes ticker {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-glass) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    var(--bg-glass) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--r);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Button Styles */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--r);
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: rgba(91, 138, 255, 0.8);
+}
+
+/* Utility Classes */
+.text-accent { color: var(--accent); }
+.text-up { color: var(--up); }
+.text-down { color: var(--down); }
+.text-neutral { color: var(--neutral); }
+.text-2 { color: var(--text2); }
+.text-3 { color: var(--text3); }
+
+.font-mono { font-family: var(--mono); }
+.font-ui { font-family: var(--ui); }

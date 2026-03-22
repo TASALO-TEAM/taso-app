@@ -1,0 +1,1 @@
+# TASALO Miniapp package

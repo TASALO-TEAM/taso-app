@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}TASALO - Tasas de Cambio{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold font-ui text-accent">TASALO</h1>
+  <button id="refresh-btn" class="text-gray-400 hover:text-accent transition-colors">
+    <span class="text-xl">⟳</span>
+  </button>
+</header>
+
+<!-- Loading State -->
+<div id="loading" class="text-center py-8">
+  <div class="animate-pulse text-gray-500">Cargando tasas...</div>
+</div>
+
+<!-- Error State -->
+<div id="error" class="hidden bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-red-400">
+  <p>Error al cargar datos. Verifica tu conexión.</p>
+</div>
+
+<!-- Content Container -->
+<div id="rates-container" class="space-y-4">
+  <!-- Secciones se renderizan dinámicamente con JS -->
+</div>
+
+<!-- Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
+  <div class="flex justify-around max-w-lg mx-auto">
+    <a href="/" class="text-accent font-medium">📊 Inicio</a>
+    <a href="/history" class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
+  </div>
+</nav>
+{% endblock %}
