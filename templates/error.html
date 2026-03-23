@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}TASALO - Error {{ status_code }}{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="mb-6">
+  <a href="/" class="text-gray-400 hover:text-accent transition-colors">
+    <span class="text-xl">←</span>
+  </a>
+</header>
+
+<!-- Error Card -->
+<div class="glass-card rounded-xl p-8 text-center">
+  <div class="text-6xl mb-4">⚠️</div>
+  <h1 class="text-2xl font-bold font-ui text-accent mb-2">Error {{ status_code }}</h1>
+  <p class="text-2 mb-6">{{ message }}</p>
+  <a href="/" class="btn-primary inline-block py-3 px-6">
+    🏠 Volver al inicio
+  </a>
+</div>
+{% endblock %}
