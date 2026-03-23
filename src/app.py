@@ -1,6 +1,6 @@
 import logging
 import os
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request
 from config import settings
 
 
@@ -51,7 +51,23 @@ def create_app():
     def health():
         """Health check endpoint."""
         return jsonify({"ok": True})
-    
+
+    # Error Handlers
+    @app.errorhandler(404)
+    def not_found(error):
+        """Handler para 404."""
+        if request.path.startswith('/api/'):
+            return jsonify({"ok": False, "error": "Not found"}), 404
+        return render_template("error.html", message="Página no encontrada", status_code=404), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        """Handler para 500."""
+        logger.error(f"Internal error: {error}")
+        if request.path.startswith('/api/'):
+            return jsonify({"ok": False, "error": "Internal server error"}), 500
+        return render_template("error.html", message="Error interno del servidor", status_code=500), 500
+
     logger.info("TASALO Miniapp initialized")
     
     return app
