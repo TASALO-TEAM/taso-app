@@ -91,3 +91,32 @@ def test_history_has_back_navigation(client):
     response = client.get("/history")
     assert response.status_code == 200
     assert b"href=\"/\"" in response.data
+
+
+def test_provincias_endpoint_returns_html(client):
+    """GET /provincias devuelve HTML con lista de provincias."""
+    response = client.get("/provincias")
+    assert response.status_code == 200
+    assert b"Provincias" in response.data
+    assert b"provincias.html" not in response.data  # Template se renderiza
+
+
+def test_provincias_has_source_selector(client):
+    """GET /provincias incluye selector de fuente."""
+    response = client.get("/provincias")
+    assert response.status_code == 200
+    assert b"id=\"source-select\"" in response.data
+
+
+def test_provincias_has_provincia_cards_container(client):
+    """GET /provincias incluye contenedor de tarjetas."""
+    response = client.get("/provincias")
+    assert response.status_code == 200
+    assert b"id=\"provincias-container\"" in response.data
+
+
+def test_provincias_has_back_navigation(client):
+    """GET /provincias incluye navegación de regreso."""
+    response = client.get("/provincias")
+    assert response.status_code == 200
+    assert b"href=\"/\"" in response.data
