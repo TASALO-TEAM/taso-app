@@ -3,8 +3,20 @@
  * Fetches rates from taso-api and renders to DOM
  */
 
+// Settings storage key
+const SETTINGS_KEY = 'tasalo_settings';
+
+// Default settings
+const DEFAULT_SETTINGS = {
+  theme: 'auto',
+  refreshInterval: 60000  // 60 seconds
+};
+
 // Global chart instance
 let historyChart = null;
+
+// Auto-refresh interval ID
+let autoRefreshInterval = null;
 
 // Currency display names and symbols
 const CURRENCY_INFO = {
@@ -578,12 +590,173 @@ async function loadProvincias() {
 }
 
 /**
+ * Load settings from localStorage
+ * @returns {Object} Settings object
+ */
+function loadSettings() {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed
+      };
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+  return { ...DEFAULT_SETTINGS };
+}
+
+/**
+ * Save settings to localStorage
+ * @param {Object} settings - Settings to save
+ */
+function saveSettings(settings) {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    return true;
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    return false;
+  }
+}
+
+/**
+ * Apply theme setting
+ * @param {string} theme - 'light', 'dark', or 'auto'
+ */
+function applyTheme(theme) {
+  const body = document.body;
+  
+  // Remove existing theme classes
+  body.classList.remove('theme-light', 'theme-dark');
+  
+  if (theme === 'light') {
+    body.classList.add('theme-light');
+  } else if (theme === 'dark') {
+    body.classList.add('theme-dark');
+  } else if (theme === 'auto') {
+    // Use system preference
+    const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    if (prefersLight) {
+      body.classList.add('theme-light');
+    }
+  }
+  
+  // Sync with Telegram WebApp
+  if (window.Telegram && window.Telegram.WebApp) {
+    const tg = window.Telegram.WebApp;
+    const bgColor = getComputedStyle(body).getPropertyValue('--bg') || '#09091e';
+    tg.setHeaderColor(bgColor.trim());
+    tg.setBackgroundColor(bgColor.trim());
+  }
+}
+
+/**
+ * Apply refresh interval setting
+ * @param {number} interval - Interval in milliseconds
+ */
+function applyRefreshInterval(interval) {
+  // Clear existing interval
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+  }
+  
+  // Set new interval (only on index page)
+  const path = window.location.pathname;
+  if (path === '/' || path === '/index.html') {
+    autoRefreshInterval = setInterval(loadRates, interval);
+  }
+  
+  return interval;
+}
+
+/**
+ * Initialize settings page
+ */
+function initSettingsPage() {
+  const settings = loadSettings();
+  
+  // Set theme radio buttons
+  const themeRadios = document.querySelectorAll('input[name="theme"]');
+  themeRadios.forEach(radio => {
+    radio.checked = radio.value === settings.theme;
+  });
+  
+  // Set refresh interval
+  const intervalSelect = document.getElementById('refresh-interval');
+  if (intervalSelect) {
+    intervalSelect.value = settings.refreshInterval.toString();
+  }
+  
+  // Setup save button
+  const saveBtn = document.getElementById('save-settings');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      // Get selected theme
+      const selectedTheme = document.querySelector('input[name="theme"]:checked');
+      const theme = selectedTheme ? selectedTheme.value : 'auto';
+      
+      // Get selected interval
+      const interval = parseInt(intervalSelect.value, 10) || DEFAULT_SETTINGS.refreshInterval;
+      
+      // Save settings
+      const newSettings = { theme, refreshInterval: interval };
+      const saved = saveSettings(newSettings);
+      
+      if (saved) {
+        // Apply settings immediately
+        applyTheme(theme);
+        applyRefreshInterval(interval);
+        
+        // Show success message
+        const successMsg = document.getElementById('success-message');
+        if (successMsg) {
+          successMsg.classList.remove('hidden');
+          setTimeout(() => {
+            successMsg.classList.add('hidden');
+          }, 3000);
+        }
+        
+        // Update timestamp
+        updateSettingsTimestamp();
+      }
+    });
+  }
+  
+  // Apply current settings on page load
+  applyTheme(settings.theme);
+}
+
+/**
+ * Update settings timestamp
+ */
+function updateSettingsTimestamp() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' });
+
+  const timestampEl = document.getElementById('settings-timestamp');
+  if (timestampEl) {
+    timestampEl.textContent = `Última guardado: ${timeStr}`;
+  }
+}
+
+/**
  * Initialize the app
  */
 function initApp() {
   const path = window.location.pathname;
+  
+  // Load and apply settings on all pages
+  const settings = loadSettings();
+  applyTheme(settings.theme);
 
-  if (path === '/history') {
+  if (path === '/settings') {
+    // Initialize settings page
+    initSettingsPage();
+  } else if (path === '/history') {
     // Initialize history chart
     loadHistoryChart();
 
@@ -633,8 +806,8 @@ function initApp() {
       });
     }
 
-    // Auto-refresh every 60 seconds
-    setInterval(loadRates, 60000);
+    // Auto-refresh with configured interval
+    applyRefreshInterval(settings.refreshInterval);
   }
 }
 
@@ -661,6 +834,11 @@ if (typeof module !== 'undefined' && module.exports) {
     loadRates,
     loadHistoryChart,
     loadProvincias,
+    loadSettings,
+    saveSettings,
+    applyTheme,
+    applyRefreshInterval,
+    initSettingsPage,
     initApp
   };
 }

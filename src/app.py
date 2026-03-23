@@ -42,6 +42,11 @@ def create_app():
         """Vista provincias - tasas por provincia."""
         return render_template("provincias.html", tasalo_api_url=settings.tasalo_api_url)
 
+    @app.route("/settings")
+    def settings_view():
+        """Vista configuración - preferencias de usuario."""
+        return render_template("settings.html", tasalo_api_url=settings.tasalo_api_url)
+
     @app.route("/health")
     def health():
         """Health check endpoint."""

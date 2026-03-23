@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}TASALO - Configuración{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="mb-6">
+  <h1 class="text-2xl font-bold font-ui text-accent">⚙️ Configuración</h1>
+</header>
+
+<!-- Settings Form -->
+<div class="glass-card space-y-6">
+  <!-- Theme Selector -->
+  <div>
+    <label class="block text-sm font-medium text-2 mb-2">🎨 Tema</label>
+    <div class="flex gap-3">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input 
+          type="radio" 
+          name="theme" 
+          value="light" 
+          id="theme-light"
+          class="accent-accent"
+        >
+        <span>☀️ Claro</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input 
+          type="radio" 
+          name="theme" 
+          value="dark" 
+          id="theme-dark"
+          class="accent-accent"
+        >
+        <span>🌙 Oscuro</span>
+      </label>
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input 
+          type="radio" 
+          name="theme" 
+          value="auto" 
+          id="theme-auto"
+          class="accent-accent"
+        >
+        <span>🔄 Auto</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Refresh Interval Selector -->
+  <div>
+    <label class="block text-sm font-medium text-2 mb-2">⏱️ Auto-refresh</label>
+    <select 
+      id="refresh-interval" 
+      class="w-full bg-bg-glass border border-border rounded-lg px-4 py-2 text-ui focus:outline-none focus:border-accent"
+    >
+      <option value="30000">30 segundos</option>
+      <option value="60000">60 segundos</option>
+      <option value="120000">2 minutos</option>
+    </select>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex gap-3 pt-4">
+    <button 
+      id="save-settings" 
+      class="btn-primary flex-1 py-3 px-4"
+    >
+      💾 Guardar
+    </button>
+    <a 
+      href="/" 
+      class="flex-1 text-center py-3 px-4 border border-border rounded-lg text-ui hover:bg-bg-glass transition-colors"
+    >
+      ↩️ Volver
+    </a>
+  </div>
+
+  <!-- Success Message -->
+  <div 
+    id="success-message" 
+    class="hidden bg-green-900/20 border border-green-500/30 rounded-lg p-4 text-green-400 text-center"
+  >
+    <p class="font-medium">✅ Configuración guardada</p>
+  </div>
+</div>
+
+<!-- Last Update Timestamp -->
+<div id="settings-timestamp" class="text-center text-3 text-sm mt-4 mb-16"></div>
+
+<!-- Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
+  <div class="flex justify-around max-w-lg mx-auto">
+    <a href="/" class="text-gray-400 hover:text-accent transition-colors">📊 Inicio</a>
+    <a href="/history" class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
+    <a href="/provincias" class="text-gray-400 hover:text-accent transition-colors">🗺️ Provincias</a>
+    <a href="/settings" class="text-accent font-medium">⚙️ Settings</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
