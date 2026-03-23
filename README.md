@@ -67,12 +67,17 @@ uv run gunicorn src.app:app \
 ## Testing
 
 ```bash
-# Ejecutar tests
+# Ejecutar tests de Python (pytest)
 FLASK_SECRET_KEY=test TASALO_API_URL=http://test:8000 pytest
 
 # Con coverage
 FLASK_SECRET_KEY=test TASALO_API_URL=http://test:8000 pytest --cov=src
+
+# Ejecutar tests manuales de JavaScript (Node.js)
+node tests/test_app_manual.js
 ```
+
+**Tests actuales:** 10 tests Python + 3 test suites JS = 13 tests total ✅
 
 ## Estructura del Proyecto
 
@@ -85,11 +90,14 @@ taso-miniapp/
 │   ├── index.html          # Vista principal
 │   └── history.html        # Vista historial
 ├── static/
-│   └── css/
-│       └── tasalo.css      # Design system
+│   ├── css/
+│   │   └── tasalo.css      # Design system
+│   └── js/
+│       └── app.js          # Fetch API + render
 ├── tests/
-│   ├── test_config.py
-│   └── test_app.py
+│   ├── test_config.py      # Config tests (4)
+│   ├── test_app.py         # Flask tests (6)
+│   └── test_app_manual.js  # JS tests (3 suites)
 ├── config.py               # pydantic-settings
 ├── requirements.txt
 └── README.md
@@ -102,6 +110,15 @@ taso-miniapp/
 | `GET /` | Vista principal con tasas actuales |
 | `GET /history` | Vista historial con gráfica |
 | `GET /health` | Health check `{"ok": true}` |
+
+## Estado Actual
+
+**Fase 2 ✅ COMPLETADA**
+- ✅ Vista principal con datos reales de taso-api
+- ✅ JavaScript cliente con fetch + render
+- ✅ Auto-refresh cada 60 segundos
+- ✅ Skeleton loader + error states
+- ✅ 10 tests Python + 3 test suites JS pasando
 
 ## Integración con Telegram
 

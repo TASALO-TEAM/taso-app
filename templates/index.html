@@ -6,25 +6,43 @@
 <!-- Header -->
 <header class="flex justify-between items-center mb-6">
   <h1 class="text-2xl font-bold font-ui text-accent">TASALO</h1>
-  <button id="refresh-btn" class="text-gray-400 hover:text-accent transition-colors">
+  <button id="refresh-btn" class="text-gray-400 hover:text-accent transition-colors" aria-label="Actualizar tasas">
     <span class="text-xl">⟳</span>
   </button>
 </header>
 
-<!-- Loading State -->
-<div id="loading" class="text-center py-8">
-  <div class="animate-pulse text-gray-500">Cargando tasas...</div>
+<!-- Loading State (Skeleton) -->
+<div id="loading" class="space-y-4">
+  <div class="glass-card">
+    <div class="skeleton h-6 w-32 mb-4 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-2/3 rounded"></div>
+  </div>
+  <div class="glass-card">
+    <div class="skeleton h-6 w-32 mb-4 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-2/3 rounded"></div>
+  </div>
 </div>
 
 <!-- Error State -->
 <div id="error" class="hidden bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-red-400">
-  <p>Error al cargar datos. Verifica tu conexión.</p>
+  <p class="font-medium">⚠️ Error al cargar datos</p>
+  <p class="text-sm mt-1">Verifica tu conexión e intenta nuevamente.</p>
+  <button onclick="loadRates()" class="mt-3 btn-primary text-sm py-2 px-4">
+    Reintentar
+  </button>
 </div>
 
 <!-- Content Container -->
-<div id="rates-container" class="space-y-4">
+<div id="rates-container" class="space-y-4 hidden">
   <!-- Secciones se renderizan dinámicamente con JS -->
 </div>
+
+<!-- Last Update Timestamp -->
+<div id="last-update" class="text-center text-3 text-sm mt-4 mb-16"></div>
 
 <!-- Navigation -->
 <nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
@@ -33,4 +51,8 @@
     <a href="/history" class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
   </div>
 </nav>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 {% endblock %}

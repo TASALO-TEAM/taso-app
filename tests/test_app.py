@@ -32,3 +32,27 @@ def test_history_endpoint_returns_html(client):
     response = client.get("/history")
     assert response.status_code == 200
     assert b"Historial" in response.data
+
+
+def test_index_includes_js_script(client):
+    """GET / incluye referencia al archivo app.js."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"app.js" in response.data
+    assert b"refresh-btn" in response.data
+
+
+def test_index_has_loading_and_error_states(client):
+    """GET / incluye estados de loading y error."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"id=\"loading\"" in response.data
+    assert b"id=\"error\"" in response.data
+    assert b"id=\"rates-container\"" in response.data
+
+
+def test_index_has_api_url_injected(client):
+    """GET / inyecta TASALO_API_URL como variable JS."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"window.TASALO_API_URL" in response.data
