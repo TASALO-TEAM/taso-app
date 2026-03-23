@@ -36,7 +36,12 @@ def create_app():
     def history():
         """Vista historial - gráfica de evolución."""
         return render_template("history.html", tasalo_api_url=settings.tasalo_api_url)
-    
+
+    @app.route("/provincias")
+    def provincias():
+        """Vista provincias - tasas por provincia."""
+        return render_template("provincias.html", tasalo_api_url=settings.tasalo_api_url)
+
     @app.route("/health")
     def health():
         """Health check endpoint."""
