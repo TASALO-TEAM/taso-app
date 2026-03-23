@@ -59,6 +59,23 @@ async function fetchHistory(source, currency, days) {
 }
 
 /**
+ * Fetch provinces rates from taso-api
+ * @param {string} source - Source (eltoque, cadeca, bcc)
+ * @returns {Promise<Array>} Array of province rates
+ */
+async function fetchProvincias(source) {
+  const apiUrl = window.TASALO_API_URL || 'http://localhost:8000';
+  const params = new URLSearchParams({ source });
+  const response = await fetch(`${apiUrl}/api/v1/tasas/provincias?${params}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+/**
  * Render change indicator (🔺 up, 🔻 down, ― neutral)
  * @param {string} change - 'up', 'down', or 'neutral'
  * @returns {string} HTML span with indicator
@@ -138,28 +155,67 @@ function buildSourceSection(sourceKey, rates) {
 function renderRates(data) {
   const container = document.getElementById('rates-container');
   if (!container) return;
-  
+
   const { eltoque, cadeca, bcc, binance } = data;
-  
+
   let html = '';
-  
+
   // Render each source section
   if (eltoque && Object.keys(eltoque).length > 0) {
     html += buildSourceSection('eltoque', eltoque);
   }
-  
+
   if (cadeca && Object.keys(cadeca).length > 0) {
     html += buildSourceSection('cadeca', cadeca);
   }
-  
+
   if (bcc && Object.keys(bcc).length > 0) {
     html += buildSourceSection('bcc', bcc);
   }
-  
+
   if (binance && Object.keys(binance).length > 0) {
     html += buildSourceSection('binance', binance);
   }
-  
+
+  container.innerHTML = html;
+}
+
+/**
+ * Render provinces data to DOM
+ * @param {Array} data - Array of province rates
+ */
+function renderProvincias(data) {
+  const container = document.getElementById('provincias-container');
+  if (!container || !Array.isArray(data)) return;
+
+  let html = '';
+
+  for (const provinceData of data) {
+    const { province, rates } = provinceData;
+    
+    let ratesHtml = '';
+    for (const [currency, rateData] of Object.entries(rates || {})) {
+      const info = CURRENCY_INFO[currency] || { symbol: currency, name: currency };
+      const changeIndicator = renderChange(rateData.change);
+      ratesHtml += `
+        <div class="rate-row">
+          <span class="rate-currency">${info.symbol} ${currency}</span>
+          <span class="rate-value font-mono">${formatRate(rateData.rate)} ${changeIndicator}</span>
+        </div>
+      `;
+    }
+
+    html += `
+      <div class="glass-card">
+        <div class="section-header">
+          <span>📍</span>
+          <span>${province}</span>
+        </div>
+        ${ratesHtml}
+      </div>
+    `;
+  }
+
   container.innerHTML = html;
 }
 
@@ -256,6 +312,61 @@ function hideChartLoading() {
 
   if (loading) loading.classList.add('hidden');
   if (container) container.classList.remove('hidden');
+}
+
+/**
+ * Show provincias loading state
+ */
+function showProvinciasLoading() {
+  const loading = document.getElementById('loading');
+  const error = document.getElementById('error');
+  const container = document.getElementById('provincias-container');
+
+  if (loading) loading.classList.remove('hidden');
+  if (error) error.classList.add('hidden');
+  if (container) container.classList.add('hidden');
+}
+
+/**
+ * Show provincias error state
+ */
+function showProvinciasError() {
+  const loading = document.getElementById('loading');
+  const error = document.getElementById('error');
+  const container = document.getElementById('provincias-container');
+
+  if (loading) loading.classList.add('hidden');
+  if (error) error.classList.remove('hidden');
+  if (container) container.classList.add('hidden');
+}
+
+/**
+ * Hide provincias loading and show container
+ */
+function hideProvinciasLoading() {
+  const loading = document.getElementById('loading');
+  const container = document.getElementById('provincias-container');
+
+  if (loading) loading.classList.add('hidden');
+  if (container) container.classList.remove('hidden');
+}
+
+/**
+ * Update provincias timestamp
+ */
+function updateProvinciasTimestamp() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' });
+
+  let timestampEl = document.getElementById('provincias-timestamp');
+  if (!timestampEl) {
+    timestampEl = document.createElement('div');
+    timestampEl.id = 'provincias-timestamp';
+    timestampEl.className = 'text-center text-3 text-sm mt-4 mb-16';
+    document.querySelector('.container')?.appendChild(timestampEl);
+  }
+
+  timestampEl.textContent = `Actualizado: ${timeStr}`;
 }
 
 /**
@@ -440,13 +551,39 @@ async function loadRates() {
 }
 
 /**
+ * Load and display provinces rates
+ */
+async function loadProvincias() {
+  const sourceSelect = document.getElementById('source-select');
+  if (!sourceSelect) return;
+
+  const source = sourceSelect.value;
+
+  showProvinciasLoading();
+
+  try {
+    const data = await fetchProvincias(source);
+    hideProvinciasLoading();
+
+    if (data.ok && data.data) {
+      renderProvincias(data.data);
+      updateProvinciasTimestamp();
+    } else {
+      showProvinciasError();
+    }
+  } catch (error) {
+    console.error('Error loading provinces:', error);
+    showProvinciasError();
+  }
+}
+
+/**
  * Initialize the app
  */
 function initApp() {
-  // Check if we're on the history page
-  const isHistoryPage = window.location.pathname === '/history';
+  const path = window.location.pathname;
 
-  if (isHistoryPage) {
+  if (path === '/history') {
     // Initialize history chart
     loadHistoryChart();
 
@@ -463,6 +600,25 @@ function initApp() {
     if (retryBtn) {
       retryBtn.addEventListener('click', () => {
         loadHistoryChart();
+      });
+    }
+  } else if (path === '/provincias') {
+    // Initialize provincias view
+    loadProvincias();
+
+    // Setup source selector change
+    const sourceSelect = document.getElementById('source-select');
+    if (sourceSelect) {
+      sourceSelect.addEventListener('change', () => {
+        loadProvincias();
+      });
+    }
+
+    // Setup retry button
+    const retryBtn = document.getElementById('retry-btn');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        loadProvincias();
       });
     }
   } else {
@@ -494,14 +650,17 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     fetchLatest,
     fetchHistory,
+    fetchProvincias,
     renderChange,
     formatRate,
     buildRateRow,
     buildSourceSection,
     renderRates,
+    renderProvincias,
     renderChart,
     loadRates,
     loadHistoryChart,
+    loadProvincias,
     initApp
   };
 }
