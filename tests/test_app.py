@@ -56,3 +56,38 @@ def test_index_has_api_url_injected(client):
     response = client.get("/")
     assert response.status_code == 200
     assert b"window.TASALO_API_URL" in response.data
+
+
+def test_history_has_chart_canvas(client):
+    """GET /history incluye canvas para Chart.js."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"id=\"history-chart\"" in response.data
+
+
+def test_history_has_currency_selector(client):
+    """GET /history incluye selector de moneda."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"id=\"currency-select\"" in response.data
+
+
+def test_history_has_days_selector(client):
+    """GET /history incluye selector de días."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"id=\"days-select\"" in response.data
+
+
+def test_history_has_update_button(client):
+    """GET /history incluye botón de actualizar."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"id=\"update-chart\"" in response.data
+
+
+def test_history_has_back_navigation(client):
+    """GET /history incluye navegación de regreso."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"href=\"/\"" in response.data

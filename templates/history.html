@@ -12,8 +12,19 @@
   <div class="w-6"></div>
 </header>
 
+<!-- Loading State -->
+<div id="chart-loading" class="glass-card rounded-xl p-8 mb-4 hidden">
+  <div class="skeleton h-64 w-full"></div>
+</div>
+
+<!-- Error State -->
+<div id="chart-error" class="glass-card rounded-xl p-6 mb-4 hidden">
+  <p class="text-center text-2 mb-4">No se pudo cargar el histórico</p>
+  <button id="retry-btn" class="w-full btn-primary py-2">Reintentar</button>
+</div>
+
 <!-- Chart Container -->
-<div class="glass-card rounded-xl p-4 mb-4">
+<div id="chart-container" class="glass-card rounded-xl p-4 mb-4 hidden">
   <canvas id="history-chart"></canvas>
 </div>
 
@@ -35,4 +46,7 @@
     Actualizar
   </button>
 </div>
+
+<!-- Last Update Timestamp -->
+<div id="chart-timestamp" class="text-center text-3 text-sm mt-4 mb-16"></div>
 {% endblock %}
