@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}TASALO - Provincias{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold font-ui text-accent">🗺️ Provincias</h1>
+  <select id="source-select" class="bg-glass border border-white/10 rounded-lg px-3 py-2 text-sm font-mono text-accent focus:outline-none focus:border-accent">
+    <option value="eltoque">📱 ElToque</option>
+    <option value="cadeca">🏪 CADECA</option>
+    <option value="bcc">🏛️ BCC</option>
+  </select>
+</header>
+
+<!-- Loading State (Skeleton) -->
+<div id="loading" class="space-y-4">
+  <div class="glass-card">
+    <div class="skeleton h-6 w-48 mb-4 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-2/3 rounded"></div>
+  </div>
+  <div class="glass-card">
+    <div class="skeleton h-6 w-48 mb-4 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton h-10 w-2/3 rounded"></div>
+  </div>
+</div>
+
+<!-- Error State -->
+<div id="error" class="hidden bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-red-400">
+  <p class="font-medium">⚠️ Error al cargar datos</p>
+  <p class="text-sm mt-1">Verifica tu conexión e intenta nuevamente.</p>
+  <button id="retry-btn" class="mt-3 btn-primary text-sm py-2 px-4">
+    Reintentar
+  </button>
+</div>
+
+<!-- Provincias Container -->
+<div id="provincias-container" class="space-y-4 hidden">
+  <!-- Tarjetas de provincias se renderizan dinámicamente -->
+</div>
+
+<!-- Last Update Timestamp -->
+<div id="provincias-timestamp" class="text-center text-3 text-sm mt-4 mb-16"></div>
+
+<!-- Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
+  <div class="flex justify-around max-w-lg mx-auto">
+    <a href="/" class="text-gray-400 hover:text-accent transition-colors">📊 Inicio</a>
+    <a href="/history" class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
+    <a href="/provincias" class="text-accent font-medium">🗺️ Provincias</a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}
