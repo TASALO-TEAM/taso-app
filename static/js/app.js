@@ -42,13 +42,26 @@ const SOURCE_INFO = {
  */
 async function fetchLatest() {
   const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
-  const response = await fetch(`${apiUrl}/api/v1/tasas/latest`);
+  console.log('[TASALO DEBUG] fetchLatest called, API URL:', apiUrl);
+  const url = `${apiUrl}/api/v1/tasas/latest`;
+  console.log('[TASALO DEBUG] Fetching URL:', url);
+  
+  try {
+    const response = await fetch(url);
+    console.log('[TASALO DEBUG] Response status:', response.status);
+    
+    if (!response.ok) {
+      console.error('[TASALO DEBUG] Response not OK:', response.status);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    console.log('[TASALO DEBUG] Data received:', data);
+    return data;
+  } catch (error) {
+    console.error('[TASALO DEBUG] Fetch error:', error);
+    throw error;
   }
-
-  return await response.json();
 }
 
 /**
@@ -544,20 +557,25 @@ function updateChartTimestamp() {
  * Main function to load and display rates
  */
 async function loadRates() {
+  console.log('[TASALO DEBUG] loadRates called');
   showLoading();
 
   try {
+    console.log('[TASALO DEBUG] Calling fetchLatest');
     const response = await fetchLatest();
+    console.log('[TASALO DEBUG] fetchLatest returned, ok:', response.ok);
     hideLoading();
 
     if (response.ok && response.data) {
+      console.log('[TASALO DEBUG] Rendering rates, data:', response.data);
       renderRates(response.data);
       updateTimestamp();
     } else {
+      console.error('[TASALO DEBUG] Response ok=false or no data');
       showError();
     }
   } catch (error) {
-    console.error('Error loading rates:', error);
+    console.error('[TASALO DEBUG] loadRates error:', error);
     showError();
   }
 }
@@ -748,7 +766,9 @@ function updateSettingsTimestamp() {
  */
 function initApp() {
   const path = window.location.pathname;
-  
+  console.log('[TASALO DEBUG] initApp called, path:', path, 'URL:', window.location.href);
+  console.log('[TASALO DEBUG] window.TASALO_API_URL:', window.TASALO_API_URL);
+
   // Load and apply settings on all pages
   const settings = loadSettings();
   applyTheme(settings.theme);
@@ -795,6 +815,7 @@ function initApp() {
       });
     }
   } else {
+    console.log('[TASALO DEBUG] Loading rates on index page');
     // Load rates on page load (index page)
     loadRates();
 
