@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas - TASALO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0088cc',
+                        primaryDark: '#006699',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .stat-value { font-size: 2.5rem; font-weight: 700; }
+        .stat-label { font-size: 0.875rem; color: #93c5fd; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">📊 Estadísticas del Bot</h1>
+                <p class="text-blue-200">Dashboard de administración TASALO</p>
+            </div>
+            <a href="/stats/logout" class="bg-red-500/20 hover:bg-red-500/40 text-red-200 px-4 py-2 rounded-lg transition-all border border-red-500/30">
+                Cerrar Sesión
+            </a>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+            <p class="text-blue-200 mt-4">Cargando estadísticas...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden glass-card rounded-2xl p-8 text-center">
+            <p class="text-red-300 text-lg">⚠️ Error cargando estadísticas</p>
+            <button onclick="loadStats()" class="mt-4 bg-primary hover:bg-primaryDark text-white px-6 py-2 rounded-lg transition-all">
+                Reintentar
+            </button>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboard" class="hidden space-y-8">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Total Usuarios -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">USUARIOS TOTALES</p>
+                            <p id="totalUsers" class="stat-value text-white mt-2">0</p>
+                        </div>
+                        <div class="text-4xl">👥</div>
+                    </div>
+                </div>
+
+                <!-- Nuevos (7d) -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">NUEVOS (7 DÍAS)</p>
+                            <p id="newUsers7d" class="stat-value text-white mt-2">0</p>
+                        </div>
+                        <div class="text-4xl">🆕</div>
+                    </div>
+                </div>
+
+                <!-- Activos (24h) -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">ACTIVOS (24H)</p>
+                            <p id="activeUsers24h" class="stat-value text-white mt-2">0</p>
+                        </div>
+                        <div class="text-4xl">⚡</div>
+                    </div>
+                </div>
+
+                <!-- Requests (24h) -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="stat-label">REQUESTS (24H)</p>
+                            <p id="totalRequests" class="stat-value text-white mt-2">0</p>
+                        </div>
+                        <div class="text-4xl">📈</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Command Usage Chart -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">📈 Comandos (24h)</h3>
+                    <canvas id="commandsChart"></canvas>
+                </div>
+
+                <!-- Performance Card -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">⚡ Rendimiento API</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between text-blue-200 mb-2">
+                                <span>Tasa de Éxito</span>
+                                <span id="successRate" class="text-white font-semibold">0%</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-3">
+                                <div id="successRateBar" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white/5 rounded-lg p-4">
+                                <p class="text-blue-300 text-sm">Avg Response</p>
+                                <p id="avgResponse" class="text-2xl font-bold text-white">0ms</p>
+                            </div>
+                            <div class="bg-white/5 rounded-lg p-4">
+                                <p class="text-blue-300 text-sm">Total Requests</p>
+                                <p id="totalReqs" class="text-2xl font-bold text-white">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Users Table -->
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="text-xl font-bold text-white mb-4">🏆 Top Usuarios</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="text-blue-300 border-b border-white/10">
+                                <th class="text-left py-3 px-4">#</th>
+                                <th class="text-left py-3 px-4">Usuario</th>
+                                <th class="text-right py-3 px-4">Comandos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topUsersTable">
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Last Updated -->
+            <div class="text-center text-blue-300/60 text-sm">
+                <p>Última actualización: <span id="lastUpdated">--</span></p>
+                <button onclick="loadStats()" class="mt-2 text-primary hover:text-white transition-colors">
+                    🔄 Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let commandsChartInstance = null;
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                if (!data.ok) {
+                    throw new Error('Failed to fetch stats');
+                }
+
+                // Hide loading, show dashboard
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+
+                // Update stats cards
+                const stats = data.data;
+                document.getElementById('totalUsers').textContent = stats.users.total;
+                document.getElementById('newUsers7d').textContent = stats.users.new_7d;
+                document.getElementById('activeUsers24h').textContent = stats.users.active_24h;
+                document.getElementById('totalRequests').textContent = stats.performance.total_requests_24h;
+
+                // Update performance
+                document.getElementById('successRate').textContent = stats.performance.success_rate.toFixed(1) + '%';
+                document.getElementById('successRateBar').style.width = stats.performance.success_rate + '%';
+                document.getElementById('avgResponse').textContent = (stats.performance.avg_response_ms || 0).toFixed(0) + 'ms';
+                document.getElementById('totalReqs').textContent = stats.performance.total_requests_24h;
+
+                // Update commands chart
+                updateCommandsChart(stats.commands.commands_24h);
+
+                // Update top users table
+                updateTopUsersTable(stats.top_users.top_users);
+
+                // Update timestamp
+                document.getElementById('lastUpdated').textContent = new Date(stats.updated_at).toLocaleString();
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+            }
+        }
+
+        function updateCommandsChart(commands) {
+            const ctx = document.getElementById('commandsChart').getContext('2d');
+            const labels = commands.map(c => c.command);
+            const data = commands.map(c => c.count);
+
+            if (commandsChartInstance) {
+                commandsChartInstance.destroy();
+            }
+
+            commandsChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Usos (24h)',
+                        data: data,
+                        backgroundColor: 'rgba(0, 136, 204, 0.7)',
+                        borderColor: 'rgba(0, 136, 204, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#93c5fd' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#93c5fd' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTopUsersTable(users) {
+            const tbody = document.getElementById('topUsersTable');
+            tbody.innerHTML = users.map((user, index) => `
+                <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <td class="py-3 px-4 text-white">${index + 1}</td>
+                    <td class="py-3 px-4 text-blue-200">${user.username || 'User ' + user.user_id}</td>
+                    <td class="py-3 px-4 text-right text-white font-semibold">${user.total_commands}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>
