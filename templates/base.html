@@ -52,19 +52,21 @@
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
-    
+
     // Sincronizar colores con tema de Telegram
     const bgColor = getComputedStyle(document.body).getPropertyValue('--bg') || '#09091e';
     tg.setHeaderColor(bgColor.trim());
     tg.setBackgroundColor(bgColor.trim());
-    
+
     // Detectar tema y aplicar clase
     if (tg.colorScheme === 'light') {
       document.body.classList.add('theme-light');
     }
-    
-    // Inyectar variable de entorno para fetch
+
+    // Inyectar variables de entorno para fetch y rutas
     window.TASALO_API_URL = "{{ tasalo_api_url }}";
+    // Auto-detectar base path desde la URL actual (ej: /miniapp o vacío)
+    window.TASALO_BASE_PATH = window.location.pathname.startsWith('/miniapp') ? '/miniapp' : '';
   </script>
   
   <div class="container mx-auto px-4 py-4 max-w-lg">

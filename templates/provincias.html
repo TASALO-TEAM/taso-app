@@ -49,12 +49,23 @@
 <!-- Navigation -->
 <nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
   <div class="flex justify-around max-w-lg mx-auto">
-    <a href="/" class="text-gray-400 hover:text-accent transition-colors">📊 Inicio</a>
-    <a href="/history" class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
-    <a href="/provincias" class="text-accent font-medium">🗺️ Provincias</a>
-    <a href="/settings" class="text-gray-400 hover:text-accent transition-colors">⚙️ Settings</a>
+    <a href="/" data-nav-link class="text-gray-400 hover:text-accent transition-colors">📊 Inicio</a>
+    <a href="/history" data-nav-link class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
+    <a href="/provincias" data-nav-link class="text-accent font-medium">🗺️ Provincias</a>
+    <a href="/settings" data-nav-link class="text-gray-400 hover:text-accent transition-colors">⚙️ Settings</a>
   </div>
 </nav>
+
+<script>
+  // Fix navigation links to include base path if needed
+  document.querySelectorAll('[data-nav-link]').forEach(link => {
+    const basePath = window.TASALO_BASE_PATH || '';
+    const href = link.getAttribute('href');
+    if (basePath && !href.startsWith(basePath)) {
+      link.setAttribute('href', basePath + href);
+    }
+  });
+</script>
 {% endblock %}
 
 {% block scripts %}

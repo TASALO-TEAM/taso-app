@@ -681,13 +681,17 @@ function applyRefreshInterval(interval) {
   if (autoRefreshInterval) {
     clearInterval(autoRefreshInterval);
   }
-  
+
   // Set new interval (only on index page)
-  const path = window.location.pathname;
-  if (path === '/' || path === '/index.html') {
+  let path = window.location.pathname;
+  // Normalize path (remove /miniapp prefix if present)
+  if (path.startsWith('/miniapp')) {
+    path = path.replace('/miniapp', '');
+  }
+  if (path === '/' || path === '/index.html' || path === '') {
     autoRefreshInterval = setInterval(loadRates, interval);
   }
-  
+
   return interval;
 }
 
@@ -765,9 +769,20 @@ function updateSettingsTimestamp() {
  * Initialize the app
  */
 function initApp() {
-  const path = window.location.pathname;
-  console.log('[TASALO DEBUG] initApp called, path:', path, 'URL:', window.location.href);
+  // Normalize path by removing /miniapp prefix if present
+  let path = window.location.pathname;
+  if (path.startsWith('/miniapp')) {
+    path = path.replace('/miniapp', '');
+  }
+  // Ensure path starts with /
+  if (!path.startsWith('/')) {
+    path = '/' + path;
+  }
+  
+  console.log('[TASALO DEBUG] initApp called, original path:', window.location.pathname, 'normalized path:', path);
+  console.log('[TASALO DEBUG] URL:', window.location.href);
   console.log('[TASALO DEBUG] window.TASALO_API_URL:', window.TASALO_API_URL);
+  console.log('[TASALO DEBUG] window.TASALO_BASE_PATH:', window.TASALO_BASE_PATH);
 
   // Load and apply settings on all pages
   const settings = loadSettings();
