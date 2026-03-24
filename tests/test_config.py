@@ -30,7 +30,7 @@ def test_settings_default_values():
     settings = Settings()
     
     assert settings.flask_env == "production"
-    assert settings.port == 5000
+    assert settings.port == 5040
     assert settings.log_level == "INFO"
 
 

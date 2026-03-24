@@ -93,7 +93,7 @@ nano .env
 | Variable | Descripción | Default |
 |----------|-------------|---------|
 | `FLASK_ENV` | Entorno (development/production) | `production` |
-| `PORT` | Puerto del servidor | `5000` |
+| `PORT` | Puerto del servidor | `5040` |
 | `LOG_LEVEL` | Nivel de logging | `INFO` |
 
 ### Generar FLASK_SECRET_KEY
@@ -111,10 +111,10 @@ print(secrets.token_hex(32))
 
 ```bash
 source .venv/bin/activate
-uv run uvicorn src.app:app --reload --host 0.0.0.0 --port 5000
+uv run uvicorn src.app:app --reload --host 0.0.0.0 --port 5040
 ```
 
-Acceder a: `http://localhost:5000`
+Acceder a: `http://localhost:5040`
 
 ### Ejecutar tests
 
@@ -130,7 +130,7 @@ TASALO_API_URL=http://test:8000 FLASK_SECRET_KEY=test pytest -v
 
 ```bash
 source .venv/bin/activate
-uv run gunicorn src.app:app --bind 0.0.0.0:5000 --workers 4 --worker-class uvicorn.workers.UvicornWorker
+uv run gunicorn src.app:app --bind 0.0.0.0:5040 --workers 4 --worker-class uvicorn.workers.UvicornWorker
 ```
 
 ### Opción 2: Systemd (VPS)
@@ -154,7 +154,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/taso-app
 Environment="PATH=/var/www/taso-app/.venv/bin"
-ExecStart=/var/www/taso-app/.venv/bin/uvicorn src.app:app --host 0.0.0.0 --port 5000
+ExecStart=/var/www/taso-app/.venv/bin/uvicorn src.app:app --host 0.0.0.0 --port 5040
 Restart=always
 
 [Install]
@@ -189,16 +189,16 @@ RUN uv pip install --system -r requirements.txt
 # Copiar aplicación
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5040
 
-CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "5040"]
 ```
 
 **Build y run:**
 
 ```bash
 docker build -t taso-app .
-docker run -p 5000:5000 --env-file .env taso-app
+docker run -p 5040:5040 --env-file .env taso-app
 ```
 
 ### Opción 4: Railway / Render
@@ -223,7 +223,7 @@ docker run -p 5000:5000 --env-file .env taso-app
 **Variables de entorno en Railway:**
 - `FLASK_SECRET_KEY`: tu_clave_secreta
 - `TASALO_API_URL`: https://api.tasalo.app
-- `PORT`: 5000 (automático en Railway)
+- `PORT`: 5040 (automático en Railway)
 
 ---
 
@@ -334,8 +334,8 @@ ls -la src/
 ### Error: "Address already in use"
 
 ```bash
-# Matar proceso en puerto 5000
-lsof -ti:5000 | xargs kill -9
+# Matar proceso en puerto 5040
+lsof -ti:5040 | xargs kill -9
 
 # O cambiar puerto en .env
 PORT=5001

@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     # Flask
     flask_secret_key: str
     flask_env: str = "production"
-    port: int = 5000
+    port: int = 5040
 
     # Backend API
     tasalo_api_url: str
