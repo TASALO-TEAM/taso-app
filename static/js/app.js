@@ -41,7 +41,7 @@ const SOURCE_INFO = {
  * @returns {Promise<Object>} API response data
  */
 async function fetchLatest() {
-  const apiUrl = window.TASALO_API_URL || 'http://localhost:8000';
+  const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
   const response = await fetch(`${apiUrl}/api/v1/tasas/latest`);
 
   if (!response.ok) {
@@ -59,7 +59,7 @@ async function fetchLatest() {
  * @returns {Promise<Object>} API response data
  */
 async function fetchHistory(source, currency, days) {
-  const apiUrl = window.TASALO_API_URL || 'http://localhost:8000';
+  const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
   const params = new URLSearchParams({ source, currency, days: days.toString() });
   const response = await fetch(`${apiUrl}/api/v1/tasas/history?${params}`);
 
@@ -76,7 +76,7 @@ async function fetchHistory(source, currency, days) {
  * @returns {Promise<Array>} Array of province rates
  */
 async function fetchProvincias(source) {
-  const apiUrl = window.TASALO_API_URL || 'http://localhost:8000';
+  const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
   const params = new URLSearchParams({ source });
   const response = await fetch(`${apiUrl}/api/v1/tasas/provincias?${params}`);
 
