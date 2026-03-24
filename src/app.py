@@ -4,6 +4,7 @@ import httpx
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 from datetime import timedelta
 from config import settings
+from asgiref.wsgi import WsgiToAsgi
 
 
 def create_app():
@@ -118,11 +119,13 @@ def create_app():
         return render_template("error.html", message="Error interno del servidor", status_code=500), 500
 
     logger.info("TASALO Miniapp initialized")
-    
+
     return app
 
 
 app = create_app()
+# Convert WSGI app to ASGI for uvicorn compatibility
+app = WsgiToAsgi(app)
 
 
 if __name__ == "__main__":
