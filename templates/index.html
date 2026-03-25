@@ -11,6 +11,32 @@
   </button>
 </header>
 
+<!-- Binance Ticker Tape -->
+<div id="tickerContainer" class="ticker-tape-container collapsed">
+  <div class="ticker-tape-header" id="tickerHeader">
+    <div class="ticker-tape-label">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+      Binance Top 10
+    </div>
+    <div class="ticker-tape-chevron" id="tickerChevron">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+  </div>
+  <div class="ticker-tape-body" id="tickerBody" style="max-height: 40px;">
+    <div class="ticker-tape-wrapper">
+      <div class="ticker-tape-strip" id="tickerStrip">
+        <!-- Ticker items rendered by JS -->
+        <span style="padding: 0 16px; font-size: 10px; color: var(--text3);">Cargando...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Loading State (Skeleton) -->
 <div id="loading" class="space-y-4">
   <div class="glass-card-v2">
@@ -39,6 +65,11 @@
 <!-- Content Container -->
 <div id="rates-container" class="space-y-4 hidden">
   <!-- Secciones se renderizan dinámicamente con JS -->
+</div>
+
+<!-- Horizontal Cards Container (optional layout) -->
+<div id="horizontalRatesContainer" class="horizontal-rates-container hidden">
+  <!-- Cards rendered by JS -->
 </div>
 
 <!-- Last Update Timestamp -->
