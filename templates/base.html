@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://tasalo.duckdns.org https://cdn.jsdelivr.net http://localhost:*;">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>{% block title %}TASALO{% endblock %}</title>
-  
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
+
   <!-- Telegram Web App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -23,7 +23,7 @@
 
   <!-- TASALO Design System -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tasalo.css') }}">
-  
+
   <!-- Configurar Tailwind con colores TASALO -->
   <script>
     tailwind.config = {
@@ -43,7 +43,7 @@
       }
     }
   </script>
-  
+
   {% block head %}{% endblock %}
 </head>
 <body class="bg-tasalo-bg text-gray-100 font-ui min-h-screen">
@@ -68,11 +68,11 @@
     // Auto-detectar base path desde la URL actual (ej: /miniapp o vacío)
     window.TASALO_BASE_PATH = window.location.pathname.startsWith('/miniapp') ? '/miniapp' : '';
   </script>
-  
-  <div class="container mx-auto px-4 py-4 max-w-lg">
+
+  <div class="container-safe fade-in">
     {% block content %}{% endblock %}
   </div>
-  
+
   {% block scripts %}{% endblock %}
 </body>
 </html>

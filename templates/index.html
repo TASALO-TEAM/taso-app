@@ -4,26 +4,26 @@
 
 {% block content %}
 <!-- Header -->
-<header class="flex justify-between items-center mb-6">
-  <h1 class="text-2xl font-bold font-ui text-accent">TASALO</h1>
-  <button id="refresh-btn" class="text-gray-400 hover:text-accent transition-colors" aria-label="Actualizar tasas">
-    <span class="text-xl">⟳</span>
+<header class="page-header">
+  <h1 class="page-title">TASALO</h1>
+  <button id="refresh-btn" class="back-button" aria-label="Actualizar tasas">
+    <span>⟳</span>
   </button>
 </header>
 
 <!-- Loading State (Skeleton) -->
 <div id="loading" class="space-y-4">
-  <div class="glass-card">
-    <div class="skeleton h-6 w-32 mb-4 rounded"></div>
-    <div class="skeleton h-10 w-full mb-2 rounded"></div>
-    <div class="skeleton h-10 w-full mb-2 rounded"></div>
-    <div class="skeleton h-10 w-2/3 rounded"></div>
+  <div class="glass-card-v2">
+    <div class="skeleton-v2 h-6 w-32 mb-4 rounded"></div>
+    <div class="skeleton-v2 h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton-v2 h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton-v2 h-10 w-2/3 rounded"></div>
   </div>
-  <div class="glass-card">
-    <div class="skeleton h-6 w-32 mb-4 rounded"></div>
-    <div class="skeleton h-10 w-full mb-2 rounded"></div>
-    <div class="skeleton h-10 w-full mb-2 rounded"></div>
-    <div class="skeleton h-10 w-2/3 rounded"></div>
+  <div class="glass-card-v2">
+    <div class="skeleton-v2 h-6 w-32 mb-4 rounded"></div>
+    <div class="skeleton-v2 h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton-v2 h-10 w-full mb-2 rounded"></div>
+    <div class="skeleton-v2 h-10 w-2/3 rounded"></div>
   </div>
 </div>
 
@@ -31,7 +31,7 @@
 <div id="error" class="hidden bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-red-400">
   <p class="font-medium">⚠️ Error al cargar datos</p>
   <p class="text-sm mt-1">Verifica tu conexión e intenta nuevamente.</p>
-  <button onclick="loadRates()" class="mt-3 btn-primary text-sm py-2 px-4">
+  <button onclick="loadRates()" class="mt-3 btn-primary-v2 text-sm py-2 px-4">
     Reintentar
   </button>
 </div>
@@ -44,13 +44,25 @@
 <!-- Last Update Timestamp -->
 <div id="last-update" class="text-center text-3 text-sm mt-4 mb-16"></div>
 
-<!-- Navigation -->
-<nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
-  <div class="flex justify-around max-w-lg mx-auto">
-    <a href="/" data-nav-link class="text-accent font-medium">📊 Inicio</a>
-    <a href="/history" data-nav-link class="text-gray-400 hover:text-accent transition-colors">📈 Historial</a>
-    <a href="/provincias" data-nav-link class="text-gray-400 hover:text-accent transition-colors">🗺️ Provincias</a>
-    <a href="/settings" data-nav-link class="text-gray-400 hover:text-accent transition-colors">⚙️ Settings</a>
+<!-- Floating Navigation -->
+<nav class="floating-nav">
+  <div class="floating-nav-inner">
+    <a href="/" data-nav-link class="nav-item active">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Inicio</span>
+    </a>
+    <a href="/history" data-nav-link class="nav-item">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">Historial</span>
+    </a>
+    <a href="/provincias" data-nav-link class="nav-item">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Provincias</span>
+    </a>
+    <a href="/settings" data-nav-link class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </a>
   </div>
 </nav>
 
@@ -61,6 +73,17 @@
     const href = link.getAttribute('href');
     if (basePath && !href.startsWith(basePath)) {
       link.setAttribute('href', basePath + href);
+    }
+  });
+  
+  // Set active nav item based on current page
+  const currentPath = window.location.pathname.replace('/miniapp', '') || '/';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const href = item.getAttribute('href');
+    if (href === currentPath || (currentPath === '/' && href === '/')) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
     }
   });
 </script>

@@ -4,32 +4,32 @@
 
 {% block content %}
 <!-- Header -->
-<header class="flex justify-between items-center mb-6">
-  <a href="/" data-nav-link class="text-gray-400 hover:text-accent transition-colors">
-    <span class="text-xl">←</span>
+<header class="page-header">
+  <a href="/" data-nav-link class="back-button" aria-label="Volver">
+    <span>←</span>
   </a>
-  <h1 class="text-2xl font-bold font-ui text-accent">📈 Historial</h1>
-  <div class="w-6"></div>
+  <h1 class="page-title">📈 Historial</h1>
+  <div class="w-11"></div>
 </header>
 
 <!-- Loading State -->
-<div id="chart-loading" class="glass-card rounded-xl p-8 mb-4 hidden">
-  <div class="skeleton h-64 w-full"></div>
+<div id="chart-loading" class="glass-card-v2 rounded-xl p-8 mb-4 hidden">
+  <div class="skeleton-v2 h-64 w-full"></div>
 </div>
 
 <!-- Error State -->
-<div id="chart-error" class="glass-card rounded-xl p-6 mb-4 hidden">
+<div id="chart-error" class="glass-card-v2 rounded-xl p-6 mb-4 hidden">
   <p class="text-center text-2 mb-4">No se pudo cargar el histórico</p>
-  <button id="retry-btn" class="w-full btn-primary py-2">Reintentar</button>
+  <button id="retry-btn" class="w-full btn-primary-v2 py-2">Reintentar</button>
 </div>
 
 <!-- Chart Container -->
-<div id="chart-container" class="glass-card rounded-xl p-4 mb-4 hidden">
+<div id="chart-container" class="glass-card-v2 rounded-xl p-4 mb-4 hidden">
   <canvas id="history-chart"></canvas>
 </div>
 
 <!-- Filters -->
-<div class="glass-card rounded-xl p-4 mb-4">
+<div class="glass-card-v2 rounded-xl p-4 mb-4">
   <div class="flex gap-2 mb-4">
     <select id="currency-select" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
       <option value="USD">USD</option>
@@ -42,7 +42,7 @@
       <option value="30">30 días</option>
     </select>
   </div>
-  <button id="update-chart" class="w-full bg-accent hover:bg-accent/80 text-white font-medium py-2 rounded-lg transition-colors">
+  <button id="update-chart" class="w-full btn-primary-v2 py-2">
     Actualizar
   </button>
 </div>
@@ -50,13 +50,25 @@
 <!-- Last Update Timestamp -->
 <div id="chart-timestamp" class="text-center text-3 text-sm mt-4 mb-16"></div>
 
-<!-- Navigation -->
-<nav class="fixed bottom-0 left-0 right-0 bg-tasalo-bg-glass backdrop-blur-lg border-t border-white/10 p-4">
-  <div class="flex justify-around max-w-lg mx-auto">
-    <a href="/" data-nav-link class="text-gray-400 hover:text-accent transition-colors">📊 Inicio</a>
-    <a href="/history" data-nav-link class="text-accent font-medium">📈 Historial</a>
-    <a href="/provincias" data-nav-link class="text-gray-400 hover:text-accent transition-colors">🗺️ Provincias</a>
-    <a href="/settings" data-nav-link class="text-gray-400 hover:text-accent transition-colors">⚙️ Settings</a>
+<!-- Floating Navigation -->
+<nav class="floating-nav">
+  <div class="floating-nav-inner">
+    <a href="/" data-nav-link class="nav-item">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Inicio</span>
+    </a>
+    <a href="/history" data-nav-link class="nav-item active">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">Historial</span>
+    </a>
+    <a href="/provincias" data-nav-link class="nav-item">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Provincias</span>
+    </a>
+    <a href="/settings" data-nav-link class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </a>
   </div>
 </nav>
 
@@ -67,6 +79,17 @@
     const href = link.getAttribute('href');
     if (basePath && !href.startsWith(basePath)) {
       link.setAttribute('href', basePath + href);
+    }
+  });
+  
+  // Set active nav item based on current page
+  const currentPath = window.location.pathname.replace('/miniapp', '') || '/';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const href = item.getAttribute('href');
+    if (href === currentPath) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
     }
   });
 </script>
