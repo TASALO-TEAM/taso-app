@@ -64,14 +64,14 @@
 
 /* Light Mode - Explicit class (overrides system preference) */
 body.theme-light {
-  --bg:           #f5f5fa;
-  --bg-glass:     rgba(255, 255, 255, 0.92);
-  --bg-nav:       rgba(255, 255, 255, 0.85);
-  --bg-overlay:   rgba(255, 255, 255, 0.95);
-  --text:         #1a1a2e;
-  --text2:        #5a5a80;
-  --text3:        #8888a0;
-  --border:       rgba(0, 0, 0, 0.1);
+  --bg:           #fafafa;
+  --bg-glass:     rgba(255, 255, 255, 0.95);
+  --bg-nav:       rgba(255, 255, 255, 0.92);
+  --bg-overlay:   rgba(255, 255, 255, 0.98);
+  --text:         #0a0a0a;
+  --text2:        #3a3a3a;
+  --text3:        #5a5a5a;
+  --border:       rgba(0, 0, 0, 0.12);
   --border-subtle:  rgba(0, 0, 0, 0.08);
   --border-strong:  rgba(0, 0, 0, 0.2);
 }

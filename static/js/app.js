@@ -181,7 +181,7 @@ function renderTicker(binanceData, currencies) {
     console.warn('[TASALO DEBUG] tickerStrip element not found');
     return;
   }
-  
+
   if (!binanceData || !binanceData.data) {
     console.warn('[TASALO DEBUG] No binanceData to render');
     tickerStrip.innerHTML = '<span style="padding: 0 16px; font-size: 10px; color: var(--text3);">Sin datos</span>';
@@ -191,12 +191,15 @@ function renderTicker(binanceData, currencies) {
   const data = binanceData.data;
   const selectedCurrencies = currencies || DEFAULT_BINANCE_CURRENCIES;
   console.log('[TASALO DEBUG] renderTicker called with currencies:', selectedCurrencies);
+  console.log('[TASALO DEBUG] Binance data keys:', Object.keys(data));
 
-  // Build ticker items
+  // Build ticker items - handle both 'BTC' and 'BTCUSD' format
   let itemsHtml = '';
   selectedCurrencies.forEach(currency => {
-    if (data[currency]) {
-      const rateInfo = data[currency];
+    // Try exact match first, then try with USD suffix
+    let rateInfo = data[currency] || data[currency + 'USD'] || data[currency + 'USDT'];
+    
+    if (rateInfo) {
       const rate = rateInfo.rate || rateInfo;
       const change = rateInfo.change || 'neutral';
       const prevRate = rateInfo.prev_rate;
@@ -226,7 +229,7 @@ function renderTicker(binanceData, currencies) {
         <span class="ticker-separator">•</span>
       `;
     } else {
-      console.warn('[TASALO DEBUG] Currency', currency, 'not in binance data');
+      console.warn('[TASALO DEBUG] Currency', currency, 'not in binance data (keys:', Object.keys(data), ')');
     }
   });
 
@@ -314,11 +317,11 @@ function renderHorizontalCards(data, layoutMode) {
   const cardSize = settings.cardSize || 'standard';
   const showFlags = settings.showFlags !== false;
 
-  // Source order: ElToque → BCC → CADECA
+  // Source order: ElToque → CADECA → BCC (matches legacy bot order)
   const sources = [
-    { key: 'eltoque', emoji: '📱', name: 'ElToque' },
-    { key: 'bcc', emoji: '🏛️', name: 'BCC' },
-    { key: 'cadeca', emoji: '🏪', name: 'CADECA' }
+    { key: 'eltoque', emoji: '📱', name: 'MERCADO INFORMAL (El Toque)' },
+    { key: 'cadeca', emoji: '🏢', name: 'CADECA (Exchange Houses)' },
+    { key: 'bcc', emoji: '🏛', name: 'OFFICIAL RATE (BCC)' }
   ];
 
   console.log('[TASALO DEBUG] Rendering horizontal cards grouped by source');
