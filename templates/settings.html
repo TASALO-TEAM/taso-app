@@ -60,6 +60,102 @@
     </select>
   </div>
 
+  <!-- Display Preferences Section -->
+  <div class="settings-section-v2">
+    <h2 class="settings-section-title">📱 Display Preferences</h2>
+    
+    <!-- Layout Mode -->
+    <div class="settings-option">
+      <label class="settings-option-label">Layout Mode</label>
+      <div class="settings-radio-group">
+        <label class="settings-radio-item">
+          <input type="radio" name="layoutMode" value="vertical" checked>
+          <span class="settings-radio-text">Vertical List (Default)</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="layoutMode" value="horizontal">
+          <span class="settings-radio-text">Horizontal Cards</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Card Size (only for horizontal mode) -->
+    <div class="settings-option" id="cardSizeOption" style="display: none;">
+      <label class="settings-option-label">Card Size</label>
+      <div class="settings-radio-group">
+        <label class="settings-radio-item">
+          <input type="radio" name="cardSize" value="compact">
+          <span class="settings-radio-text">Compact (120px)</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="cardSize" value="standard" checked>
+          <span class="settings-radio-text">Standard (140px)</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="cardSize" value="wide">
+          <span class="settings-radio-text">Wide (160px)</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Show Binance Ticker -->
+    <div class="settings-option">
+      <label class="settings-option-label">Show Binance Ticker</label>
+      <div class="settings-radio-group">
+        <label class="settings-radio-item">
+          <input type="radio" name="showTicker" value="true" checked>
+          <span class="settings-radio-text">Enabled</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="showTicker" value="false">
+          <span class="settings-radio-text">Disabled</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Ticker Speed -->
+    <div class="settings-option" id="tickerSpeedOption">
+      <label class="settings-option-label">Ticker Speed</label>
+      <div class="settings-radio-group">
+        <label class="settings-radio-item">
+          <input type="radio" name="tickerSpeed" value="slow">
+          <span class="settings-radio-text">Slow (60s)</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="tickerSpeed" value="normal" checked>
+          <span class="settings-radio-text">Normal (40s)</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="tickerSpeed" value="fast">
+          <span class="settings-radio-text">Fast (20s)</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Binance Currencies -->
+    <div class="settings-option">
+      <label class="settings-option-label">Ticker Currencies</label>
+      <div class="settings-currency-grid" id="tickerCurrenciesGrid">
+        <!-- Checkboxes rendered by JS -->
+      </div>
+    </div>
+    
+    <!-- Show Flags -->
+    <div class="settings-option">
+      <label class="settings-option-label">Show Flags on Cards</label>
+      <div class="settings-radio-group">
+        <label class="settings-radio-item">
+          <input type="radio" name="showFlags" value="true" checked>
+          <span class="settings-radio-text">Enabled</span>
+        </label>
+        <label class="settings-radio-item">
+          <input type="radio" name="showFlags" value="false">
+          <span class="settings-radio-text">Disabled</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
   <!-- Action Buttons -->
   <div class="flex gap-3 pt-4">
     <button
