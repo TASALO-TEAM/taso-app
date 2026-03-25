@@ -9,7 +9,15 @@ const SETTINGS_KEY = 'tasalo_settings';
 // Default settings
 const DEFAULT_SETTINGS = {
   theme: 'auto',
-  refreshInterval: 60000  // 60 seconds
+  refreshInterval: 60000,  // 60 seconds
+  // Display preferences (new)
+  layoutMode: 'vertical',
+  cardSize: 'standard',
+  showTicker: true,
+  tickerSpeed: 'normal',
+  tickerCurrencies: [...DEFAULT_BINANCE_CURRENCIES],
+  showFlags: true,
+  tickerExpanded: false
 };
 
 // Global chart instance
@@ -34,6 +42,27 @@ const SOURCE_INFO = {
   cadeca: { emoji: '🏪', name: 'CADECA', class: 'cadeca' },
   bcc: { emoji: '🏛️', name: 'BCC', class: 'bcc' },
   binance: { emoji: '🪙', name: 'Binance', class: 'binance' }
+};
+
+// Binance top 10 default currencies
+const DEFAULT_BINANCE_CURRENCIES = [
+  'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 
+  'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC'
+];
+
+// All available Binance currencies
+const ALL_BINANCE_CURRENCIES = [
+  'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 
+  'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
+  'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC',
+  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO'
+];
+
+// Priority order for currency sorting (matches bot legacy order)
+const CURRENCY_PRIORITY = {
+  eltoque: ['EUR', 'USD', 'MLC', 'BTC', 'TRX', 'USDT'],
+  cadeca: ['EUR', 'USD', 'MLC', 'CAD', 'MXN', 'GBP', 'CHF', 'RUB', 'AUD', 'JPY'],
+  bcc: ['EUR', 'USD', 'MLC', 'CAD', 'MXN', 'GBP', 'CHF', 'RUB', 'AUD', 'JPY']
 };
 
 /**
@@ -98,6 +127,205 @@ async function fetchProvincias(source) {
   }
 
   return await response.json();
+}
+
+/**
+ * Fetch Binance rates from API
+ * @returns {Promise<Object>} Binance rates data
+ */
+async function fetchBinance() {
+  const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
+  const url = `${apiUrl}/api/v1/tasas/binance`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching Binance rates:', error);
+    throw error;
+  }
+}
+
+/**
+ * Render Binance ticker tape
+ * @param {Object} binanceData - Binance rates data
+ * @param {Array} currencies - Array of currency codes to show
+ */
+function renderTicker(binanceData, currencies) {
+  const tickerStrip = document.getElementById('tickerStrip');
+  if (!tickerStrip || !binanceData || !binanceData.data) {
+    return;
+  }
+  
+  const data = binanceData.data;
+  const selectedCurrencies = currencies || DEFAULT_BINANCE_CURRENCIES;
+  
+  // Build ticker items
+  let itemsHtml = '';
+  selectedCurrencies.forEach(currency => {
+    if (data[currency]) {
+      const rateInfo = data[currency];
+      const rate = rateInfo.rate || rateInfo;
+      const change = rateInfo.change || 'neutral';
+      const prevRate = rateInfo.prev_rate;
+      
+      // Calculate change indicator
+      let indicator = '―';
+      let changeClass = 'neutral';
+      if (change === 'up') {
+        indicator = '🔺';
+        changeClass = 'up';
+      } else if (change === 'down') {
+        indicator = '🔻';
+        changeClass = 'down';
+      }
+      
+      // Format rate
+      const rateStr = rate >= 1000 
+        ? rate.toLocaleString('en-US', { maximumFractionDigits: 0 })
+        : rate.toFixed(2);
+      
+      itemsHtml += `
+        <div class="ticker-item ${changeClass}">
+          <span class="ticker-currency">${currency}</span>
+          <span class="ticker-rate">${rateStr}</span>
+          <span class="ticker-indicator">${indicator}</span>
+        </div>
+        <span class="ticker-separator">•</span>
+      `;
+    }
+  });
+  
+  // Duplicate for seamless loop
+  tickerStrip.innerHTML = itemsHtml + itemsHtml;
+  
+  // Calculate animation duration based on items count
+  const totalWidth = selectedCurrencies.length * 120; // Approx width per item
+  const duration = Math.max(20, Math.min(60, totalWidth / 3));
+  tickerStrip.style.animationDuration = `${duration}s`;
+}
+
+/**
+ * Toggle ticker expanded/collapsed state
+ */
+function toggleTicker() {
+  const container = document.getElementById('tickerContainer');
+  const chevron = document.getElementById('tickerChevron');
+  const body = document.getElementById('tickerBody');
+  
+  if (!container || !chevron) return;
+  
+  const isExpanded = container.classList.contains('expanded');
+  
+  if (isExpanded) {
+    container.classList.remove('expanded');
+    container.classList.add('collapsed');
+    chevron.classList.remove('expanded');
+    if (body) body.style.maxHeight = '40px';
+  } else {
+    container.classList.add('expanded');
+    container.classList.remove('collapsed');
+    chevron.classList.add('expanded');
+    if (body) body.style.maxHeight = '48px';
+  }
+  
+  // Save state to localStorage
+  const settings = loadSettings();
+  settings.tickerExpanded = !isExpanded;
+  saveSettings(settings);
+}
+
+/**
+ * Render rates as horizontal scrolling cards
+ * @param {Object} data - Latest rates data
+ * @param {string} layoutMode - 'horizontal' or 'vertical'
+ */
+function renderHorizontalCards(data, layoutMode) {
+  const container = document.getElementById('horizontalRatesContainer');
+  const verticalContainer = document.getElementById('ratesContainer');
+  
+  if (!container) return;
+  
+  // Show/hide containers based on layout mode
+  if (layoutMode === 'horizontal') {
+    container.classList.remove('hidden');
+    if (verticalContainer) verticalContainer.classList.add('hidden');
+  } else {
+    container.classList.add('hidden');
+    if (verticalContainer) verticalContainer.classList.remove('hidden');
+    return; // Use existing vertical rendering
+  }
+  
+  // Clear container
+  container.innerHTML = '';
+  
+  // Get settings
+  const settings = loadSettings();
+  const cardSize = settings.cardSize || 'standard';
+  const showFlags = settings.showFlags !== false;
+  
+  // Render each source
+  ['eltoque', 'cadeca', 'bcc'].forEach(source => {
+    const sourceData = data[source] || {};
+    const priority = CURRENCY_PRIORITY[source] || [];
+    
+    // Sort currencies by priority
+    const sortedCurrencies = Object.keys(sourceData).sort((a, b) => {
+      const idxA = priority.indexOf(a);
+      const idxB = priority.indexOf(b);
+      if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+    
+    sortedCurrencies.forEach(currency => {
+      const currencyInfo = sourceData[currency];
+      const rate = currencyInfo.rate || currencyInfo.buy || currencyInfo;
+      const change = currencyInfo.change || 'neutral';
+      const prevRate = currencyInfo.prev_rate;
+      const currencyMeta = CURRENCY_INFO[currency] || { symbol: '💱', name: currency };
+      
+      // Calculate change
+      let indicator = '';
+      let changeStr = '';
+      if (change === 'up' && prevRate) {
+        const diff = rate - prevRate;
+        indicator = '🔺';
+        changeStr = `+${diff.toFixed(2)}`;
+      } else if (change === 'down' && prevRate) {
+        const diff = rate - prevRate;
+        indicator = '🔻';
+        changeStr = `${diff.toFixed(2)}`;
+      }
+      
+      // Format rate
+      const rateStr = rate >= 1000 
+        ? rate.toLocaleString('en-US', { maximumFractionDigits: 0 })
+        : rate.toFixed(2);
+      
+      // Create card
+      const card = document.createElement('div');
+      card.className = `horizontal-rate-card ${cardSize} ${change}`;
+      card.innerHTML = `
+        <div class="horizontal-rate-card-top">
+          <span class="horizontal-rate-code">${currency}</span>
+          ${showFlags ? `<span class="horizontal-rate-flag">${currencyMeta.symbol}</span>` : ''}
+        </div>
+        <div class="horizontal-rate-value">${rateStr}</div>
+        <div class="horizontal-rate-card-bottom">
+          <span class="horizontal-rate-name">${currencyMeta.name}</span>
+          ${changeStr ? `<span class="horizontal-rate-change">${indicator} ${changeStr}</span>` : ''}
+        </div>
+      `;
+      
+      container.appendChild(card);
+    });
+  });
 }
 
 /**
@@ -568,7 +796,31 @@ async function loadRates() {
 
     if (response.ok && response.data) {
       console.log('[TASALO DEBUG] Rendering rates, data:', response.data);
-      renderRates(response.data);
+      
+      // Fetch Binance for ticker (non-blocking)
+      let binanceData = null;
+      try {
+        binanceData = await fetchBinance();
+        console.log('[TASALO DEBUG] Binance data:', binanceData);
+      } catch (binanceError) {
+        console.warn('[TASALO DEBUG] Could not fetch Binance:', binanceError);
+      }
+      
+      // Get settings
+      const settings = loadSettings();
+      
+      // Render ticker if enabled and we have data
+      if (settings.showTicker && binanceData) {
+        renderTicker(binanceData, settings.tickerCurrencies);
+      }
+      
+      // Render rates based on layout mode
+      if (settings.layoutMode === 'horizontal') {
+        renderHorizontalCards(response.data, 'horizontal');
+      } else {
+        renderRates(response.data); // Existing vertical rendering
+      }
+      
       updateTimestamp();
     } else {
       console.error('[TASALO DEBUG] Response ok=false or no data');
@@ -618,7 +870,15 @@ function loadSettings() {
       const parsed = JSON.parse(stored);
       return {
         ...DEFAULT_SETTINGS,
-        ...parsed
+        ...parsed,
+        // Ensure new settings have defaults
+        layoutMode: parsed.layoutMode || 'vertical',
+        cardSize: parsed.cardSize || 'standard',
+        showTicker: parsed.showTicker !== false,
+        tickerSpeed: parsed.tickerSpeed || 'normal',
+        tickerCurrencies: parsed.tickerCurrencies || [...DEFAULT_BINANCE_CURRENCIES],
+        showFlags: parsed.showFlags !== false,
+        tickerExpanded: parsed.tickerExpanded !== false
       };
     }
   } catch (error) {
@@ -831,6 +1091,21 @@ function initApp() {
     }
   } else {
     console.log('[TASALO DEBUG] Loading rates on index page');
+    
+    // Initialize ticker toggle
+    const tickerHeader = document.getElementById('tickerHeader');
+    if (tickerHeader) {
+      tickerHeader.addEventListener('click', toggleTicker);
+    }
+    
+    // Apply ticker expanded state from settings
+    const tickerContainer = document.getElementById('tickerContainer');
+    const tickerChevron = document.getElementById('tickerChevron');
+    if (tickerContainer && tickerChevron && settings.tickerExpanded) {
+      tickerContainer.classList.add('expanded');
+      tickerChevron.classList.add('expanded');
+    }
+    
     // Load rates on page load (index page)
     loadRates();
 
