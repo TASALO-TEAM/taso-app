@@ -492,32 +492,31 @@ function buildSourceSection(sourceKey, rates) {
 }
 
 /**
- * Render rates data to DOM
+ * Render rates data to DOM (vertical mode)
+ * Order: ElToque → BCC → CADECA (matches bot and horizontal mode)
+ * Binance NOT shown (already in ticker tape at top)
  * @param {Object} data - API response data
  */
 function renderRates(data) {
   const container = document.getElementById('rates-container');
   if (!container) return;
 
-  const { eltoque, cadeca, bcc, binance } = data;
+  const { eltoque, cadeca, bcc } = data;
 
   let html = '';
 
-  // Render each source section
+  // Render each source section in order: ElToque → BCC → CADECA
+  // Binance NOT included (already shown in ticker tape)
   if (eltoque && Object.keys(eltoque).length > 0) {
     html += buildSourceSection('eltoque', eltoque);
-  }
-
-  if (cadeca && Object.keys(cadeca).length > 0) {
-    html += buildSourceSection('cadeca', cadeca);
   }
 
   if (bcc && Object.keys(bcc).length > 0) {
     html += buildSourceSection('bcc', bcc);
   }
 
-  if (binance && Object.keys(binance).length > 0) {
-    html += buildSourceSection('binance', binance);
+  if (cadeca && Object.keys(cadeca).length > 0) {
+    html += buildSourceSection('cadeca', cadeca);
   }
 
   container.innerHTML = html;
