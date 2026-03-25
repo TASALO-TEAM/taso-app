@@ -58,18 +58,41 @@
   --ease-in-out:      cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* Light Mode */
+/* ═══════════════════════════════════════════════
+   THEME CLASSES (Explicit light/dark modes)
+═══════════════════════════════════════════════ */
+
+/* Light Mode - Explicit class (overrides system preference) */
+body.theme-light {
+  --bg:           #f5f5fa;
+  --bg-glass:     rgba(255, 255, 255, 0.92);
+  --bg-nav:       rgba(255, 255, 255, 0.85);
+  --bg-overlay:   rgba(255, 255, 255, 0.95);
+  --text:         #1a1a2e;
+  --text2:        #5a5a80;
+  --text3:        #8888a0;
+  --border:       rgba(0, 0, 0, 0.1);
+  --border-subtle:  rgba(0, 0, 0, 0.08);
+  --border-strong:  rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode - Explicit class (overrides system preference) */
+body.theme-dark {
+  --bg:           #09091e;
+  --bg-glass:     rgba(16, 16, 42, 0.92);
+  --bg-nav:       rgba(16, 16, 42, 0.85);
+  --bg-overlay:   rgba(16, 16, 42, 0.95);
+  --text:         #eeeef8;
+  --text2:        #9090c0;
+  --text3:        #585878;
+  --border:       rgba(255, 255, 255, 0.12);
+  --border-subtle:  rgba(255, 255, 255, 0.08);
+  --border-strong:  rgba(255, 255, 255, 0.2);
+}
+
+/* System preference (auto mode) - only when no explicit class */
 @media (prefers-color-scheme: light) {
   :root {
-    --bg:           #f5f5fa;
-    --bg-glass:     rgba(255, 255, 255, 0.92);
-    --text:         #1a1a2e;
-    --text2:        #5a5a80;
-    --text3:        #8888a0;
-    --border:       rgba(0, 0, 0, 0.1);
-  }
-  
-  body.theme-light {
     --bg:           #f5f5fa;
     --bg-glass:     rgba(255, 255, 255, 0.92);
     --text:         #1a1a2e;
@@ -703,45 +726,89 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
-   HORIZONTAL CARDS LAYOUT
+   HORIZONTAL CARDS LAYOUT V3 (Enhanced Glassmorphism)
 ═══════════════════════════════════════════════ */
 
 .horizontal-rates-container {
   display: flex;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  gap: 12px;
-  padding: 12px;
+  gap: 16px;
+  padding: 16px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+}
+
+/* Source section header */
+.source-section {
+  margin-bottom: 20px;
+}
+
+.source-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.source-section-emoji {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.source-section-title {
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text2);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.source-section-cards {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 12px;
+  padding: 8px 4px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .horizontal-rate-card {
   flex: 0 0 auto;
-  width: 140px; /* Standard size */
-  background: var(--bg-glass);
+  width: 150px; /* Standard size */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
   backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 12px;
+  padding: 14px;
   scroll-snap-align: start;
   position: relative;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Card sizes */
 .horizontal-rate-card.compact {
-  width: 120px;
+  width: 130px;
 }
 
 .horizontal-rate-card.standard {
-  width: 140px;
+  width: 150px;
 }
 
 .horizontal-rate-card.wide {
-  width: 160px;
+  width: 170px;
 }
 
 /* Left accent bar for change indication */
@@ -750,86 +817,140 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: 3px;
+  width: 4px;
   height: 100%;
-  border-radius: 3px 0 0 3px;
-  transition: all 0.25s ease;
+  border-radius: 0 3px 3px 0;
+  transition: all 0.3s ease;
 }
 
 .horizontal-rate-card.up::before {
-  background: linear-gradient(180deg, var(--up), rgba(239, 68, 68, 0.6));
-  box-shadow: 0 0 12px var(--up);
+  background: linear-gradient(180deg, #ff6b6b 0%, #ef4444 100%);
+  box-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
 }
 
 .horizontal-rate-card.down::before {
-  background: linear-gradient(180deg, var(--down), rgba(34, 197, 94, 0.6));
-  box-shadow: 0 0 12px var(--down);
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
 }
 
 .horizontal-rate-card.neutral::before {
-  background: var(--text3);
-  opacity: 0.5;
+  background: linear-gradient(180deg, var(--text3), var(--text2));
+  opacity: 0.6;
 }
 
-/* Card hover effect */
+/* Card hover/press effect */
 .horizontal-rate-card:hover {
-  border-color: var(--border-accent);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-color: var(--accent);
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 20px rgba(91, 138, 255, 0.15);
+}
+
+.horizontal-rate-card:active {
+  transform: translateY(-2px) scale(0.98);
+  transition-duration: 0.1s;
 }
 
 .horizontal-rate-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .horizontal-rate-code {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text2);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .horizontal-rate-flag {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .horizontal-rate-value {
   font-family: var(--mono);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, var(--text) 0%, var(--text2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .horizontal-rate-card.up .horizontal-rate-value {
-  color: var(--up);
-  text-shadow: 0 0 16px rgba(255, 107, 107, 0.3);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ef4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(255, 107, 107, 0.3));
 }
 
 .horizontal-rate-card.down .horizontal-rate-value {
-  color: var(--down);
-  text-shadow: 0 0 16px rgba(34, 197, 94, 0.3);
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(74, 222, 128, 0.3));
 }
 
 .horizontal-rate-card.neutral .horizontal-rate-value {
-  color: var(--text);
+  background: linear-gradient(135deg, var(--text) 0%, var(--text2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.horizontal-rate-card-bottom {
+/* Change indicator row */
+.horizontal-rate-change-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  gap: 8px;
+}
+
+.horizontal-rate-change {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.horizontal-rate-card.up .horizontal-rate-change {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.horizontal-rate-card.down .horizontal-rate-change {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.horizontal-rate-card.neutral .horizontal-rate-change {
+  color: var(--text3);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .horizontal-rate-name {
@@ -838,35 +959,17 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 70%;
-}
-
-.horizontal-rate-change {
-  font-family: var(--mono);
-  font-size: 9px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.horizontal-rate-card.up .horizontal-rate-change {
-  color: var(--up);
-}
-
-.horizontal-rate-card.down .horizontal-rate-change {
-  color: var(--down);
-}
-
-.horizontal-rate-card.neutral .horizontal-rate-change {
-  color: var(--text3);
+  flex: 1;
+  text-align: right;
 }
 
 /* Card size variants */
 .horizontal-rate-card.compact .horizontal-rate-value {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .horizontal-rate-card.wide .horizontal-rate-value {
-  font-size: 22px;
+  font-size: 24px;
 }
 
 /* Hide horizontal container when not active */

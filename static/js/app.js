@@ -131,14 +131,15 @@ async function fetchProvincias(source) {
 
 /**
  * Fetch Binance rates from API
+ * Note: Binance data comes from /latest endpoint, not a separate endpoint
  * @returns {Promise<Object|null>} Binance rates data or null on error
  */
 async function fetchBinance() {
   const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
-  const url = `${apiUrl}/api/v1/tasas/binance`;
+  const url = `${apiUrl}/api/v1/tasas/latest`;
 
   try {
-    console.log('[TASALO DEBUG] Fetching Binance from:', url);
+    console.log('[TASALO DEBUG] Fetching Binance from /latest endpoint:', url);
     const response = await fetch(url);
     console.log('[TASALO DEBUG] Binance response status:', response.status);
     
@@ -148,8 +149,21 @@ async function fetchBinance() {
     }
     
     const data = await response.json();
-    console.log('[TASALO DEBUG] Binance data received:', data);
-    return data;
+    
+    // Extract only binance data from the response
+    const binanceData = data.data?.binance || {};
+    console.log('[TASALO DEBUG] Binance data received:', binanceData);
+    
+    // Return in same format as expected by renderTicker
+    if (Object.keys(binanceData).length > 0) {
+      return {
+        ok: true,
+        data: binanceData
+      };
+    }
+    
+    console.warn('[TASALO DEBUG] No binance data in response');
+    return null;
   } catch (error) {
     console.warn('[TASALO DEBUG] Error fetching Binance rates:', error.message);
     return null;
@@ -263,7 +277,7 @@ function toggleTicker() {
 }
 
 /**
- * Render rates as horizontal scrolling cards
+ * Render rates as horizontal scrolling cards grouped by source
  * @param {Object} data - Latest rates data
  * @param {string} layoutMode - 'horizontal' or 'vertical'
  */
@@ -300,16 +314,24 @@ function renderHorizontalCards(data, layoutMode) {
   const cardSize = settings.cardSize || 'standard';
   const showFlags = settings.showFlags !== false;
 
-  // Render each source
-  ['eltoque', 'cadeca', 'bcc'].forEach(source => {
-    const sourceData = data[source] || {};
+  // Source order: ElToque → BCC → CADECA
+  const sources = [
+    { key: 'eltoque', emoji: '📱', name: 'ElToque' },
+    { key: 'bcc', emoji: '🏛️', name: 'BCC' },
+    { key: 'cadeca', emoji: '🏪', name: 'CADECA' }
+  ];
+
+  console.log('[TASALO DEBUG] Rendering horizontal cards grouped by source');
+
+  sources.forEach(source => {
+    const sourceData = data[source.key] || {};
     
     if (Object.keys(sourceData).length === 0) {
-      console.warn('[TASALO DEBUG] No data for source:', source);
+      console.warn('[TASALO DEBUG] No data for source:', source.key);
       return;
     }
     
-    const priority = CURRENCY_PRIORITY[source] || [];
+    const priority = CURRENCY_PRIORITY[source.key] || [];
 
     // Sort currencies by priority
     const sortedCurrencies = Object.keys(sourceData).sort((a, b) => {
@@ -321,7 +343,23 @@ function renderHorizontalCards(data, layoutMode) {
       return idxA - idxB;
     });
 
-    console.log('[TASALO DEBUG] Rendering horizontal cards for', source, 'with', sortedCurrencies.length, 'currencies');
+    console.log('[TASALO DEBUG] Rendering', source.name, 'with', sortedCurrencies.length, 'currencies');
+
+    // Create source section
+    const section = document.createElement('div');
+    section.className = 'source-section';
+    
+    // Section header
+    const header = document.createElement('div');
+    header.className = 'source-section-header';
+    header.innerHTML = `
+      <span class="source-section-emoji">${source.emoji}</span>
+      <span class="source-section-title">${source.name}</span>
+    `;
+    
+    // Cards container
+    const cardsContainer = document.createElement('div');
+    cardsContainer.className = 'source-section-cards';
 
     sortedCurrencies.forEach(currency => {
       const currencyInfo = sourceData[currency];
@@ -338,16 +376,20 @@ function renderHorizontalCards(data, layoutMode) {
         return;
       }
 
-      // Calculate change
-      let indicator = '';
-      let changeStr = '';
+      // Calculate change indicator and difference
+      let changeIndicator = '―';
+      let changeClass = 'neutral';
+      let changeStr = '0.00';
+      
       if (change === 'up' && prevRate) {
         const diff = rate - prevRate;
-        indicator = '🔺';
+        changeIndicator = '🔺';
+        changeClass = 'up';
         changeStr = `+${diff.toFixed(2)}`;
       } else if (change === 'down' && prevRate) {
         const diff = rate - prevRate;
-        indicator = '🔻';
+        changeIndicator = '🔻';
+        changeClass = 'down';
         changeStr = `${diff.toFixed(2)}`;
       }
 
@@ -358,22 +400,28 @@ function renderHorizontalCards(data, layoutMode) {
 
       // Create card
       const card = document.createElement('div');
-      card.className = `horizontal-rate-card ${cardSize} ${change}`;
+      card.className = `horizontal-rate-card ${cardSize} ${changeClass}`;
       card.innerHTML = `
         <div class="horizontal-rate-card-top">
           <span class="horizontal-rate-code">${currency}</span>
           ${showFlags ? `<span class="horizontal-rate-flag">${currencyMeta.symbol}</span>` : ''}
         </div>
         <div class="horizontal-rate-value">${rateStr}</div>
-        <div class="horizontal-rate-card-bottom">
+        <div class="horizontal-rate-change-row">
+          <span class="horizontal-rate-change">${changeIndicator} ${changeStr}</span>
           <span class="horizontal-rate-name">${currencyMeta.name}</span>
-          ${changeStr ? `<span class="horizontal-rate-change">${indicator} ${changeStr}</span>` : ''}
         </div>
       `;
 
-      container.appendChild(card);
+      cardsContainer.appendChild(card);
     });
+
+    section.appendChild(header);
+    section.appendChild(cardsContainer);
+    container.appendChild(section);
   });
+  
+  console.log('[TASALO DEBUG] Horizontal cards rendering complete');
 }
 
 /**
@@ -849,21 +897,15 @@ async function loadRates() {
       const settings = loadSettings();
       console.log('[TASALO DEBUG] Current settings:', settings);
 
-      // Fetch Binance for ticker (non-blocking)
-      let binanceData = null;
-      if (settings.showTicker) {
-        console.log('[TASALO DEBUG] Ticker enabled, fetching Binance...');
-        binanceData = await fetchBinance();
-        console.log('[TASALO DEBUG] Binance data:', binanceData);
-      } else {
-        console.log('[TASALO DEBUG] Ticker disabled in settings');
-      }
+      // Extract Binance data from the same response (more efficient)
+      const binanceData = response.data.binance || {};
+      console.log('[TASALO DEBUG] Binance data from response:', binanceData);
 
       // Render ticker if enabled and we have data
-      if (settings.showTicker && binanceData) {
+      if (settings.showTicker && Object.keys(binanceData).length > 0) {
         console.log('[TASALO DEBUG] Rendering ticker with currencies:', settings.tickerCurrencies);
-        renderTicker(binanceData, settings.tickerCurrencies);
-      } else if (settings.showTicker && !binanceData) {
+        renderTicker({ ok: true, data: binanceData }, settings.tickerCurrencies);
+      } else if (settings.showTicker && Object.keys(binanceData).length === 0) {
         console.warn('[TASALO DEBUG] Ticker enabled but no Binance data available');
         // Show message in ticker that data is unavailable
         const tickerStrip = document.getElementById('tickerStrip');
