@@ -2,7 +2,7 @@
 
 > Mini App web para Telegram que muestra tasas de cambio del dólar en Cuba en tiempo real.
 
-[![Version](https://img.shields.io/badge/version-0.5.0--fase5-blue)](https://github.com/TASALO-TEAM/taso-app/releases)
+[![Version](https://img.shields.io/badge/version-0.8.0--horizontal--cards-blue)](https://github.com/TASALO-TEAM/taso-app/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ---
@@ -14,9 +14,40 @@
 - Tasas actuales de ElToque, CADECA, BCC y Binance
 - Histórico de evolución con gráficas (7, 14, 30 días)
 - Tasas por provincia cubana
-- Configuración de tema y auto-refresh
+- Configuración de tema, auto-refresh y diseño (vertical/horizontal)
+- **NUEVO (v0.8.0):** Binance ticker tape y diseño de tarjetas horizontales
 
 **Stack:** Python 3.12 · Flask · Jinja2 · Tailwind CSS (CDN) · Chart.js · Gunicorn
+
+---
+
+## 🎉 Nuevas Características (v0.8.0)
+
+### Binance Ticker Tape
+- **Ticker scrolling** en la parte superior mostrando las top 10 criptomonedas de Binance
+- **Indicadores visuales**: 🔺 (sube), 🔻 (baja) con colores rojo/verde
+- **Configurable**: activar/desactivar, velocidad, seleccionar monedas
+- **Colapsable**: header para ahorrar espacio
+
+### Diseño de Tarjetas Horizontales
+- **Layout alternativo** al diseño vertical tradicional
+- **Scroll suave** con snap CSS para mejor experiencia móvil
+- **3 tamaños**: Compact (120px), Standard (140px), Wide (160px)
+- **Orden de monedas** coincide con el bot:
+  - **ElToque:** EUR, USD, MLC, BTC, TRX, USDT
+  - **CADECA/BCC:** EUR, USD, MLC, CAD, MXN, GBP, CHF, RUB, AUD, JPY
+
+### Configuración Mejorada
+- **Sección Display Preferences** en Settings
+- **Selector de layout**: Vertical (default) / Horizontal
+- **Selector de tamaño de tarjeta**
+- **Selector de velocidad del ticker** (Slow/Normal/Fast)
+- **Selector múltiple de monedas** para el ticker
+- **Mostrar/ocultar banderas** en las tarjetas
+
+### CADECA Buy/Sell Fix
+- **Panel CADECA** ahora muestra correctamente ambas tasas (Compra/Venta)
+- **Fallback** a tasa única si la API devuelve datos incompletos
 
 ---
 
