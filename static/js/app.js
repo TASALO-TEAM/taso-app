@@ -980,19 +980,41 @@ function initSettingsPage() {
       // Get selected theme
       const selectedTheme = document.querySelector('input[name="theme"]:checked');
       const theme = selectedTheme ? selectedTheme.value : 'auto';
-      
+
       // Get selected interval
       const interval = parseInt(intervalSelect.value, 10) || DEFAULT_SETTINGS.refreshInterval;
+
+      // Get display preferences
+      const layoutMode = document.querySelector('input[name="layoutMode"]:checked')?.value || 'vertical';
+      const cardSize = document.querySelector('input[name="cardSize"]:checked')?.value || 'standard';
+      const showTicker = document.querySelector('input[name="showTicker"]:checked')?.value === 'true';
+      const tickerSpeed = document.querySelector('input[name="tickerSpeed"]:checked')?.value || 'normal';
+      const showFlags = document.querySelector('input[name="showFlags"]:checked')?.value === 'true';
       
+      // Get selected currencies
+      const selectedCurrencies = [];
+      document.querySelectorAll('#tickerCurrenciesGrid input[type="checkbox"]:checked').forEach(checkbox => {
+        selectedCurrencies.push(checkbox.value);
+      });
+
       // Save settings
-      const newSettings = { theme, refreshInterval: interval };
+      const newSettings = { 
+        theme, 
+        refreshInterval: interval,
+        layoutMode,
+        cardSize,
+        showTicker,
+        tickerSpeed,
+        showFlags,
+        tickerCurrencies: selectedCurrencies.length > 0 ? selectedCurrencies : [...DEFAULT_BINANCE_CURRENCIES]
+      };
       const saved = saveSettings(newSettings);
-      
+
       if (saved) {
         // Apply settings immediately
         applyTheme(theme);
         applyRefreshInterval(interval);
-        
+
         // Show success message
         const successMsg = document.getElementById('success-message');
         if (successMsg) {
@@ -1001,15 +1023,138 @@ function initSettingsPage() {
             successMsg.classList.add('hidden');
           }, 3000);
         }
-        
+
         // Update timestamp
         updateSettingsTimestamp();
+        
+        // Reload page after delay to apply layout changes
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
       }
     });
   }
-  
+
   // Apply current settings on page load
   applyTheme(settings.theme);
+  
+  // Initialize display preferences
+  initDisplayPreferences(settings);
+}
+
+/**
+ * Initialize display preferences form
+ * @param {Object} settings - Current settings
+ */
+function initDisplayPreferences(settings) {
+  // Layout mode
+  const layoutRadios = document.querySelectorAll('input[name="layoutMode"]');
+  layoutRadios.forEach(radio => {
+    radio.checked = radio.value === settings.layoutMode;
+  });
+  
+  // Card size
+  const cardSizeRadios = document.querySelectorAll('input[name="cardSize"]');
+  cardSizeRadios.forEach(radio => {
+    radio.checked = radio.value === settings.cardSize;
+  });
+  
+  // Show ticker
+  const showTickerRadios = document.querySelectorAll('input[name="showTicker"]');
+  showTickerRadios.forEach(radio => {
+    radio.checked = (radio.value === 'true') === settings.showTicker;
+  });
+  
+  // Ticker speed
+  const tickerSpeedRadios = document.querySelectorAll('input[name="tickerSpeed"]');
+  tickerSpeedRadios.forEach(radio => {
+    radio.checked = radio.value === settings.tickerSpeed;
+  });
+  
+  // Show flags
+  const showFlagsRadios = document.querySelectorAll('input[name="showFlags"]');
+  showFlagsRadios.forEach(radio => {
+    radio.checked = (radio.value === 'true') === settings.showFlags;
+  });
+  
+  // Render currency checkboxes
+  renderCurrencyCheckboxes(settings.tickerCurrencies);
+  
+  // Toggle card size visibility based on layout mode
+  toggleCardSizeVisibility(settings.layoutMode);
+  
+  // Toggle ticker speed visibility based on ticker enabled
+  toggleTickerSpeedVisibility(settings.showTicker);
+  
+  // Add event listeners for dynamic toggling
+  layoutRadios.forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      toggleCardSizeVisibility(e.target.value);
+    });
+  });
+  
+  showTickerRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      const enabled = document.querySelector('input[name="showTicker"]:checked').value === 'true';
+      toggleTickerSpeedVisibility(enabled);
+    });
+  });
+}
+
+/**
+ * Toggle card size option visibility
+ * @param {string} layoutMode - 'vertical' or 'horizontal'
+ */
+function toggleCardSizeVisibility(layoutMode) {
+  const cardSizeOption = document.getElementById('cardSizeOption');
+  if (cardSizeOption) {
+    cardSizeOption.style.display = layoutMode === 'horizontal' ? 'block' : 'none';
+  }
+}
+
+/**
+ * Toggle ticker speed option visibility
+ * @param {boolean} enabled - Whether ticker is enabled
+ */
+function toggleTickerSpeedVisibility(enabled) {
+  const tickerSpeedOption = document.getElementById('tickerSpeedOption');
+  if (tickerSpeedOption) {
+    tickerSpeedOption.style.display = enabled ? 'block' : 'none';
+  }
+}
+
+/**
+ * Render currency checkboxes for ticker
+ * @param {Array} selectedCurrencies - Array of selected currency codes
+ */
+function renderCurrencyCheckboxes(selectedCurrencies) {
+  const grid = document.getElementById('tickerCurrenciesGrid');
+  if (!grid) return;
+  
+  const allCurrencies = [
+    'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 
+    'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
+    'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC'
+  ];
+  
+  grid.innerHTML = allCurrencies.map(currency => `
+    <label class="settings-currency-chip ${selectedCurrencies.includes(currency) ? 'selected' : ''}">
+      <input type="checkbox" value="${currency}" ${selectedCurrencies.includes(currency) ? 'checked' : ''}>
+      <span>${currency}</span>
+    </label>
+  `).join('');
+  
+  // Add change listeners
+  grid.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      const chip = checkbox.closest('.settings-currency-chip');
+      if (checkbox.checked) {
+        chip.classList.add('selected');
+      } else {
+        chip.classList.remove('selected');
+      }
+    });
+  });
 }
 
 /**
