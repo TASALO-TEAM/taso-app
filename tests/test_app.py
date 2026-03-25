@@ -120,3 +120,53 @@ def test_provincias_has_back_navigation(client):
     response = client.get("/provincias")
     assert response.status_code == 200
     assert b"href=\"/\"" in response.data
+
+
+def test_index_has_ticker_container(client):
+    """GET / incluye contenedor del Binance ticker."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"id=\"tickerContainer\"" in response.data
+    assert b"Binance Top 10" in response.data
+
+
+def test_index_has_horizontal_cards_container(client):
+    """GET / incluye contenedor de tarjetas horizontales."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"id=\"horizontalRatesContainer\"" in response.data
+
+
+def test_settings_has_display_preferences(client):
+    """GET /settings incluye sección de Display Preferences."""
+    response = client.get("/settings")
+    assert response.status_code == 200
+    assert b"Display Preferences" in response.data
+    assert b"Layout Mode" in response.data
+    assert b"Horizontal Cards" in response.data
+
+
+def test_settings_has_card_size_option(client):
+    """GET /settings incluye opción de Card Size."""
+    response = client.get("/settings")
+    assert response.status_code == 200
+    assert b"Card Size" in response.data
+    assert b"Compact" in response.data
+    assert b"Standard" in response.data
+    assert b"Wide" in response.data
+
+
+def test_settings_has_ticker_options(client):
+    """GET /settings incluye opciones del ticker."""
+    response = client.get("/settings")
+    assert response.status_code == 200
+    assert b"Show Binance Ticker" in response.data
+    assert b"Ticker Speed" in response.data
+    assert b"Ticker Currencies" in response.data
+
+
+def test_settings_has_show_flags_option(client):
+    """GET /settings incluye opción de mostrar banderas."""
+    response = client.get("/settings")
+    assert response.status_code == 200
+    assert b"Show Flags on Cards" in response.data
