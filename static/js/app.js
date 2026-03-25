@@ -280,7 +280,8 @@ function toggleTicker() {
 }
 
 /**
- * Render rates as horizontal scrolling cards grouped by source
+ * Render rates as horizontal cards grouped by source
+ * Shows 3 VERTICAL sections (ElToque, CADECA, BCC), each with horizontal scroll
  * @param {Object} data - Latest rates data
  * @param {string} layoutMode - 'horizontal' or 'vertical'
  */
@@ -324,7 +325,7 @@ function renderHorizontalCards(data, layoutMode) {
     { key: 'bcc', emoji: '🏛', name: 'OFFICIAL RATE (BCC)' }
   ];
 
-  console.log('[TASALO DEBUG] Rendering horizontal cards grouped by source');
+  console.log('[TASALO DEBUG] Rendering 3 horizontal sections (one per source)');
 
   sources.forEach(source => {
     const sourceData = data[source.key] || {};
@@ -336,7 +337,7 @@ function renderHorizontalCards(data, layoutMode) {
     
     const priority = CURRENCY_PRIORITY[source.key] || [];
 
-    // Sort currencies by priority
+    // Sort currencies by priority (EUR, USD, MLC, BTC, TRX, USDT for ElToque)
     const sortedCurrencies = Object.keys(sourceData).sort((a, b) => {
       const idxA = priority.indexOf(a);
       const idxB = priority.indexOf(b);
@@ -346,9 +347,9 @@ function renderHorizontalCards(data, layoutMode) {
       return idxA - idxB;
     });
 
-    console.log('[TASALO DEBUG] Rendering', source.name, 'with', sortedCurrencies.length, 'currencies');
+    console.log('[TASALO DEBUG] Rendering', source.name, 'with', sortedCurrencies.length, 'currencies in order:', sortedCurrencies);
 
-    // Create source section
+    // Create source section (vertical stack)
     const section = document.createElement('div');
     section.className = 'source-section';
     
@@ -360,7 +361,7 @@ function renderHorizontalCards(data, layoutMode) {
       <span class="source-section-title">${source.name}</span>
     `;
     
-    // Cards container
+    // Cards container (horizontal scroll within this section)
     const cardsContainer = document.createElement('div');
     cardsContainer.className = 'source-section-cards';
 
@@ -424,7 +425,7 @@ function renderHorizontalCards(data, layoutMode) {
     container.appendChild(section);
   });
   
-  console.log('[TASALO DEBUG] Horizontal cards rendering complete');
+  console.log('[TASALO DEBUG] 3 horizontal sections rendered');
 }
 
 /**
@@ -464,7 +465,7 @@ function formatRate(rate) {
 function buildRateRow(currency, rateData) {
   const info = CURRENCY_INFO[currency] || { symbol: currency, name: currency };
   const changeIndicator = renderChange(rateData.change);
-  
+
   return `
     <div class="rate-row">
       <span class="rate-currency">${info.symbol} ${currency}</span>
@@ -474,7 +475,7 @@ function buildRateRow(currency, rateData) {
 }
 
 /**
- * Build source section HTML
+ * Build source section HTML with sorted currencies
  * @param {string} sourceKey - Source key (eltoque, cadeca, bcc, binance)
  * @param {Object} rates - Rates object for this source
  * @returns {string} HTML for source section
@@ -484,11 +485,22 @@ function buildSourceSection(sourceKey, rates) {
   if (!info || !rates || Object.keys(rates).length === 0) {
     return '';
   }
-  
-  const rateRows = Object.entries(rates)
-    .map(([currency, rateData]) => buildRateRow(currency, rateData))
+
+  // Sort currencies by priority (EUR, USD, MLC, etc.)
+  const priority = CURRENCY_PRIORITY[sourceKey] || [];
+  const sortedCurrencies = Object.keys(rates).sort((a, b) => {
+    const idxA = priority.indexOf(a);
+    const idxB = priority.indexOf(b);
+    if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+
+  const rateRows = sortedCurrencies
+    .map(currency => buildRateRow(currency, rates[currency]))
     .join('');
-  
+
   return `
     <div class="glass-card">
       <div class="section-header">
