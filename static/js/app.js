@@ -251,32 +251,11 @@ function renderTicker(binanceData, currencies) {
 
 /**
  * Toggle ticker expanded/collapsed state
+ * DISABLED: Ticker can now only be toggled from Settings
  */
 function toggleTicker() {
-  const container = document.getElementById('tickerContainer');
-  const chevron = document.getElementById('tickerChevron');
-  const body = document.getElementById('tickerBody');
-  
-  if (!container || !chevron) return;
-  
-  const isExpanded = container.classList.contains('expanded');
-  
-  if (isExpanded) {
-    container.classList.remove('expanded');
-    container.classList.add('collapsed');
-    chevron.classList.remove('expanded');
-    if (body) body.style.maxHeight = '40px';
-  } else {
-    container.classList.add('expanded');
-    container.classList.remove('collapsed');
-    chevron.classList.add('expanded');
-    if (body) body.style.maxHeight = '48px';
-  }
-  
-  // Save state to localStorage
-  const settings = loadSettings();
-  settings.tickerExpanded = !isExpanded;
-  saveSettings(settings);
+  // No-op - ticker toggle moved to Settings only
+  console.log('[TASALO DEBUG] Ticker toggle disabled - use Settings to show/hide');
 }
 
 /**
@@ -318,11 +297,11 @@ function renderHorizontalCards(data, layoutMode) {
   const cardSize = settings.cardSize || 'standard';
   const showFlags = settings.showFlags !== false;
 
-  // Source order: ElToque → CADECA → BCC (matches legacy bot order)
+  // Source order: ElToque → BCC → CADECA (matches legacy bot order)
   const sources = [
     { key: 'eltoque', emoji: '📱', name: 'MERCADO INFORMAL (El Toque)' },
-    { key: 'cadeca', emoji: '🏢', name: 'CADECA (Exchange Houses)' },
-    { key: 'bcc', emoji: '🏛', name: 'OFFICIAL RATE (BCC)' }
+    { key: 'bcc', emoji: '🏛', name: 'OFFICIAL RATE (BCC)' },
+    { key: 'cadeca', emoji: '🏢', name: 'CADECA (Exchange Houses)' }
   ];
 
   console.log('[TASALO DEBUG] Rendering 3 horizontal sections (one per source)');
@@ -1394,27 +1373,24 @@ function initApp() {
   } else {
     console.log('[TASALO DEBUG] Loading rates on index page, path:', path);
 
-    // Initialize ticker toggle
-    const tickerHeader = document.getElementById('tickerHeader');
-    if (tickerHeader) {
-      tickerHeader.addEventListener('click', toggleTicker);
-    }
-
-    // Apply ticker expanded state from settings (default: expanded)
+    // Binance ticker - ALWAYS expanded by default, only hide via settings
     const tickerContainer = document.getElementById('tickerContainer');
     const tickerChevron = document.getElementById('tickerChevron');
     const tickerBody = document.getElementById('tickerBody');
+    const tickerHeader = document.getElementById('tickerHeader');
     
-    // Default to expanded unless explicitly set to collapsed
-    const isTickerExpanded = settings.tickerExpanded !== false;
-    
-    if (tickerContainer && tickerChevron && isTickerExpanded) {
-      tickerContainer.classList.add('expanded');
-      tickerChevron.classList.add('expanded');
+    if (settings.showTicker) {
+      // Show ticker - expanded by default
+      if (tickerContainer) tickerContainer.classList.remove('hidden');
+      if (tickerContainer) tickerContainer.classList.add('expanded');
+      if (tickerContainer) tickerContainer.classList.remove('collapsed');
+      if (tickerChevron) tickerChevron.classList.add('expanded');
       if (tickerBody) tickerBody.style.maxHeight = '48px';
-    } else if (tickerContainer && tickerChevron) {
-      tickerContainer.classList.add('collapsed');
-      if (tickerBody) tickerBody.style.maxHeight = '40px';
+      // Remove click handler - can only toggle from settings
+      if (tickerHeader) tickerHeader.style.cursor = 'default';
+    } else {
+      // Hide ticker completely via settings
+      if (tickerContainer) tickerContainer.classList.add('hidden');
     }
 
     // Load rates on page load (index page)
