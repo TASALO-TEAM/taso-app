@@ -1400,12 +1400,21 @@ function initApp() {
       tickerHeader.addEventListener('click', toggleTicker);
     }
 
-    // Apply ticker expanded state from settings
+    // Apply ticker expanded state from settings (default: expanded)
     const tickerContainer = document.getElementById('tickerContainer');
     const tickerChevron = document.getElementById('tickerChevron');
-    if (tickerContainer && tickerChevron && settings.tickerExpanded) {
+    const tickerBody = document.getElementById('tickerBody');
+    
+    // Default to expanded unless explicitly set to collapsed
+    const isTickerExpanded = settings.tickerExpanded !== false;
+    
+    if (tickerContainer && tickerChevron && isTickerExpanded) {
       tickerContainer.classList.add('expanded');
       tickerChevron.classList.add('expanded');
+      if (tickerBody) tickerBody.style.maxHeight = '48px';
+    } else if (tickerContainer && tickerChevron) {
+      tickerContainer.classList.add('collapsed');
+      if (tickerBody) tickerBody.style.maxHeight = '40px';
     }
 
     // Load rates on page load (index page)

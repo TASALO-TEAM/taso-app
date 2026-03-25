@@ -727,22 +727,24 @@ body {
 
 /* ═══════════════════════════════════════════════
    HORIZONTAL CARDS LAYOUT V3 (Enhanced Glassmorphism)
+   3 VERTICAL sections, each with horizontal scroll
 ═══════════════════════════════════════════════ */
 
 .horizontal-rates-container {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  gap: 16px;
-  padding: 16px;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  display: block; /* Stack sections vertically */
+  overflow-x: hidden; /* No horizontal scroll on container */
+  padding: 16px 0;
   margin-bottom: 20px;
 }
 
-/* Source section header */
+/* Source section - each is a horizontal scroll section */
 .source-section {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.source-section:last-child {
+  margin-bottom: 0;
 }
 
 .source-section-header {
@@ -750,7 +752,7 @@ body {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-  padding-left: 4px;
+  padding-left: 8px;
 }
 
 .source-section-emoji {
@@ -772,9 +774,28 @@ body {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   gap: 12px;
-  padding: 8px 4px;
+  padding: 8px 12px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.source-section-cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.source-section-cards::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 3px;
+}
+
+.source-section-cards::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.source-section-cards::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
 }
 
 .horizontal-rate-card {
