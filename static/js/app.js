@@ -131,39 +131,53 @@ async function fetchProvincias(source) {
 
 /**
  * Fetch Binance rates from API
- * @returns {Promise<Object>} Binance rates data
+ * @returns {Promise<Object|null>} Binance rates data or null on error
  */
 async function fetchBinance() {
   const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
   const url = `${apiUrl}/api/v1/tasas/binance`;
-  
+
   try {
+    console.log('[TASALO DEBUG] Fetching Binance from:', url);
     const response = await fetch(url);
+    console.log('[TASALO DEBUG] Binance response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.warn('[TASALO DEBUG] Binance response not OK:', response.status);
+      return null;
     }
+    
     const data = await response.json();
+    console.log('[TASALO DEBUG] Binance data received:', data);
     return data;
   } catch (error) {
-    console.error('Error fetching Binance rates:', error);
-    throw error;
+    console.warn('[TASALO DEBUG] Error fetching Binance rates:', error.message);
+    return null;
   }
 }
 
 /**
  * Render Binance ticker tape
- * @param {Object} binanceData - Binance rates data
+ * @param {Object|null} binanceData - Binance rates data
  * @param {Array} currencies - Array of currency codes to show
  */
 function renderTicker(binanceData, currencies) {
   const tickerStrip = document.getElementById('tickerStrip');
-  if (!tickerStrip || !binanceData || !binanceData.data) {
+  if (!tickerStrip) {
+    console.warn('[TASALO DEBUG] tickerStrip element not found');
     return;
   }
   
+  if (!binanceData || !binanceData.data) {
+    console.warn('[TASALO DEBUG] No binanceData to render');
+    tickerStrip.innerHTML = '<span style="padding: 0 16px; font-size: 10px; color: var(--text3);">Sin datos</span>';
+    return;
+  }
+
   const data = binanceData.data;
   const selectedCurrencies = currencies || DEFAULT_BINANCE_CURRENCIES;
-  
+  console.log('[TASALO DEBUG] renderTicker called with currencies:', selectedCurrencies);
+
   // Build ticker items
   let itemsHtml = '';
   selectedCurrencies.forEach(currency => {
@@ -172,7 +186,7 @@ function renderTicker(binanceData, currencies) {
       const rate = rateInfo.rate || rateInfo;
       const change = rateInfo.change || 'neutral';
       const prevRate = rateInfo.prev_rate;
-      
+
       // Calculate change indicator
       let indicator = '―';
       let changeClass = 'neutral';
@@ -183,12 +197,12 @@ function renderTicker(binanceData, currencies) {
         indicator = '🔻';
         changeClass = 'down';
       }
-      
+
       // Format rate
-      const rateStr = rate >= 1000 
+      const rateStr = rate >= 1000
         ? rate.toLocaleString('en-US', { maximumFractionDigits: 0 })
         : rate.toFixed(2);
-      
+
       itemsHtml += `
         <div class="ticker-item ${changeClass}">
           <span class="ticker-currency">${currency}</span>
@@ -197,12 +211,21 @@ function renderTicker(binanceData, currencies) {
         </div>
         <span class="ticker-separator">•</span>
       `;
+    } else {
+      console.warn('[TASALO DEBUG] Currency', currency, 'not in binance data');
     }
   });
-  
+
+  if (itemsHtml === '') {
+    console.warn('[TASALO DEBUG] No ticker items rendered, showing fallback');
+    tickerStrip.innerHTML = '<span style="padding: 0 16px; font-size: 10px; color: var(--text3);">Sin datos</span>';
+    return;
+  }
+
   // Duplicate for seamless loop
   tickerStrip.innerHTML = itemsHtml + itemsHtml;
-  
+  console.log('[TASALO DEBUG] Ticker rendered with', selectedCurrencies.length, 'currencies');
+
   // Calculate animation duration based on items count
   const totalWidth = selectedCurrencies.length * 120; // Approx width per item
   const duration = Math.max(20, Math.min(60, totalWidth / 3));
@@ -247,9 +270,18 @@ function toggleTicker() {
 function renderHorizontalCards(data, layoutMode) {
   const container = document.getElementById('horizontalRatesContainer');
   const verticalContainer = document.getElementById('ratesContainer');
-  
-  if (!container) return;
-  
+
+  if (!container) {
+    console.warn('[TASALO DEBUG] horizontalRatesContainer not found');
+    return;
+  }
+
+  if (!data) {
+    console.error('[TASALO DEBUG] No data to render in horizontal cards');
+    container.innerHTML = '<div class="glass-card"><p class="text-center text-2">Datos no disponibles</p></div>';
+    return;
+  }
+
   // Show/hide containers based on layout mode
   if (layoutMode === 'horizontal') {
     container.classList.remove('hidden');
@@ -259,20 +291,26 @@ function renderHorizontalCards(data, layoutMode) {
     if (verticalContainer) verticalContainer.classList.remove('hidden');
     return; // Use existing vertical rendering
   }
-  
+
   // Clear container
   container.innerHTML = '';
-  
+
   // Get settings
   const settings = loadSettings();
   const cardSize = settings.cardSize || 'standard';
   const showFlags = settings.showFlags !== false;
-  
+
   // Render each source
   ['eltoque', 'cadeca', 'bcc'].forEach(source => {
     const sourceData = data[source] || {};
-    const priority = CURRENCY_PRIORITY[source] || [];
     
+    if (Object.keys(sourceData).length === 0) {
+      console.warn('[TASALO DEBUG] No data for source:', source);
+      return;
+    }
+    
+    const priority = CURRENCY_PRIORITY[source] || [];
+
     // Sort currencies by priority
     const sortedCurrencies = Object.keys(sourceData).sort((a, b) => {
       const idxA = priority.indexOf(a);
@@ -282,14 +320,24 @@ function renderHorizontalCards(data, layoutMode) {
       if (idxB === -1) return -1;
       return idxA - idxB;
     });
-    
+
+    console.log('[TASALO DEBUG] Rendering horizontal cards for', source, 'with', sortedCurrencies.length, 'currencies');
+
     sortedCurrencies.forEach(currency => {
       const currencyInfo = sourceData[currency];
+      
+      // Handle different data formats
       const rate = currencyInfo.rate || currencyInfo.buy || currencyInfo;
       const change = currencyInfo.change || 'neutral';
       const prevRate = currencyInfo.prev_rate;
       const currencyMeta = CURRENCY_INFO[currency] || { symbol: '💱', name: currency };
-      
+
+      // Validate rate
+      if (rate === null || rate === undefined) {
+        console.warn('[TASALO DEBUG] No rate for currency:', currency);
+        return;
+      }
+
       // Calculate change
       let indicator = '';
       let changeStr = '';
@@ -302,12 +350,12 @@ function renderHorizontalCards(data, layoutMode) {
         indicator = '🔻';
         changeStr = `${diff.toFixed(2)}`;
       }
-      
+
       // Format rate
-      const rateStr = rate >= 1000 
+      const rateStr = rate >= 1000
         ? rate.toLocaleString('en-US', { maximumFractionDigits: 0 })
         : rate.toFixed(2);
-      
+
       // Create card
       const card = document.createElement('div');
       card.className = `horizontal-rate-card ${cardSize} ${change}`;
@@ -322,7 +370,7 @@ function renderHorizontalCards(data, layoutMode) {
           ${changeStr ? `<span class="horizontal-rate-change">${indicator} ${changeStr}</span>` : ''}
         </div>
       `;
-      
+
       container.appendChild(card);
     });
   });
@@ -796,31 +844,43 @@ async function loadRates() {
 
     if (response.ok && response.data) {
       console.log('[TASALO DEBUG] Rendering rates, data:', response.data);
-      
+
+      // Get settings first
+      const settings = loadSettings();
+      console.log('[TASALO DEBUG] Current settings:', settings);
+
       // Fetch Binance for ticker (non-blocking)
       let binanceData = null;
-      try {
+      if (settings.showTicker) {
+        console.log('[TASALO DEBUG] Ticker enabled, fetching Binance...');
         binanceData = await fetchBinance();
         console.log('[TASALO DEBUG] Binance data:', binanceData);
-      } catch (binanceError) {
-        console.warn('[TASALO DEBUG] Could not fetch Binance:', binanceError);
+      } else {
+        console.log('[TASALO DEBUG] Ticker disabled in settings');
       }
-      
-      // Get settings
-      const settings = loadSettings();
-      
+
       // Render ticker if enabled and we have data
       if (settings.showTicker && binanceData) {
+        console.log('[TASALO DEBUG] Rendering ticker with currencies:', settings.tickerCurrencies);
         renderTicker(binanceData, settings.tickerCurrencies);
+      } else if (settings.showTicker && !binanceData) {
+        console.warn('[TASALO DEBUG] Ticker enabled but no Binance data available');
+        // Show message in ticker that data is unavailable
+        const tickerStrip = document.getElementById('tickerStrip');
+        if (tickerStrip) {
+          tickerStrip.innerHTML = '<span style="padding: 0 16px; font-size: 10px; color: var(--text3);">Datos no disponibles</span>';
+        }
       }
-      
+
       // Render rates based on layout mode
       if (settings.layoutMode === 'horizontal') {
+        console.log('[TASALO DEBUG] Rendering horizontal cards');
         renderHorizontalCards(response.data, 'horizontal');
       } else {
+        console.log('[TASALO DEBUG] Rendering vertical rates');
         renderRates(response.data); // Existing vertical rendering
       }
-      
+
       updateTimestamp();
     } else {
       console.error('[TASALO DEBUG] Response ok=false or no data');
@@ -959,30 +1019,46 @@ function applyRefreshInterval(interval) {
  * Initialize settings page
  */
 function initSettingsPage() {
+  console.log('[TASALO DEBUG] initSettingsPage called');
   const settings = loadSettings();
-  
+  console.log('[TASALO DEBUG] Loaded settings:', settings);
+
   // Set theme radio buttons
   const themeRadios = document.querySelectorAll('input[name="theme"]');
+  console.log('[TASALO DEBUG] Found theme radios:', themeRadios.length);
   themeRadios.forEach(radio => {
     radio.checked = radio.value === settings.theme;
+    console.log('[TASALO DEBUG] Theme radio', radio.value, 'checked:', radio.checked);
   });
-  
+
   // Set refresh interval
   const intervalSelect = document.getElementById('refresh-interval');
   if (intervalSelect) {
     intervalSelect.value = settings.refreshInterval.toString();
+    console.log('[TASALO DEBUG] Set refresh interval to:', settings.refreshInterval);
+  } else {
+    console.warn('[TASALO DEBUG] refresh-interval select not found');
   }
-  
+
   // Setup save button
   const saveBtn = document.getElementById('save-settings');
+  console.log('[TASALO DEBUG] Save button found:', !!saveBtn);
   if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
+    // Remove any existing listener to prevent duplicates
+    saveBtn.replaceWith(saveBtn.cloneNode(true));
+    const newSaveBtn = document.getElementById('save-settings');
+    
+    newSaveBtn.addEventListener('click', () => {
+      console.log('[TASALO DEBUG] Save button clicked');
+      
       // Get selected theme
       const selectedTheme = document.querySelector('input[name="theme"]:checked');
       const theme = selectedTheme ? selectedTheme.value : 'auto';
+      console.log('[TASALO DEBUG] Selected theme:', theme);
 
       // Get selected interval
       const interval = parseInt(intervalSelect.value, 10) || DEFAULT_SETTINGS.refreshInterval;
+      console.log('[TASALO DEBUG] Selected interval:', interval);
 
       // Get display preferences
       const layoutMode = document.querySelector('input[name="layoutMode"]:checked')?.value || 'vertical';
@@ -990,16 +1066,17 @@ function initSettingsPage() {
       const showTicker = document.querySelector('input[name="showTicker"]:checked')?.value === 'true';
       const tickerSpeed = document.querySelector('input[name="tickerSpeed"]:checked')?.value || 'normal';
       const showFlags = document.querySelector('input[name="showFlags"]:checked')?.value === 'true';
-      
+
       // Get selected currencies
       const selectedCurrencies = [];
       document.querySelectorAll('#tickerCurrenciesGrid input[type="checkbox"]:checked').forEach(checkbox => {
         selectedCurrencies.push(checkbox.value);
       });
+      console.log('[TASALO DEBUG] Selected currencies:', selectedCurrencies);
 
       // Save settings
-      const newSettings = { 
-        theme, 
+      const newSettings = {
+        theme,
         refreshInterval: interval,
         layoutMode,
         cardSize,
@@ -1008,15 +1085,20 @@ function initSettingsPage() {
         showFlags,
         tickerCurrencies: selectedCurrencies.length > 0 ? selectedCurrencies : [...DEFAULT_BINANCE_CURRENCIES]
       };
+      console.log('[TASALO DEBUG] Saving settings:', newSettings);
       const saved = saveSettings(newSettings);
+      console.log('[TASALO DEBUG] Save result:', saved);
 
       if (saved) {
         // Apply settings immediately
+        console.log('[TASALO DEBUG] Applying theme:', theme);
         applyTheme(theme);
+        console.log('[TASALO DEBUG] Applying refresh interval:', interval);
         applyRefreshInterval(interval);
 
         // Show success message
         const successMsg = document.getElementById('success-message');
+        console.log('[TASALO DEBUG] Success message element:', !!successMsg);
         if (successMsg) {
           successMsg.classList.remove('hidden');
           setTimeout(() => {
@@ -1026,20 +1108,28 @@ function initSettingsPage() {
 
         // Update timestamp
         updateSettingsTimestamp();
-        
+
         // Reload page after delay to apply layout changes
+        console.log('[TASALO DEBUG] Will reload page in 1s to apply changes');
         setTimeout(() => {
           window.location.href = '/';
         }, 1000);
       }
     });
+    console.log('[TASALO DEBUG] Save button listener attached');
+  } else {
+    console.error('[TASALO DEBUG] Save button NOT found in DOM');
   }
 
   // Apply current settings on page load
+  console.log('[TASALO DEBUG] Applying initial theme:', settings.theme);
   applyTheme(settings.theme);
-  
+
   // Initialize display preferences
+  console.log('[TASALO DEBUG] Initializing display preferences');
   initDisplayPreferences(settings);
+  
+  console.log('[TASALO DEBUG] initSettingsPage completed');
 }
 
 /**
@@ -1176,15 +1266,22 @@ function updateSettingsTimestamp() {
 function initApp() {
   // Normalize path by removing /miniapp prefix if present
   let path = window.location.pathname;
+  const originalPath = path;
+  
   if (path.startsWith('/miniapp')) {
     path = path.replace('/miniapp', '');
+    // Ensure path starts with / after replacement
+    if (!path.startsWith('/')) {
+      path = '/' + path;
+    }
   }
-  // Ensure path starts with /
+  
+  // Ensure path always starts with /
   if (!path.startsWith('/')) {
     path = '/' + path;
   }
-  
-  console.log('[TASALO DEBUG] initApp called, original path:', window.location.pathname, 'normalized path:', path);
+
+  console.log('[TASALO DEBUG] initApp called, original path:', originalPath, 'normalized path:', path);
   console.log('[TASALO DEBUG] URL:', window.location.href);
   console.log('[TASALO DEBUG] window.TASALO_API_URL:', window.TASALO_API_URL);
   console.log('[TASALO DEBUG] window.TASALO_BASE_PATH:', window.TASALO_BASE_PATH);
@@ -1194,9 +1291,11 @@ function initApp() {
   applyTheme(settings.theme);
 
   if (path === '/settings') {
+    console.log('[TASALO DEBUG] Initializing settings page');
     // Initialize settings page
     initSettingsPage();
   } else if (path === '/history') {
+    console.log('[TASALO DEBUG] Initializing history page');
     // Initialize history chart
     loadHistoryChart();
 
@@ -1216,6 +1315,7 @@ function initApp() {
       });
     }
   } else if (path === '/provincias') {
+    console.log('[TASALO DEBUG] Initializing provincias page');
     // Initialize provincias view
     loadProvincias();
 
@@ -1235,14 +1335,14 @@ function initApp() {
       });
     }
   } else {
-    console.log('[TASALO DEBUG] Loading rates on index page');
-    
+    console.log('[TASALO DEBUG] Loading rates on index page, path:', path);
+
     // Initialize ticker toggle
     const tickerHeader = document.getElementById('tickerHeader');
     if (tickerHeader) {
       tickerHeader.addEventListener('click', toggleTicker);
     }
-    
+
     // Apply ticker expanded state from settings
     const tickerContainer = document.getElementById('tickerContainer');
     const tickerChevron = document.getElementById('tickerChevron');
@@ -1250,7 +1350,7 @@ function initApp() {
       tickerContainer.classList.add('expanded');
       tickerChevron.classList.add('expanded');
     }
-    
+
     // Load rates on page load (index page)
     loadRates();
 
