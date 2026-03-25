@@ -6,6 +6,20 @@
 // Settings storage key
 const SETTINGS_KEY = 'tasalo_settings';
 
+// Binance top 10 default currencies (MUST be before DEFAULT_SETTINGS)
+const DEFAULT_BINANCE_CURRENCIES = [
+  'BTC', 'ETH', 'BNB', 'XRP', 'ADA',
+  'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC'
+];
+
+// All available Binance currencies
+const ALL_BINANCE_CURRENCIES = [
+  'BTC', 'ETH', 'BNB', 'XRP', 'ADA',
+  'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
+  'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC',
+  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO'
+];
+
 // Default settings
 const DEFAULT_SETTINGS = {
   theme: 'auto',
@@ -43,20 +57,6 @@ const SOURCE_INFO = {
   bcc: { emoji: '🏛️', name: 'BCC', class: 'bcc' },
   binance: { emoji: '🪙', name: 'Binance', class: 'binance' }
 };
-
-// Binance top 10 default currencies
-const DEFAULT_BINANCE_CURRENCIES = [
-  'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 
-  'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC'
-];
-
-// All available Binance currencies
-const ALL_BINANCE_CURRENCIES = [
-  'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 
-  'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
-  'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC',
-  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO'
-];
 
 // Priority order for currency sorting (matches bot legacy order)
 const CURRENCY_PRIORITY = {
