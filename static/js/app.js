@@ -823,7 +823,330 @@ function renderChart(labels, data, currency) {
 }
 
 /**
- * Load and render history chart
+ * Fetch Cubanomic history from taso-api
+ * @param {number} days - Number of days (7, 14, 30, 60, 90, 180, 365, 730)
+ * @returns {Promise<Object>} API response data
+ */
+async function fetchCubanomicHistory(days) {
+  const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
+  const params = new URLSearchParams({ days: days.toString() });
+  const response = await fetch(`${apiUrl}/api/v1/tasas/history/cubanomic?${params}`);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Render combined chart with 3 lines (USD, EUR, MLC)
+ * @param {Array} history - Array of data points
+ */
+function renderCombinedChart(history) {
+  const canvas = document.getElementById('combined-chart');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+
+  // Destroy existing chart
+  if (window.combinedChartInstance) {
+    window.combinedChartInstance.destroy();
+  }
+
+  // Extract data
+  const labels = history.map(point => {
+    const date = new Date(point.fetched_at);
+    return date.toLocaleDateString('es-CU', { day: '2-digit', month: 'short' });
+  });
+
+  const usdData = history.map(point => point.usdRate);
+  const eurData = history.map(point => point.eurRate);
+  const mlcData = history.map(point => point.mlcRate);
+
+  // Colors
+  const usdColor = '#ef4444';  // Red
+  const eurColor = '#3b82f6';  // Blue
+  const mlcColor = '#22c55e';  // Green
+
+  // Create chart
+  window.combinedChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'USD',
+          data: usdData,
+          borderColor: usdColor,
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4
+        },
+        {
+          label: 'EUR',
+          data: eurData,
+          borderColor: eurColor,
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4
+        },
+        {
+          label: 'MLC',
+          data: mlcData,
+          borderColor: mlcColor,
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        },
+        tooltip: {
+          backgroundColor: 'rgba(16, 16, 42, 0.95)',
+          titleColor: '#eeeef8',
+          bodyColor: '#9090c0',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 1,
+          padding: 12,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} CUP`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#9090c0',
+            maxTicksLimit: 8,
+            maxRotation: 0
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#9090c0',
+            callback: function(value) {
+              return value.toFixed(2);
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Render single chart
+ * @param {string} canvasId - Canvas element ID
+ * @param {string} label - Currency label
+ * @param {Array} labels - X-axis labels
+ * @param {Array} data - Y-axis data
+ * @param {string} color - Line color
+ */
+function renderSingleChart(canvasId, label, labels, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+
+  // Destroy existing chart
+  const chartKey = `${canvasId}ChartInstance`;
+  if (window[chartKey]) {
+    window[chartKey].destroy();
+  }
+
+  // Create gradient
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, color.replace(')', ', 0.2)').replace('rgb', 'rgba'));
+  gradient.addColorStop(1, color.replace(')', ', 0)').replace('rgb', 'rgba'));
+
+  window[chartKey] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: `${label} → CUP`,
+        data: data,
+        borderColor: color,
+        backgroundColor: gradient,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(16, 16, 42, 0.95)',
+          titleColor: '#eeeef8',
+          bodyColor: '#9090c0',
+          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderWidth: 1,
+          padding: 12,
+          callbacks: {
+            label: function(context) {
+              return `${context.parsed.y.toFixed(2)} CUP`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#9090c0',
+            maxTicksLimit: 6,
+            maxRotation: 0
+          }
+        },
+        y: {
+          grid: {
+            color: 'rgba(255, 255, 255, 0.05)',
+            drawBorder: false
+          },
+          ticks: {
+            color: '#9090c0',
+            callback: function(value) {
+              return value.toFixed(2);
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Render separated charts (one per currency)
+ * @param {Array} history - Array of data points
+ */
+function renderSeparatedCharts(history) {
+  const labels = history.map(point => {
+    const date = new Date(point.fetched_at);
+    return date.toLocaleDateString('es-CU', { day: '2-digit', month: 'short' });
+  });
+
+  const usdData = history.map(point => point.usdRate);
+  const eurData = history.map(point => point.eurRate);
+  const mlcData = history.map(point => point.mlcRate);
+
+  renderSingleChart('usd-chart', 'USD', labels, usdData, '#ef4444');
+  renderSingleChart('eur-chart', 'EUR', labels, eurData, '#3b82f6');
+  renderSingleChart('mlc-chart', 'MLC', labels, mlcData, '#22c55e');
+}
+
+/**
+ * Switch between combined and separated views
+ * @param {string} view - 'combined' or 'separated'
+ */
+function switchView(view) {
+  const combinedView = document.getElementById('combined-view');
+  const separatedView = document.getElementById('separated-view');
+  const combinedBtn = document.getElementById('view-combined');
+  const separatedBtn = document.getElementById('view-separated');
+
+  if (view === 'combined') {
+    combinedView.classList.remove('hidden');
+    separatedView.classList.add('hidden');
+    if (combinedBtn) combinedBtn.classList.add('active');
+    if (separatedBtn) separatedBtn.classList.remove('active');
+  } else {
+    combinedView.classList.add('hidden');
+    separatedView.classList.remove('hidden');
+    if (combinedBtn) combinedBtn.classList.remove('active');
+    if (separatedBtn) separatedBtn.classList.add('active');
+  }
+}
+
+/**
+ * Load and render charts
+ * @param {number} days - Number of days
+ */
+async function loadCharts(days) {
+  showChartLoading();
+
+  try {
+    const data = await fetchCubanomicHistory(days);
+
+    if (!data.ok || !data.data) {
+      showChartError();
+      return;
+    }
+
+    // Parse history data - API returns data array with fetched_at and rates
+    const history = data.data.map(point => ({
+      fetched_at: point.fetched_at,
+      usdRate: point.usd_rate || point.buy_rate || point.sell_rate || 0,
+      eurRate: point.eur_rate || point.buy_rate || point.sell_rate || 0,
+      mlcRate: point.mlc_rate || point.buy_rate || point.sell_rate || 0
+    }));
+
+    // Render based on current view
+    const combinedView = document.getElementById('combined-view');
+    if (combinedView && !combinedView.classList.contains('hidden')) {
+      renderCombinedChart(history);
+    } else {
+      renderSeparatedCharts(history);
+    }
+
+    hideChartLoading();
+
+    // Update timestamp
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('es-CU', { hour: '2-digit', minute: '2-digit' });
+    const timestamp = document.getElementById('chart-timestamp');
+    if (timestamp) {
+      timestamp.textContent = `Actualizado: ${timeStr}`;
+    }
+
+  } catch (error) {
+    console.error('Error loading charts:', error);
+    showChartError();
+  }
+}
+
+/**
+ * Load and render history chart (legacy single-currency chart)
  */
 async function loadHistoryChart() {
   const currencySelect = document.getElementById('currency-select');
@@ -1294,13 +1617,34 @@ function updateSettingsTimestamp() {
 }
 
 /**
+ * Initialize history page
+ */
+function initHistoryPage() {
+  const chartContainer = document.getElementById('combined-view');
+  if (!chartContainer) return;
+
+  // Load default (30 days)
+  loadCharts(30);
+
+  // Update button handler
+  const updateBtn = document.getElementById('update-chart');
+  if (updateBtn) {
+    updateBtn.addEventListener('click', () => {
+      const daysSelect = document.getElementById('days-select');
+      const days = parseInt(daysSelect.value);
+      loadCharts(days);
+    });
+  }
+}
+
+/**
  * Initialize the app
  */
 function initApp() {
   // Normalize path by removing /miniapp prefix if present
   let path = window.location.pathname;
   const originalPath = path;
-  
+
   if (path.startsWith('/miniapp')) {
     path = path.replace('/miniapp', '');
     // Ensure path starts with / after replacement
@@ -1308,7 +1652,7 @@ function initApp() {
       path = '/' + path;
     }
   }
-  
+
   // Ensure path always starts with /
   if (!path.startsWith('/')) {
     path = '/' + path;
@@ -1329,22 +1673,16 @@ function initApp() {
     initSettingsPage();
   } else if (path === '/history') {
     console.log('[TASALO DEBUG] Initializing history page');
-    // Initialize history chart
-    loadHistoryChart();
-
-    // Setup update chart button
-    const updateBtn = document.getElementById('update-chart');
-    if (updateBtn) {
-      updateBtn.addEventListener('click', () => {
-        loadHistoryChart();
-      });
-    }
+    // Initialize history page with new Cubanomic charts
+    initHistoryPage();
 
     // Setup retry button
     const retryBtn = document.getElementById('retry-btn');
     if (retryBtn) {
       retryBtn.addEventListener('click', () => {
-        loadHistoryChart();
+        const daysSelect = document.getElementById('days-select');
+        const days = parseInt(daysSelect.value) || 30;
+        loadCharts(days);
       });
     }
   } else if (path === '/provincias') {
