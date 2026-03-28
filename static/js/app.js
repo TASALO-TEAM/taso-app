@@ -13,13 +13,14 @@ const DEFAULT_BINANCE_CURRENCIES = [
   'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC'
 ];
 
-// All available Binance currencies (21 total - matches taso-api binance.py)
+// All available Binance currencies (20 total - matches Binance US API)
+// Note: USDT not available on Binance US, using Binance Global alternative
 const ALL_BINANCE_CURRENCIES = [
   'BTC', 'ETH', 'BNB', 'XRP', 'ADA',
   'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
   'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC',
-  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO',
-  'USDT'
+  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO'
+  // USDT not available on Binance US API
 ];
 
 // Default settings
