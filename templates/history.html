@@ -104,6 +104,9 @@
   </div>
 </nav>
 
+<!-- TASALO App JS -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
 <script>
   // Fix navigation links to include base path if needed
   document.querySelectorAll('[data-nav-link]').forEach(link => {
@@ -113,7 +116,7 @@
       link.setAttribute('href', basePath + href);
     }
   });
-  
+
   // Set active nav item based on current page
   const currentPath = window.location.pathname.replace('/miniapp', '') || '/';
   document.querySelectorAll('.nav-item').forEach(item => {
