@@ -1080,17 +1080,26 @@ function renderSeparatedCharts(history) {
  * @param {string} view - 'combined' or 'separated'
  */
 function switchView(view) {
+  console.log('[TASALO DEBUG] switchView called with:', view);
+  
   const combinedView = document.getElementById('combined-view');
   const separatedView = document.getElementById('separated-view');
   const combinedBtn = document.getElementById('view-combined');
   const separatedBtn = document.getElementById('view-separated');
 
+  if (!combinedView || !separatedView) {
+    console.error('[TASALO DEBUG] View containers not found');
+    return;
+  }
+
   if (view === 'combined') {
+    console.log('[TASALO DEBUG] Switching to combined view');
     combinedView.classList.remove('hidden');
     separatedView.classList.add('hidden');
     if (combinedBtn) combinedBtn.classList.add('active');
     if (separatedBtn) separatedBtn.classList.remove('active');
   } else {
+    console.log('[TASALO DEBUG] Switching to separated view');
     combinedView.classList.add('hidden');
     separatedView.classList.remove('hidden');
     if (combinedBtn) combinedBtn.classList.remove('active');
@@ -1098,35 +1107,54 @@ function switchView(view) {
   }
 }
 
+// Expose switchView to global scope for inline onclick handlers
+window.switchView = switchView;
+
 /**
  * Load and render charts
  * @param {number} days - Number of days
  */
 async function loadCharts(days) {
+  console.log('[TASALO DEBUG] loadCharts called with days:', days);
   showChartLoading();
 
   try {
     const data = await fetchCubanomicHistory(days);
+    console.log('[TASALO DEBUG] Cubanomic history response:', data);
 
     if (!data.ok || !data.data) {
+      console.error('[TASALO DEBUG] No data in response');
       showChartError();
       return;
     }
 
-    // Parse history data - API returns data array with fetched_at and rates
-    const history = data.data.map(point => ({
-      fetched_at: point.fetched_at,
-      usdRate: point.usd_rate || point.buy_rate || point.sell_rate || 0,
-      eurRate: point.eur_rate || point.buy_rate || point.sell_rate || 0,
-      mlcRate: point.mlc_rate || point.buy_rate || point.sell_rate || 0
-    }));
+    // Parse history data - API returns data array with fetched_at, usd_rate, eur_rate, mlc_rate
+    const history = data.data.map(point => {
+      console.log('[TASALO DEBUG] Parsing data point:', point);
+      return {
+        fetched_at: point.fetched_at,
+        usdRate: point.usd_rate || 0,
+        eurRate: point.eur_rate || 0,
+        mlcRate: point.mlc_rate || 0
+      };
+    });
+
+    console.log('[TASALO DEBUG] Parsed history:', history);
 
     // Render based on current view
     const combinedView = document.getElementById('combined-view');
+    const separatedView = document.getElementById('separated-view');
+    
     if (combinedView && !combinedView.classList.contains('hidden')) {
+      console.log('[TASALO DEBUG] Rendering combined chart');
       renderCombinedChart(history);
-    } else {
+    } else if (separatedView && !separatedView.classList.contains('hidden')) {
+      console.log('[TASALO DEBUG] Rendering separated charts');
       renderSeparatedCharts(history);
+    } else {
+      // Default to combined if neither is visible (initial load)
+      console.log('[TASALO DEBUG] No view visible, defaulting to combined');
+      renderCombinedChart(history);
     }
 
     hideChartLoading();
@@ -1140,7 +1168,7 @@ async function loadCharts(days) {
     }
 
   } catch (error) {
-    console.error('Error loading charts:', error);
+    console.error('[TASALO DEBUG] Error loading charts:', error);
     showChartError();
   }
 }
@@ -1620,21 +1648,50 @@ function updateSettingsTimestamp() {
  * Initialize history page
  */
 function initHistoryPage() {
+  console.log('[TASALO DEBUG] initHistoryPage called');
+  
   const chartContainer = document.getElementById('combined-view');
-  if (!chartContainer) return;
+  if (!chartContainer) {
+    console.error('[TASALO DEBUG] combined-view container not found');
+    return;
+  }
 
+  // Get default days from selector or use 30
+  const daysSelect = document.getElementById('days-select');
+  const defaultDays = daysSelect ? parseInt(daysSelect.value) || 30 : 30;
+  
+  console.log('[TASALO DEBUG] Loading charts with default days:', defaultDays);
+  
   // Load default (30 days)
-  loadCharts(30);
+  loadCharts(defaultDays);
 
   // Update button handler
   const updateBtn = document.getElementById('update-chart');
   if (updateBtn) {
+    console.log('[TASALO DEBUG] Update button found, attaching handler');
     updateBtn.addEventListener('click', () => {
-      const daysSelect = document.getElementById('days-select');
-      const days = parseInt(daysSelect.value);
+      const days = parseInt(daysSelect.value) || 30;
+      console.log('[TASALO DEBUG] Update button clicked, days:', days);
       loadCharts(days);
     });
+  } else {
+    console.error('[TASALO DEBUG] Update button not found');
   }
+  
+  // Setup retry button
+  const retryBtn = document.getElementById('retry-btn');
+  if (retryBtn) {
+    console.log('[TASALO DEBUG] Retry button found, attaching handler');
+    retryBtn.addEventListener('click', () => {
+      const days = parseInt(daysSelect.value) || 30;
+      console.log('[TASALO DEBUG] Retry button clicked, days:', days);
+      loadCharts(days);
+    });
+  } else {
+    console.error('[TASALO DEBUG] Retry button not found');
+  }
+  
+  console.log('[TASALO DEBUG] initHistoryPage completed');
 }
 
 /**
@@ -1757,6 +1814,7 @@ if (typeof module !== 'undefined' && module.exports) {
     fetchLatest,
     fetchHistory,
     fetchProvincias,
+    fetchCubanomicHistory,
     renderChange,
     formatRate,
     buildRateRow,
@@ -1764,14 +1822,20 @@ if (typeof module !== 'undefined' && module.exports) {
     renderRates,
     renderProvincias,
     renderChart,
+    renderCombinedChart,
+    renderSeparatedCharts,
+    renderSingleChart,
     loadRates,
     loadHistoryChart,
     loadProvincias,
+    loadCharts,
     loadSettings,
     saveSettings,
     applyTheme,
     applyRefreshInterval,
     initSettingsPage,
-    initApp
+    initHistoryPage,
+    initApp,
+    switchView
   };
 }
