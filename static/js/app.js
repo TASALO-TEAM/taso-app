@@ -6,18 +6,20 @@
 // Settings storage key
 const SETTINGS_KEY = 'tasalo_settings';
 
-// Binance top 10 default currencies (MUST be before DEFAULT_SETTINGS)
+// Binance default currencies for ticker (top 10 most popular)
+// MUST be before DEFAULT_SETTINGS
 const DEFAULT_BINANCE_CURRENCIES = [
   'BTC', 'ETH', 'BNB', 'XRP', 'ADA',
   'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC'
 ];
 
-// All available Binance currencies
+// All available Binance currencies (21 total - matches taso-api binance.py)
 const ALL_BINANCE_CURRENCIES = [
   'BTC', 'ETH', 'BNB', 'XRP', 'ADA',
   'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
   'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC',
-  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO'
+  'BCH', 'FIL', 'ETC', 'XLM', 'ALGO',
+  'USDT'
 ];
 
 // Default settings
@@ -1255,20 +1257,15 @@ function toggleTickerSpeedVisibility(enabled) {
 function renderCurrencyCheckboxes(selectedCurrencies) {
   const grid = document.getElementById('tickerCurrenciesGrid');
   if (!grid) return;
-  
-  const allCurrencies = [
-    'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 
-    'DOGE', 'SOL', 'TRX', 'DOT', 'MATIC',
-    'AVAX', 'LINK', 'UNI', 'ATOM', 'LTC'
-  ];
-  
-  grid.innerHTML = allCurrencies.map(currency => `
+
+  // Use ALL_BINANCE_CURRENCIES (21 total) to match taso-api binance.py
+  grid.innerHTML = ALL_BINANCE_CURRENCIES.map(currency => `
     <label class="settings-currency-chip ${selectedCurrencies.includes(currency) ? 'selected' : ''}">
       <input type="checkbox" value="${currency}" ${selectedCurrencies.includes(currency) ? 'checked' : ''}>
       <span>${currency}</span>
     </label>
   `).join('');
-  
+
   // Add change listeners
   grid.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
     checkbox.addEventListener('change', () => {
