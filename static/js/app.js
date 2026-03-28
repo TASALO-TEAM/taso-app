@@ -649,6 +649,36 @@ function showChartError() {
 }
 
 /**
+ * Show message when no historical data is available yet
+ * @param {number} days - Number of days requested
+ */
+function showNoDataMessage(days) {
+  const loading = document.getElementById('chart-loading');
+  const error = document.getElementById('chart-error');
+  const container = document.getElementById('chart-container');
+  const combinedView = document.getElementById('combined-view');
+
+  if (loading) loading.classList.add('hidden');
+  if (error) error.classList.add('hidden');
+  if (container) container.classList.remove('hidden');
+
+  // Show message in combined view container
+  if (combinedView) {
+    combinedView.innerHTML = `
+      <div class="text-center py-8">
+        <p class="text-2 mb-4">📊 No hay datos históricos disponibles aún</p>
+        <p class="text-3 text-sm">
+          Los datos se recopilan automáticamente cada 5 minutos.
+          ${days === 1 ? 'Vuelve mañana para ver el histórico de 1 día.' : 'Vuelve más tarde.'}
+        </p>
+      </div>
+    `;
+  }
+
+  hideChartLoading();
+}
+
+/**
  * Hide chart loading and show container
  */
 function hideChartLoading() {
@@ -823,14 +853,15 @@ function renderChart(labels, data, currency) {
 }
 
 /**
- * Fetch Cubanomic history from taso-api
- * @param {number} days - Number of days (7, 14, 30, 60, 90, 180, 365, 730)
+ * Fetch local history from taso-api
+ * @param {number} days - Number of days (1, 7, 14, 30, 60, 90, 180, 365, 730)
  * @returns {Promise<Object>} API response data
  */
 async function fetchCubanomicHistory(days) {
   const apiUrl = window.TASALO_API_URL || 'http://localhost:8040';
   const params = new URLSearchParams({ days: days.toString() });
-  const response = await fetch(`${apiUrl}/api/v1/tasas/history/cubanomic?${params}`);
+  // Use local history endpoint instead of cubanomic
+  const response = await fetch(`${apiUrl}/api/v1/tasas/history/local?${params}`);
 
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
@@ -1120,11 +1151,11 @@ async function loadCharts(days) {
 
   try {
     const data = await fetchCubanomicHistory(days);
-    console.log('[TASALO DEBUG] Cubanomic history response:', data);
+    console.log('[TASALO DEBUG] Local history response:', data);
 
-    if (!data.ok || !data.data) {
-      console.error('[TASALO DEBUG] No data in response');
-      showChartError();
+    if (!data.ok || !data.data || data.count === 0) {
+      // Show message instead of error for empty local history
+      showNoDataMessage(days);
       return;
     }
 
@@ -1144,7 +1175,7 @@ async function loadCharts(days) {
     // Render based on current view
     const combinedView = document.getElementById('combined-view');
     const separatedView = document.getElementById('separated-view');
-    
+
     if (combinedView && !combinedView.classList.contains('hidden')) {
       console.log('[TASALO DEBUG] Rendering combined chart');
       renderCombinedChart(history);
