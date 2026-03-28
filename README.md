@@ -49,6 +49,13 @@
 - **Panel CADECA** ahora muestra correctamente ambas tasas (Compra/Venta)
 - **Fallback** a tasa única si la API devuelve datos incompletos
 
+### Historial de Cubanomic
+- **Vista Combinada:** Un solo gráfico con 3 líneas (USD rojo, EUR azul, MLC verde)
+- **Vista Separada:** 3 gráficos individuales para ver detalles de cada moneda
+- **Rangos disponibles:** 7d, 14d, 30d, 60d, 90d, 6 meses, 1 año, 2 años
+- **Tecnología:** Chart.js con gradientes y tooltips personalizados
+- **Diseño:** Glass 2.0 styling responsivo
+
 ---
 
 ## 🚀 Requisitos del Sistema
@@ -392,6 +399,40 @@ docker logs -f <container_id>
 # Gunicorn directo
 # Los logs van a stdout/stderr
 ```
+
+---
+
+## 📈 Historial (/history)
+
+La página de historial muestra la evolución de las tasas de cambio de Cubanomic (USD, EUR, MLC) con dos vistas:
+
+### Vista Combinada
+- Un solo gráfico con 3 líneas (USD, EUR, MLC)
+- Colores: USD (rojo), EUR (azul), MLC (verde)
+- Ideal para comparar la evolución de las 3 monedas
+
+### Vista Separada
+- 3 gráficos individuales (uno por moneda)
+- Cada gráfico muestra la evolución de una moneda específica
+- Ideal para ver detalles de cada moneda
+
+### Rangos Disponibles
+
+| Rango | Días | Descripción |
+|-------|------|-------------|
+| 7 días | 7 | Última semana |
+| 14 días | 14 | Dos semanas |
+| 30 días | 30 | Un mes |
+| 60 días | 60 | Dos meses |
+| 90 días | 90 | Tres meses |
+| 6 meses | 180 | Medio año |
+| 1 año | 365 | Año completo |
+| 2 años | 730 | Histórico extendido |
+
+### Tecnología
+- **Chart.js** para renderizado de gráficos
+- Gradientes y tooltips personalizados
+- Diseño responsivo con Glass 2.0 styling
 
 ---
 
