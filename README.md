@@ -404,7 +404,7 @@ docker logs -f <container_id>
 
 ## 📈 Historial (/history)
 
-La página de historial muestra la evolución de las tasas de cambio de Cubanomic (USD, EUR, MLC) con dos vistas:
+La página de historial muestra la evolución de las tasas de cambio con datos locales recolectados automáticamente.
 
 ### Vista Combinada
 - Un solo gráfico con 3 líneas (USD, EUR, MLC)
@@ -420,6 +420,7 @@ La página de historial muestra la evolución de las tasas de cambio de Cubanomi
 
 | Rango | Días | Descripción |
 |-------|------|-------------|
+| 1 día | 1 | Último día (default) |
 | 7 días | 7 | Última semana |
 | 14 días | 14 | Dos semanas |
 | 30 días | 30 | Un mes |
@@ -433,6 +434,9 @@ La página de historial muestra la evolución de las tasas de cambio de Cubanomi
 - **Chart.js** para renderizado de gráficos
 - Gradientes y tooltips personalizados
 - Diseño responsivo con Glass 2.0 styling
+
+### Nota Importante
+Los datos históricos se recopilan automáticamente cada 5 minutos desde el despliegue. El sistema comienza con 1 día de datos y expande a medida que se acumula información.
 
 ---
 
