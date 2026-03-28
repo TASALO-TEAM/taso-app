@@ -65,11 +65,32 @@ def test_history_has_chart_canvas(client):
     assert b"id=\"history-chart\"" in response.data
 
 
-def test_history_has_currency_selector(client):
-    """GET /history incluye selector de moneda."""
+def test_history_has_view_toggle(client):
+    """GET /history incluye toggle de vistas (Combinada/Separada)."""
     response = client.get("/history")
     assert response.status_code == 200
-    assert b"id=\"currency-select\"" in response.data
+    assert b"id=\"view-combined\"" in response.data
+    assert b"id=\"view-separated\"" in response.data
+    assert b"Vista Combinada" in response.data
+    assert b"Vista Separada" in response.data
+
+
+def test_history_has_combined_chart(client):
+    """GET /history incluye canvas para gráfico combinado."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"id=\"combined-chart\"" in response.data
+    assert b"id=\"combined-view\"" in response.data
+
+
+def test_history_has_separated_charts(client):
+    """GET /history incluye canvas para gráficos separados."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"id=\"usd-chart\"" in response.data
+    assert b"id=\"eur-chart\"" in response.data
+    assert b"id=\"mlc-chart\"" in response.data
+    assert b"id=\"separated-view\"" in response.data
 
 
 def test_history_has_days_selector(client):

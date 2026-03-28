@@ -998,6 +998,44 @@ body {
   display: none;
 }
 
+/* ═══════════════════════════════════════════════
+   HISTORY PAGE - VIEW TOGGLE
+═══════════════════════════════════════════════ */
+
+/* View toggle buttons */
+#view-combined.active,
+#view-separated.active {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* Chart containers */
+#combined-view,
+#separated-view {
+  transition: opacity 0.3s ease;
+}
+
+#combined-view.hidden,
+#separated-view.hidden {
+  display: none;
+}
+
+/* Individual chart cards */
+#separated-view > div {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Show vertical container when active */
 .vertical-rates-container.hidden {
   display: none;

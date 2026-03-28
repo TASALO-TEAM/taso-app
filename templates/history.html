@@ -23,28 +23,60 @@
   <button id="retry-btn" class="w-full btn-primary-v2 py-2">Reintentar</button>
 </div>
 
-<!-- Chart Container -->
-<div id="chart-container" class="glass-card-v2 rounded-xl p-4 mb-4 hidden">
-  <canvas id="history-chart"></canvas>
-</div>
-
-<!-- Filters -->
+<!-- View Toggle -->
 <div class="glass-card-v2 rounded-xl p-4 mb-4">
   <div class="flex gap-2 mb-4">
-    <select id="currency-select" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
-      <option value="USD">USD</option>
-      <option value="EUR">EUR</option>
-      <option value="MLC">MLC</option>
-    </select>
-    <select id="days-select" class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
+    <button id="view-combined" class="flex-1 btn-primary-v2 py-2 active" onclick="switchView('combined')">
+      📊 Vista Combinada
+    </button>
+    <button id="view-separated" class="flex-1 btn-primary-v2 py-2" onclick="switchView('separated')">
+      📈📈📈 Vista Separada
+    </button>
+  </div>
+  
+  <!-- Filters -->
+  <div class="flex gap-2 mb-4">
+    <select id="days-select" class="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent">
       <option value="7">7 días</option>
       <option value="14">14 días</option>
-      <option value="30">30 días</option>
+      <option value="30" selected>30 días</option>
+      <option value="60">60 días</option>
+      <option value="90">90 días</option>
+      <option value="180">6 meses</option>
+      <option value="365">1 año</option>
+      <option value="730">2 años</option>
     </select>
+    <button id="update-chart" class="flex-1 btn-primary-v2 py-2">
+      Actualizar
+    </button>
   </div>
-  <button id="update-chart" class="w-full btn-primary-v2 py-2">
-    Actualizar
-  </button>
+</div>
+
+<!-- Combined View (1 chart with 3 lines) -->
+<div id="combined-view" class="glass-card-v2 rounded-xl p-4 mb-4">
+  <h2 class="text-lg font-semibold mb-4">Evolución USD/EUR/MLC → CUP</h2>
+  <canvas id="combined-chart"></canvas>
+</div>
+
+<!-- Separated View (3 individual charts) -->
+<div id="separated-view" class="space-y-4 hidden">
+  <div class="glass-card-v2 rounded-xl p-4">
+    <h2 class="text-lg font-semibold mb-4">🇺🇸 USD → CUP</h2>
+    <canvas id="usd-chart"></canvas>
+  </div>
+  <div class="glass-card-v2 rounded-xl p-4">
+    <h2 class="text-lg font-semibold mb-4">🇪🇺 EUR → CUP</h2>
+    <canvas id="eur-chart"></canvas>
+  </div>
+  <div class="glass-card-v2 rounded-xl p-4">
+    <h2 class="text-lg font-semibold mb-4">🧾 MLC → CUP</h2>
+    <canvas id="mlc-chart"></canvas>
+  </div>
+</div>
+
+<!-- Chart Container (legacy reference) -->
+<div id="chart-container" class="hidden">
+  <canvas id="history-chart"></canvas>
 </div>
 
 <!-- Last Update Timestamp -->
