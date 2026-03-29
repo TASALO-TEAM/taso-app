@@ -253,15 +253,6 @@ function renderTicker(binanceData, currencies) {
 }
 
 /**
- * Toggle ticker expanded/collapsed state
- * DISABLED: Ticker can now only be toggled from Settings
- */
-function toggleTicker() {
-  // No-op - ticker toggle moved to Settings only
-  console.log('[TASALO DEBUG] Ticker toggle disabled - use Settings to show/hide');
-}
-
-/**
  * Render rates as 3-column grid cards grouped by source
  * Shows 3 sections (ElToque, BCC, CADECA), each with grid of 3 columns
  * @param {Object} data - Latest rates data
@@ -1589,24 +1580,20 @@ function initDisplayPreferences(settings) {
   
   // Render currency checkboxes
   renderCurrencyCheckboxes(settings.tickerCurrencies);
-  
+
   // Toggle card size visibility based on layout mode
   toggleCardSizeVisibility(settings.layoutMode);
-  
-  // Toggle ticker speed visibility based on ticker enabled
-  toggleTickerSpeedVisibility(settings.showTicker);
-  
+
   // Add event listeners for dynamic toggling
   layoutRadios.forEach(radio => {
     radio.addEventListener('change', (e) => {
       toggleCardSizeVisibility(e.target.value);
     });
   });
-  
+
   showTickerRadios.forEach(radio => {
     radio.addEventListener('change', () => {
-      const enabled = document.querySelector('input[name="showTicker"]:checked').value === 'true';
-      toggleTickerSpeedVisibility(enabled);
+      // Ticker visibility handled by settings save
     });
   });
 }
@@ -1619,17 +1606,6 @@ function toggleCardSizeVisibility(layoutMode) {
   const cardSizeOption = document.getElementById('cardSizeOption');
   if (cardSizeOption) {
     cardSizeOption.style.display = layoutMode === 'horizontal' ? 'block' : 'none';
-  }
-}
-
-/**
- * Toggle ticker speed option visibility
- * @param {boolean} enabled - Whether ticker is enabled
- */
-function toggleTickerSpeedVisibility(enabled) {
-  const tickerSpeedOption = document.getElementById('tickerSpeedOption');
-  if (tickerSpeedOption) {
-    tickerSpeedOption.style.display = enabled ? 'block' : 'none';
   }
 }
 
@@ -1796,21 +1772,12 @@ function initApp() {
   } else {
     console.log('[TASALO DEBUG] Loading rates on index page, path:', path);
 
-    // Binance ticker - ALWAYS expanded by default, only hide via settings
+    // Binance ticker - always visible if enabled in settings (no header, no collapse)
     const tickerContainer = document.getElementById('tickerContainer');
-    const tickerChevron = document.getElementById('tickerChevron');
-    const tickerBody = document.getElementById('tickerBody');
-    const tickerHeader = document.getElementById('tickerHeader');
-    
+
     if (settings.showTicker) {
-      // Show ticker - expanded by default
+      // Show ticker
       if (tickerContainer) tickerContainer.classList.remove('hidden');
-      if (tickerContainer) tickerContainer.classList.add('expanded');
-      if (tickerContainer) tickerContainer.classList.remove('collapsed');
-      if (tickerChevron) tickerChevron.classList.add('expanded');
-      if (tickerBody) tickerBody.style.maxHeight = '48px';
-      // Remove click handler - can only toggle from settings
-      if (tickerHeader) tickerHeader.style.cursor = 'default';
     } else {
       // Hide ticker completely via settings
       if (tickerContainer) tickerContainer.classList.add('hidden');

@@ -581,43 +581,6 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.2s;
-}
-
-.ticker-tape-container.collapsed {
-  max-height: 40px !important;
-}
-
-.ticker-tape-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(91, 138, 255, 0.1);
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  user-select: none;
-}
-
-.ticker-tape-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--mono);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text2);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.ticker-tape-chevron {
-  color: var(--text3);
-  transition: transform 0.3s;
-}
-
-.ticker-tape-chevron.expanded {
-  transform: rotate(180deg);
 }
 
 .ticker-tape-body {

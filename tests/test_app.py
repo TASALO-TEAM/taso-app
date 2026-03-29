@@ -144,11 +144,13 @@ def test_provincias_has_back_navigation(client):
 
 
 def test_index_has_ticker_container(client):
-    """GET / incluye contenedor del Binance ticker."""
+    """GET / incluye contenedor del Binance ticker (sin header, solo monedas)."""
     response = client.get("/")
     assert response.status_code == 200
     assert b"id=\"tickerContainer\"" in response.data
-    assert b"Binance Top 10" in response.data
+    # Header "Binance Top 10" eliminado en v0.11.1 - ticker muestra solo monedas
+    assert b"Binance Top 10" not in response.data
+    assert b"id=\"tickerStrip\"" in response.data
 
 
 def test_index_has_horizontal_cards_container(client):
