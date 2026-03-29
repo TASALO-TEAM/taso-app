@@ -189,14 +189,22 @@ body.theme-dark::after {
   75% { transform: translate(50px, 10px) scale(1.05); }
 }
 
-/* Base Styles */
+/* CRITICAL: Content must be ABOVE the blobs (z-index: 1) */
 body {
+  position: relative;
+  z-index: 1;
   font-family: var(--ui);
   background-color: var(--bg);
   color: var(--text);
   margin: 0;
   padding: 0;
   min-height: 100vh;
+}
+
+/* Container must also be above blobs */
+.container-safe {
+  position: relative;
+  z-index: 1;
 }
 
 /* Glass Card Component */
