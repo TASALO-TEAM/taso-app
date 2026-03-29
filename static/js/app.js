@@ -386,7 +386,7 @@ function renderHorizontalCards(data, layoutMode) {
         <div class="horizontal-rate-value">${rateStr}</div>
         <div class="horizontal-rate-change-row">
           <span class="horizontal-rate-change">${changeIndicator} ${changeStr}</span>
-          <span class="horizontal-rate-name">${currencyMeta.name}</span>
+          <span class="horizontal-rate-name">CUP</span>
         </div>
       `;
 
