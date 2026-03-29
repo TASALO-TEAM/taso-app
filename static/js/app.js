@@ -28,7 +28,7 @@ const DEFAULT_SETTINGS = {
   theme: 'auto',
   refreshInterval: 60000,  // 60 seconds
   // Display preferences (new)
-  layoutMode: 'vertical',
+  layoutMode: 'horizontal',  // Changed to horizontal cards by default (v0.11.2)
   cardSize: 'standard',
   showTicker: true,
   tickerSpeed: 'normal',
@@ -1343,7 +1343,7 @@ function loadSettings() {
         ...DEFAULT_SETTINGS,
         ...parsed,
         // Ensure new settings have defaults
-        layoutMode: parsed.layoutMode || 'vertical',
+        layoutMode: parsed.layoutMode || 'horizontal',  // v0.11.2: horizontal default
         cardSize: parsed.cardSize || 'standard',
         showTicker: parsed.showTicker !== false,
         tickerSpeed: parsed.tickerSpeed || 'normal',
