@@ -1394,12 +1394,25 @@ function applyTheme(theme) {
     }
   }
   
-  // Sync with Telegram WebApp
+  // Sync with Telegram WebApp (version-aware)
   if (window.Telegram && window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
     const bgColor = getComputedStyle(body).getPropertyValue('--bg') || '#09091e';
-    tg.setHeaderColor(bgColor.trim());
-    tg.setBackgroundColor(bgColor.trim());
+    
+    // Only set colors if Telegram WebApp API supports it (v7.0+)
+    // Version 6.0 doesn't support setHeaderColor/setBackgroundColor
+    try {
+      // Check if methods exist before calling (defensive programming)
+      if (typeof tg.setHeaderColor === 'function') {
+        tg.setHeaderColor(bgColor.trim());
+      }
+      if (typeof tg.setBackgroundColor === 'function') {
+        tg.setBackgroundColor(bgColor.trim());
+      }
+    } catch (e) {
+      // Silently ignore - older Telegram versions don't support these methods
+      console.log('[TASALO] Telegram color sync not available (older API version)');
+    }
   }
 }
 
