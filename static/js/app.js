@@ -262,8 +262,8 @@ function toggleTicker() {
 }
 
 /**
- * Render rates as horizontal cards grouped by source
- * Shows 3 VERTICAL sections (ElToque, CADECA, BCC), each with horizontal scroll
+ * Render rates as 3-column grid cards grouped by source
+ * Shows 3 sections (ElToque, BCC, CADECA), each with grid of 3 columns
  * @param {Object} data - Latest rates data
  * @param {string} layoutMode - 'horizontal' or 'vertical'
  */
@@ -307,16 +307,16 @@ function renderHorizontalCards(data, layoutMode) {
     { key: 'cadeca', emoji: '🏢', name: 'CADECA (Exchange Houses)' }
   ];
 
-  console.log('[TASALO DEBUG] Rendering 3 horizontal sections (one per source)');
+  console.log('[TASALO DEBUG] Rendering 3 grid sections (one per source)');
 
   sources.forEach(source => {
     const sourceData = data[source.key] || {};
-    
+
     if (Object.keys(sourceData).length === 0) {
       console.warn('[TASALO DEBUG] No data for source:', source.key);
       return;
     }
-    
+
     const priority = CURRENCY_PRIORITY[source.key] || [];
 
     // Sort currencies by priority (EUR, USD, MLC, BTC, TRX, USDT for ElToque)
@@ -331,10 +331,10 @@ function renderHorizontalCards(data, layoutMode) {
 
     console.log('[TASALO DEBUG] Rendering', source.name, 'with', sortedCurrencies.length, 'currencies in order:', sortedCurrencies);
 
-    // Create source section (vertical stack)
+    // Create source section
     const section = document.createElement('div');
     section.className = 'source-section';
-    
+
     // Section header
     const header = document.createElement('div');
     header.className = 'source-section-header';
@@ -342,14 +342,14 @@ function renderHorizontalCards(data, layoutMode) {
       <span class="source-section-emoji">${source.emoji}</span>
       <span class="source-section-title">${source.name}</span>
     `;
-    
-    // Cards container (horizontal scroll within this section)
+
+    // Cards grid container
     const cardsContainer = document.createElement('div');
     cardsContainer.className = 'source-section-cards';
 
     sortedCurrencies.forEach(currency => {
       const currencyInfo = sourceData[currency];
-      
+
       // Handle different data formats
       const rate = currencyInfo.rate || currencyInfo.buy || currencyInfo;
       const change = currencyInfo.change || 'neutral';
@@ -366,7 +366,7 @@ function renderHorizontalCards(data, layoutMode) {
       let changeIndicator = '―';
       let changeClass = 'neutral';
       let changeStr = '0.00';
-      
+
       if (change === 'up' && prevRate) {
         const diff = rate - prevRate;
         changeIndicator = '🔺';
@@ -406,8 +406,8 @@ function renderHorizontalCards(data, layoutMode) {
     section.appendChild(cardsContainer);
     container.appendChild(section);
   });
-  
-  console.log('[TASALO DEBUG] 3 horizontal sections rendered');
+
+  console.log('[TASALO DEBUG] 3 grid sections rendered');
 }
 
 /**
