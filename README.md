@@ -2,7 +2,7 @@
 
 > Mini App web para Telegram que muestra tasas de cambio del dólar en Cuba en tiempo real.
 
-[![Version](https://img.shields.io/badge/version-0.8.0--horizontal--cards-blue)](https://github.com/TASALO-TEAM/taso-app/releases)
+[![Version](https://img.shields.io/badge/version-0.11.0--grid--layout-blue)](https://github.com/TASALO-TEAM/taso-app/releases)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ---
@@ -29,13 +29,34 @@
 - **Configurable**: activar/desactivar, velocidad, seleccionar monedas
 - **Colapsable**: header para ahorrar espacio
 
-### Diseño de Tarjetas Horizontales
+### Diseño de Tarjetas Horizontales - Grid 3 Columnas (v0.11.0)
 - **Layout alternativo** al diseño vertical tradicional
-- **Scroll suave** con snap CSS para mejor experiencia móvil
-- **3 tamaños**: Compact (120px), Standard (140px), Wide (160px)
+- **Grid de 3 columnas fijas** en móvil - sin scroll horizontal
+- **Todas las monedas visibles** simultáneamente
+- **3 tamaños de tarjeta**: Compact, Standard, Wide
 - **Orden de monedas** coincide con el bot:
   - **ElToque:** EUR, USD, MLC, BTC, TRX, USDT
   - **CADECA/BCC:** EUR, USD, MLC, CAD, MXN, GBP, CHF, RUB, AUD, JPY
+
+**Visual ejemplo:**
+
+```
+┌─────────────────────────────────────────────┐
+│ 📱 MERCADO INFORMAL (El Toque)              │
+├──────────────┬──────────────┬──────────────┤
+│    EUR       │    USD       │    MLC       │
+│   580.00     │   515.00     │   120.00     │
+│   🔺 +5.00   │   🔺 +2.00   │   ― 0.00     │
+├──────────────┼──────────────┼──────────────┤
+│    BTC       │    TRX       │    USDT      │
+│   95000      │   0.12       │   1.00       │
+│   🔺 +100    │   🔺 +0.01   │   ― 0.00     │
+└──────────────┴──────────────┴──────────────┘
+```
+
+**Casos no múltiplos de 3:** Si una fuente tiene 7 monedas, el layout muestra 3 + 3 + 1 (la última fila tiene 1 tarjeta).
+
+**Responsive:** 3 columnas en móvil, 3 columnas en tablet, 3 columnas en desktop (las tarjetas se expanden para llenar el grid).
 
 ### Configuración Mejorada
 - **Sección Display Preferences** en Settings
