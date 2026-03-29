@@ -726,21 +726,19 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
-   HORIZONTAL CARDS LAYOUT V3 (Enhanced Glassmorphism)
-   3 VERTICAL sections, each with horizontal scroll
+   HORIZONTAL CARDS LAYOUT - GRID 3 COLUMNAS
+   Mobile-first: 3 columns on mobile, responsive
 ═══════════════════════════════════════════════ */
 
 .horizontal-rates-container {
-  display: block; /* Stack sections vertically */
-  overflow-x: hidden; /* No horizontal scroll on container */
+  display: block;
   padding: 16px 0;
   margin-bottom: 20px;
 }
 
-/* Source section - each is a horizontal scroll section */
+/* Source section - each source is a separate grid */
 .source-section {
   margin-bottom: 24px;
-  display: block;
 }
 
 .source-section:last-child {
@@ -769,38 +767,19 @@ body {
   text-transform: uppercase;
 }
 
+/* Grid container - 3 columns on mobile */
 .source-section-cards {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns equal width */
   gap: 12px;
-  padding: 8px 12px;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  padding: 0;
 }
 
-.source-section-cards::-webkit-scrollbar {
-  height: 6px;
-}
-
-.source-section-cards::-webkit-scrollbar-track {
-  background: var(--bg);
-  border-radius: 3px;
-}
-
-.source-section-cards::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-.source-section-cards::-webkit-scrollbar-thumb:hover {
-  background: var(--border-strong);
-}
-
+/* Card base styles */
 .horizontal-rate-card {
   flex: 0 0 auto;
-  width: 150px; /* Standard size */
+  width: auto; /* Auto width for grid */
+  min-width: 0; /* Allow shrinking in grid */
   background: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.08) 0%,
@@ -809,27 +788,26 @@ body {
   backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 14px;
-  scroll-snap-align: start;
+  padding: 12px;
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 
+  box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Card sizes */
+/* Card sizes - adjust for grid */
 .horizontal-rate-card.compact {
-  width: 130px;
+  padding: 10px;
 }
 
 .horizontal-rate-card.standard {
-  width: 150px;
+  padding: 12px;
 }
 
 .horizontal-rate-card.wide {
-  width: 170px;
+  padding: 14px;
 }
 
 /* Left accent bar for change indication */
@@ -862,15 +840,15 @@ body {
 /* Card hover/press effect */
 .horizontal-rate-card:hover {
   border-color: var(--accent);
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.2),
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 0 20px rgba(91, 138, 255, 0.15);
 }
 
 .horizontal-rate-card:active {
-  transform: translateY(-2px) scale(0.98);
+  transform: translateY(0);
   transition-duration: 0.1s;
 }
 
@@ -878,12 +856,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .horizontal-rate-code {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text2);
   letter-spacing: 0.12em;
@@ -891,14 +869,14 @@ body {
 }
 
 .horizontal-rate-flag {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .horizontal-rate-value {
   font-family: var(--mono);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -940,22 +918,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 10px;
-  margin-top: 8px;
+  padding-top: 8px;
+  margin-top: 6px;
   border-top: 1px solid var(--border-subtle);
-  gap: 8px;
+  gap: 6px;
 }
 
 .horizontal-rate-change {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   flex-shrink: 0;
-  padding: 3px 6px;
-  border-radius: 6px;
+  padding: 2px 5px;
+  border-radius: 4px;
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -975,7 +953,7 @@ body {
 }
 
 .horizontal-rate-name {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text3);
   white-space: nowrap;
   overflow: hidden;
@@ -984,13 +962,13 @@ body {
   text-align: right;
 }
 
-/* Card size variants */
+/* Card size variants - adjust font sizes */
 .horizontal-rate-card.compact .horizontal-rate-value {
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .horizontal-rate-card.wide .horizontal-rate-value {
-  font-size: 24px;
+  font-size: 20px;
 }
 
 /* Hide horizontal container when not active */
