@@ -504,12 +504,14 @@ body.theme-light .btn-primary-v2:active {
 
 /* Light mode floating nav - enhanced glass */
 body.theme-light .floating-nav-inner {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(255, 255, 255, 0.6);
-  border-top-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(255, 255, 255, 0.5);
+  border-top-color: rgba(255, 255, 255, 0.9);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
 }
 
 .nav-item {
@@ -593,6 +595,12 @@ body.theme-light .nav-item.active .nav-label {
   border-bottom: 0.5px solid var(--border-subtle);
 }
 
+/* Light mode page header - reduce spacing to ticker */
+body.theme-light .page-header {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
 .page-title {
   font-size: 28px;
   font-weight: 700;
@@ -600,6 +608,16 @@ body.theme-light .nav-item.active .nav-label {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Light mode page title - stronger gradient for visibility */
+body.theme-light .page-title {
+  background: linear-gradient(135deg, #3b6ee8 0%, #5080f0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(59, 110, 224, 0.1);
 }
 
 .back-button {
@@ -617,13 +635,33 @@ body.theme-light .nav-item.active .nav-label {
   transition: all var(--duration-normal) var(--ease-out);
 }
 
+/* Light mode back button - better visibility */
+body.theme-light .back-button {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #4a5070;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
 .back-button:hover {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
 }
 
+/* Light mode hover */
+body.theme-light .back-button:hover {
+  background: rgba(255, 255, 255, 0.85);
+  color: #1a1f3a;
+  box-shadow: 0 4px 12px rgba(59, 110, 224, 0.15);
+}
+
 .back-button:active {
   transform: scale(0.95);
+}
+
+/* Light mode active */
+body.theme-light .back-button:active {
+  box-shadow: 0 1px 4px rgba(59, 110, 224, 0.1);
 }
 
 /* --- Enhanced Section Header --- */
