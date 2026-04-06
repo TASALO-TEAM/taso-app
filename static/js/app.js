@@ -988,12 +988,25 @@ function renderCombinedChart(history) {
 }
 
 /**
+ * Convert hex color to rgba string
+ * @param {string} hex - Hex color (e.g., '#ef4444')
+ * @param {number} alpha - Opacity 0-1
+ * @returns {string} rgba color string
+ */
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
  * Render single chart
  * @param {string} canvasId - Canvas element ID
  * @param {string} label - Currency label
  * @param {Array} labels - X-axis labels
  * @param {Array} data - Y-axis data
- * @param {string} color - Line color
+ * @param {string} color - Line color (hex)
  */
 function renderSingleChart(canvasId, label, labels, data, color) {
   const canvas = document.getElementById(canvasId);
@@ -1007,10 +1020,10 @@ function renderSingleChart(canvasId, label, labels, data, color) {
     window[chartKey].destroy();
   }
 
-  // Create gradient
+  // Create gradient using proper hex-to-rgba conversion
   const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, color.replace(')', ', 0.2)').replace('rgb', 'rgba'));
-  gradient.addColorStop(1, color.replace(')', ', 0)').replace('rgb', 'rgba'));
+  gradient.addColorStop(0, hexToRgba(color, 0.2));
+  gradient.addColorStop(1, hexToRgba(color, 0));
 
   window[chartKey] = new Chart(ctx, {
     type: 'line',
@@ -1099,11 +1112,12 @@ function renderSeparatedCharts(history) {
 
 /**
  * Switch between combined and separated views
+ * Re-renders charts for the newly visible view
  * @param {string} view - 'combined' or 'separated'
  */
 function switchView(view) {
   console.log('[TASALO DEBUG] switchView called with:', view);
-  
+
   const combinedView = document.getElementById('combined-view');
   const separatedView = document.getElementById('separated-view');
   const combinedBtn = document.getElementById('view-combined');
@@ -1120,12 +1134,22 @@ function switchView(view) {
     separatedView.classList.add('hidden');
     if (combinedBtn) combinedBtn.classList.add('active');
     if (separatedBtn) separatedBtn.classList.remove('active');
+
+    // Re-render combined chart if we have cached data
+    if (window._historyData) {
+      renderCombinedChart(window._historyData);
+    }
   } else {
     console.log('[TASALO DEBUG] Switching to separated view');
     combinedView.classList.add('hidden');
     separatedView.classList.remove('hidden');
     if (combinedBtn) combinedBtn.classList.remove('active');
     if (separatedBtn) separatedBtn.classList.add('active');
+
+    // Re-render separated charts if we have cached data
+    if (window._historyData) {
+      renderSeparatedCharts(window._historyData);
+    }
   }
 }
 
@@ -1151,17 +1175,21 @@ async function loadCharts(days) {
     }
 
     // Parse history data - API returns data array with fetched_at, usd_rate, eur_rate, mlc_rate
+    // Keep null values as null (Chart.js skips null points instead of plotting 0)
     const history = data.data.map(point => {
       console.log('[TASALO DEBUG] Parsing data point:', point);
       return {
         fetched_at: point.fetched_at,
-        usdRate: point.usd_rate || 0,
-        eurRate: point.eur_rate || 0,
-        mlcRate: point.mlc_rate || 0
+        usdRate: point.usd_rate ?? null,
+        eurRate: point.eur_rate ?? null,
+        mlcRate: point.mlc_rate ?? null
       };
     });
 
     console.log('[TASALO DEBUG] Parsed history:', history);
+
+    // Cache history data for view switching
+    window._historyData = history;
 
     // Render based on current view
     const combinedView = document.getElementById('combined-view');
@@ -1676,12 +1704,12 @@ function initHistoryPage() {
     return;
   }
 
-  // Get default days from selector or use 30
+  // Get default days from selector (defaults to 30 in HTML)
   const daysSelect = document.getElementById('days-select');
   const defaultDays = daysSelect ? parseInt(daysSelect.value) || 30 : 30;
-  
+
   console.log('[TASALO DEBUG] Loading charts with default days:', defaultDays);
-  
+
   // Load default (30 days)
   loadCharts(defaultDays);
 

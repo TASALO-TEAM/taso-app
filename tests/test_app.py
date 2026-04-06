@@ -59,10 +59,13 @@ def test_index_has_api_url_injected(client):
 
 
 def test_history_has_chart_canvas(client):
-    """GET /history incluye canvas para Chart.js."""
+    """GET /history incluye canvas para Chart.js (combined + separated)."""
     response = client.get("/history")
     assert response.status_code == 200
-    assert b"id=\"history-chart\"" in response.data
+    assert b"id=\"combined-chart\"" in response.data
+    assert b"id=\"usd-chart\"" in response.data
+    assert b"id=\"eur-chart\"" in response.data
+    assert b"id=\"mlc-chart\"" in response.data
 
 
 def test_history_has_view_toggle(client):
