@@ -62,16 +62,15 @@
    THEME CLASSES (Explicit light/dark modes)
 ═══════════════════════════════════════════════ */
 
-/* Light Mode - Liquid Glass Style (aligned with taso-ext values) */
+/* Light Mode - EXACT taso-ext popup.css body.theme-light values */
 body.theme-light {
-  /* Liquid Glass - Light Mode Colors (taso-ext aligned) */
-  --bg:           #f0f2f8;
+  --bg:           #e8eaf3;
   --bg-glass:     rgba(255, 255, 255, 0.92);
   --bg-nav:       rgba(255, 255, 255, 0.85);
   --bg-overlay:   rgba(255, 255, 255, 0.98);
   --text:         #0f0f1a;
-  --text2:        #3d4260;
-  --text3:        #5a6080;
+  --text2:        #4a5070;
+  --text3:        #7880a0;
   --border:       rgba(0, 0, 0, 0.08);
   --border-subtle:  rgba(0, 0, 0, 0.05);
   --border-strong:  rgba(0, 0, 0, 0.15);
@@ -80,12 +79,12 @@ body.theme-light {
   /* Accent colors for light mode */
   --accent:       #3b6ee8;
   --accent-hover: #5080f0;
-  --accent-glow:  rgba(59, 110, 224, 0.25);
+  --accent-glow:  rgba(59, 110, 224, 0.3);
 
-  /* Semantic colors for light mode (higher contrast) */
+  /* Semantic colors for light mode */
   --up:           #dc2626;
   --down:         #16a34a;
-  --neutral:      #4b5563;
+  --neutral:      #5b6070;
   --success:      #16a34a;
   --warning:      #d97706;
   --error:        #dc2626;
@@ -116,14 +115,14 @@ body.theme-dark {
   --glass-shadow-hover: 0 16px 48px rgba(91, 138, 255, 0.25);
 }
 
-/* System preference (auto mode) - aligned with taso-ext */
+/* System preference (auto mode) - aligned with taso-ext popup.css */
 @media (prefers-color-scheme: light) {
   :root {
-    --bg:           #f0f2f8;
+    --bg:           #e8eaf3;
     --bg-glass:     rgba(255, 255, 255, 0.92);
     --text:         #0f0f1a;
-    --text2:        #3d4260;
-    --text3:        #5a6080;
+    --text2:        #4a5070;
+    --text3:        #7880a0;
     --border:       rgba(0, 0, 0, 0.08);
     --border-accent:  rgba(59, 110, 224, 0.35);
     --accent:       #3b6ee8;
@@ -137,17 +136,18 @@ body.theme-dark {
    Inspired by taso-ext Liquid Glass design
 ═══════════════════════════════════════════════ */
 
-/* Base background with gradient pattern for Light Mode */
+/* Base background with gradient pattern for Light Mode - EXACT taso-ext newtab.css values */
 body.theme-light::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf3 50%, #f0f2f8 100%);
+  background:
+    linear-gradient(135deg, #f5f7fa 0%, #e4e8ef 50%, #f0f2f7 100%);
 }
 
-/* Animated blobs for Light Mode */
+/* Animated blobs for Light Mode - EXACT taso-ext newtab.css values */
 body.theme-light::after {
   content: '';
   position: fixed;
@@ -155,14 +155,14 @@ body.theme-light::after {
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(600px 600px at 20% 30%, rgba(99, 102, 241, 0.20) 0%, transparent 70%),
-    radial-gradient(500px 500px at 80% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 70%),
-    radial-gradient(550px 550px at 60% 70%, rgba(20, 184, 166, 0.13) 0%, transparent 70%),
-    radial-gradient(400px 400px at 10% 80%, rgba(249, 115, 22, 0.10) 0%, transparent 70%),
-    radial-gradient(350px 350px at 90% 60%, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+    radial-gradient(600px 600px at 20% 30%, rgba(99,102,241,0.25) 0%, transparent 70%),
+    radial-gradient(500px 500px at 80% 20%, rgba(236,72,153,0.2) 0%, transparent 70%),
+    radial-gradient(550px 550px at 60% 70%, rgba(20,184,166,0.18) 0%, transparent 70%),
+    radial-gradient(400px 400px at 10% 80%, rgba(249,115,22,0.15) 0%, transparent 70%),
+    radial-gradient(350px 350px at 90% 60%, rgba(168,85,247,0.12) 0%, transparent 70%);
   animation: blob-float 25s ease-in-out infinite;
   filter: blur(30px);
-  opacity: 0.75;
+  opacity: 0.85;
 }
 
 /* Animated blobs for Dark Mode */

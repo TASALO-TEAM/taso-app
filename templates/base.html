@@ -31,9 +31,12 @@
       theme: {
         extend: {
           colors: {
-            accent: '#5b8aff',
-            'tasalo-bg': '#09091e',
-            'tasalo-bg-glass': 'rgba(16, 16, 42, 0.92)',
+            accent: 'var(--accent)',
+            'tasalo-bg': 'var(--bg)',
+            'tasalo-bg-glass': 'var(--bg-glass)',
+            text: 'var(--text)',
+            text2: 'var(--text2)',
+            text3: 'var(--text3)',
           },
           fontFamily: {
             mono: ['JetBrains Mono', 'monospace'],
@@ -46,7 +49,7 @@
 
   {% block head %}{% endblock %}
 </head>
-<body class="bg-tasalo-bg text-gray-100 font-ui min-h-screen">
+<body class="bg-tasalo-bg font-ui min-h-screen" style="background-color: var(--bg); color: var(--text);">
   <!-- Telegram Web App Init -->
   <script>
     const tg = window.Telegram.WebApp;

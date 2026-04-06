@@ -3,116 +3,169 @@
 {% block title %}TASALO - Página Desaparecida{% endblock %}
 
 {% block content %}
-<!-- Back Button -->
-<header class="mb-6">
-  <a href="/" class="text-text hover:text-accent transition-colors inline-flex items-center gap-2">
-    <span class="text-xl">←</span>
-    <span class="text-sm font-medium">Volver</span>
-  </a>
-</header>
+<style>
+  .error-page { padding: 0 0 2rem; }
+  .error-back {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: var(--text); text-decoration: none; transition: color 0.2s;
+    font-size: 0.875rem; font-weight: 500;
+  }
+  .error-back:hover { color: var(--accent); }
+  .error-number {
+    font-size: 120px; line-height: 1; font-family: var(--mono);
+    font-weight: 700; color: var(--accent); opacity: 0.3;
+    margin-bottom: 1rem; text-align: center;
+  }
+  .error-title {
+    font-size: 1.5rem; font-weight: 700; font-family: var(--ui);
+    color: var(--text); margin-bottom: 0.5rem; text-align: center;
+  }
+  .error-subtitle {
+    font-size: 1rem; color: var(--text); max-width: 28rem;
+    margin: 0 auto 2rem; text-align: center; line-height: 1.5;
+  }
+  .error-card {
+    background: var(--bg-glass); backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 1.5rem; margin-bottom: 1.5rem;
+  }
+  .error-alert-icon {
+    width: 3rem; height: 3rem; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(217, 119, 6, 0.15);
+  }
+  .error-alert-icon svg { width: 1.5rem; height: 1.5rem; color: var(--warning); }
+  .error-h2 {
+    font-size: 1rem; font-weight: 600; font-family: var(--ui);
+    color: var(--text); margin-bottom: 0.5rem;
+  }
+  .error-p {
+    font-size: 0.875rem; color: var(--text); line-height: 1.625;
+  }
+  .error-actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .error-action {
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--bg-glass); backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--border); border-radius: var(--r);
+    padding: 1rem; text-decoration: none; transition: border-color 0.2s;
+  }
+  .error-action:hover { border-color: var(--border-accent); }
+  .error-action svg { width: 2rem; height: 2rem; color: var(--accent); margin-bottom: 0.75rem; }
+  .error-action-label {
+    font-size: 0.875rem; font-weight: 600; color: var(--text);
+  }
+  .error-action-desc {
+    font-size: 0.75rem; color: var(--text); margin-top: 0.25rem;
+  }
+  .error-populars-h3 {
+    font-size: 0.75rem; font-weight: 700; font-family: var(--ui);
+    color: var(--text); text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .error-link {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.75rem; border-radius: 0.5rem; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .error-link:hover { background: var(--accent-dim, rgba(59, 110, 224, 0.1)); }
+  .error-link svg { width: 1.25rem; height: 1.25rem; color: var(--accent); flex-shrink: 0; }
+  .error-link span {
+    font-size: 0.875rem; font-weight: 500; color: var(--text);
+  }
+  .error-cta { text-align: center; margin-top: 1.5rem; }
+</style>
 
-<!-- Main 404 Section -->
-<div class="text-center mb-8">
-  <!-- Large 404 Number -->
-  <div class="text-[120px] leading-none font-mono font-bold text-accent opacity-30 mb-4">
-    404
+<div class="error-page">
+  <!-- Back Button -->
+  <header style="margin-bottom: 1.5rem;">
+    <a href="/" class="error-back">
+      <span style="font-size: 1.25rem;">←</span>
+      <span>Volver</span>
+    </a>
+  </header>
+
+  <!-- Main 404 Section -->
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <div class="error-number">404</div>
+    <h1 class="error-title">Página Desaparecida</h1>
+    <p class="error-subtitle">
+      Esta página no existe o fue movida. Pero podemos ayudarte a encontrar lo que buscas.
+    </p>
   </div>
 
-  <!-- Title -->
-  <h1 class="text-2xl font-bold font-ui text-text mb-2">
-    Página Desaparecida
-  </h1>
-
-  <!-- Subtitle -->
-  <p class="text-text text-base max-w-md mx-auto mb-8">
-    Esta página no existe o fue movida. Pero podemos ayudarte a encontrar lo que buscas.
-  </p>
-</div>
-
-<!-- Missing Person Cards -->
-<div class="glass-card rounded-xl p-6 mb-6">
-  <div class="flex items-start gap-4 mb-2">
-    <!-- Alert Icon -->
-    <div class="flex-shrink-0 w-12 h-12 rounded-full bg-warning/15 flex items-center justify-center">
-      <svg class="w-6 h-6 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-      </svg>
-    </div>
-
-    <!-- Content -->
-    <div class="flex-1 text-left">
-      <h2 class="text-base font-semibold font-ui text-text mb-2">
-        ¿Qué pasó?
-      </h2>
-      <p class="text-text text-sm leading-relaxed">
-        La URL que intentas acceder no está registrada en nuestro sistema.
-        Puede que haya sido removida, renombrada o nunca existió.
-      </p>
+  <!-- Explanation Card -->
+  <div class="error-card">
+    <div style="display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 0.5rem;">
+      <div class="error-alert-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div style="flex: 1;">
+        <h2 class="error-h2">¿Qué pasó?</h2>
+        <p class="error-p">
+          La URL que intentas acceder no está registrada en nuestro sistema.
+          Puede que haya sido removida, renombrada o nunca existió.
+        </p>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Quick Actions -->
-<div class="grid grid-cols-2 gap-3 mb-6">
-  <a href="/" class="glass-card rounded-lg p-4 text-center hover:border-accent/40 hover:bg-glass transition-all group">
-    <div class="mb-3">
-      <svg class="w-8 h-8 mx-auto text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Quick Actions -->
+  <div class="error-actions">
+    <a href="/" class="error-action">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
       </svg>
-    </div>
-    <div class="text-sm font-semibold text-text">Inicio</div>
-    <div class="text-xs text-text mt-0.5">Ver tasas actuales</div>
-  </a>
-
-  <a href="/settings" class="glass-card rounded-lg p-4 text-center hover:border-accent/40 hover:bg-glass transition-all group">
-    <div class="mb-3">
-      <svg class="w-8 h-8 mx-auto text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <span class="error-action-label">Inicio</span>
+      <span class="error-action-desc">Ver tasas actuales</span>
+    </a>
+    <a href="/settings" class="error-action">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
-    </div>
-    <div class="text-sm font-semibold text-text">Ajustes</div>
-    <div class="text-xs text-text mt-0.5">Preferencias de la app</div>
-  </a>
-</div>
-
-<!-- Popular Pages -->
-<div class="glass-card rounded-xl p-5 mb-6">
-  <h3 class="text-xs font-bold font-ui text-text uppercase tracking-wider mb-4">
-    Páginas Populares
-  </h3>
-  <div class="space-y-1">
-    <a href="/" class="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/10 transition-colors group">
-      <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-      </svg>
-      <span class="text-text text-sm font-medium">Ver tasas actuales</span>
-    </a>
-    <a href="/history" class="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/10 transition-colors group">
-      <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-      </svg>
-      <span class="text-text text-sm font-medium">Historial de tasas</span>
-    </a>
-    <a href="/provincias" class="flex items-center gap-3 p-3 rounded-lg hover:bg-accent/10 transition-colors group">
-      <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-      </svg>
-      <span class="text-text text-sm font-medium">Tasas por provincia</span>
+      <span class="error-action-label">Ajustes</span>
+      <span class="error-action-desc">Preferencias de la app</span>
     </a>
   </div>
-</div>
 
-<!-- Back to Home CTA -->
-<div class="text-center">
-  <button
-    onclick="window.location.href='/'"
-    class="btn-primary-v2 inline-flex items-center gap-2 py-3 px-8"
-  >
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-    </svg>
-    Volver al inicio
-  </button>
+  <!-- Popular Pages -->
+  <div class="error-card" style="padding: 1.25rem;">
+    <h3 class="error-populars-h3">Páginas Populares</h3>
+    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+      <a href="/" class="error-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+        <span>Ver tasas actuales</span>
+      </a>
+      <a href="/history" class="error-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+        <span>Historial de tasas</span>
+      </a>
+      <a href="/provincias" class="error-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+        <span>Tasas por provincia</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Back to Home CTA -->
+  <div class="error-cta">
+    <button onclick="window.location.href='/'" class="btn-primary-v2" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 2rem;">
+      <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      Volver al inicio
+    </button>
+  </div>
 </div>
 {% endblock %}
