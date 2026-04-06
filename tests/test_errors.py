@@ -15,7 +15,8 @@ def test_404_for_nonexistent_route(client):
     """GET a ruta inexistente devuelve 404."""
     response = client.get("/nonexistent-route")
     assert response.status_code == 404
-    assert b"Error 404" in response.data
+    assert b"404" in response.data
+    assert b"Desaparecida" in response.data or "Desaparecida".encode("utf-8") in response.data
 
 
 def test_404_for_api_route(client):
@@ -33,3 +34,29 @@ def test_error_template_has_back_link(client):
     assert response.status_code == 404
     assert b'href="/"' in response.data
     assert b"Volver" in response.data
+
+
+def test_404_has_quick_actions(client):
+    """404 page includes quick action links."""
+    response = client.get("/nonexistent-route")
+    assert response.status_code == 404
+    assert b'href="/settings"' in response.data
+    assert b"Inicio" in response.data
+    assert b"Ajustes" in response.data
+
+
+def test_404_has_popular_pages(client):
+    """404 page includes popular pages section."""
+    response = client.get("/nonexistent-route")
+    assert response.status_code == 404
+    assert b"Paginas Populares" in response.data or "Páginas Populares".encode("utf-8") in response.data
+    assert b'href="/history"' in response.data
+    assert b'href="/provincias"' in response.data
+
+
+def test_404_has_explanation(client):
+    """404 page includes explanation of what happened."""
+    response = client.get("/nonexistent-route")
+    assert response.status_code == 404
+    assert b"Que paso" in response.data or "¿Qué pasó?".encode("utf-8") in response.data
+    assert b"no esta registrada" in response.data or "no está registrada".encode("utf-8") in response.data
