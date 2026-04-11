@@ -231,7 +231,7 @@ def test_imagen_has_refresh_button(client):
     """GET /imagen incluye botón de actualizar."""
     response = client.get("/imagen")
     assert response.status_code == 200
-    assert b"refresh-image-btn" in response.data
+    assert b"refresh-btn" in response.data
     assert b"Actualizar" in response.data
 
 
