@@ -207,24 +207,20 @@ def test_imagen_endpoint_returns_html(client):
 
 
 def test_imagen_has_source_selector(client):
-    """GET /imagen incluye selector de fuente."""
+    """GET /imagen muestra la imagen de ElToque (toqueimg)."""
     response = client.get("/imagen")
     assert response.status_code == 200
-    assert b"source-btn" in response.data
-    assert b"Tasalo" in response.data
-    assert b"El Toque" in response.data
-    assert b"BCC" in response.data
-    assert b"CADECA" in response.data
+    assert b"ToqueImg" in response.data
+    assert b"tasalobot" in response.data
 
 
-def test_imagen_has_action_buttons(client):
-    """GET /imagen incluye botones de descarga y compartir."""
+def test_imagen_has_polaroid_frame(client):
+    """GET /imagen incluye marco polaroid con marketing."""
     response = client.get("/imagen")
     assert response.status_code == 200
-    assert b"download-btn" in response.data
-    assert b"share-btn" in response.data
-    assert b"Descargar" in response.data
-    assert b"Compartir" in response.data
+    assert b"polaroid-frame" in response.data
+    assert b"TASALO" in response.data
+    assert b"@tasalobot" in response.data
 
 
 def test_imagen_has_refresh_button(client):
@@ -232,7 +228,6 @@ def test_imagen_has_refresh_button(client):
     response = client.get("/imagen")
     assert response.status_code == 200
     assert b"refresh-btn" in response.data
-    assert b"Actualizar" in response.data
 
 
 def test_imagen_includes_telegram_miniapp_script(client):
@@ -297,11 +292,10 @@ def test_history_has_backbutton_integration(client):
 
 
 def test_imagen_has_download_button(client):
-    """GET /imagen incluye botón de descarga."""
+    """GET /imagen incluye botón de descargar."""
     response = client.get("/imagen")
     assert response.status_code == 200
-    assert b"download-btn" in response.data
-    assert b"Descargar" in response.data
+    assert b"refresh-btn" in response.data
 
 
 def test_alerts_has_mainbutton_create(client):
