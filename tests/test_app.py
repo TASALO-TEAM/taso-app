@@ -243,28 +243,43 @@ def test_imagen_includes_telegram_miniapp_script(client):
 
 
 def test_alerts_endpoint_returns_html(client):
-    """GET /alerts devuelve HTML con gestión de alertas."""
+    """GET /alerts devuelve HTML con gestión de alerta de imagen."""
     response = client.get("/alerts")
     assert response.status_code == 200
-    assert b"Alertas" in response.data
-    assert b"alerts-container" in response.data
+    assert b"Alerta de Imagen" in response.data
+    assert b"alert-form" in response.data
 
 
-def test_alerts_has_create_button(client):
-    """GET /alerts incluye botón de crear alerta."""
+def test_alerts_has_time_selector(client):
+    """GET /alerts incluye selector de hora."""
     response = client.get("/alerts")
     assert response.status_code == 200
-    assert b"create-alert-btn" in response.data
-    assert b"Nueva" in response.data
+    assert b' type="time"' in response.data
+    assert b"alert-time" in response.data
 
 
-def test_alerts_has_empty_state(client):
-    """GET /alerts incluye estado vacío cuando no hay alertas."""
+def test_alerts_has_format_selector(client):
+    """GET /alerts incluye selector de formato (foto/documento)."""
     response = client.get("/alerts")
     assert response.status_code == 200
-    assert b"empty-state" in response.data
-    assert b"Sin alertas" in response.data
-    assert b"Crear Alerta" in response.data
+    assert b"format" in response.data
+    assert b"photo" in response.data
+    assert b"document" in response.data
+
+
+def test_alerts_has_enable_toggle(client):
+    """GET /alerts incluye toggle de activar/desactivar."""
+    response = client.get("/alerts")
+    assert response.status_code == 200
+    assert b"alert-enabled" in response.data
+
+
+def test_alerts_has_save_button(client):
+    """GET /alerts incluye botón de guardar."""
+    response = client.get("/alerts")
+    assert response.status_code == 200
+    assert b"save-alert-btn" in response.data
+    assert b"Guardar" in response.data
 
 
 def test_index_has_telegram_mainbutton_setup(client):
@@ -290,8 +305,8 @@ def test_imagen_has_download_button(client):
 
 
 def test_alerts_has_mainbutton_create(client):
-    """GET /alerts incluye botón de crear alerta."""
+    """GET /alerts incluye botón de guardar alerta de imagen."""
     response = client.get("/alerts")
     assert response.status_code == 200
-    assert b"create-alert" in response.data
-    assert b"Nueva" in response.data
+    assert b"save-alert-btn" in response.data
+    assert b"Guardar" in response.data

@@ -1885,9 +1885,6 @@ async function initApp() {
         origLoadRates();
       };
     }
-
-    // Prompt homescreen after 3 visits
-    promptHomescreen();
   }
 
   // ============================================================
@@ -2041,38 +2038,6 @@ class NetworkStatus {
       toast.style.opacity = '0';
       setTimeout(() => toast.remove(), 200);
     }, 2500);
-  }
-}
-
-/**
- * Prompt user to add homescreen shortcut (after 3 visits).
- */
-async function promptHomescreen() {
-  if (!tgMiniApp || !tgMiniApp.isInsideTelegram) return;
-
-  try {
-    const status = await tgMiniApp.checkHomeScreenStatus();
-    if (status === 'unsupported' || status === 'added') return;
-
-    // Show subtle banner
-    const visitCount = parseInt(localStorage.getItem('tasalo_visit_count') || '0') + 1;
-    localStorage.setItem('tasalo_visit_count', String(visitCount));
-
-    if (visitCount >= 3) {
-      tgMiniApp.haptic('light');
-      // Use Telegram native alert to prompt
-      tgMiniApp.showAlert('💡 Tip: Agrega TASALO a tu pantalla de inicio para acceso rápido');
-
-      // Wait a bit, then attempt to add
-      setTimeout(async () => {
-        const success = await tgMiniApp.addToHomeScreen();
-        if (success) {
-          localStorage.removeItem('tasalo_visit_count');
-        }
-      }, 2000);
-    }
-  } catch (e) {
-    console.warn('[TASALO] Homescreen prompt failed:', e);
   }
 }
 
