@@ -1906,7 +1906,11 @@ function setupPageButtons(path) {
 
   switch (path) {
     case '/':
-      // Home: no buttons (user has nav bar for navigation)
+      // Home: MainButton = "Crear Alerta" → /alerts
+      tgMiniApp.setMainButton({
+        text: '🔔 Crear Alerta',
+        onClick: () => window.location.href = `${window.TASALO_BASE_PATH || ''}/alerts`
+      });
       break;
 
     case '/imagen':

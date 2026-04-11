@@ -7,13 +7,44 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  /* Polaroid Image Viewer — ElToque Only */
+  /* Polaroid Image Viewer */
   .polaroid-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
     padding-bottom: 6rem;
+  }
+
+  /* Source Selector */
+  .image-source-selector {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .source-btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text2);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .source-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text);
+  }
+
+  .source-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
   }
 
   /* Polaroid Frame */
@@ -117,6 +148,53 @@
     margin-top: 1px;
   }
 
+  /* Action Buttons */
+  .image-actions {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .action-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .action-btn.primary {
+    background: linear-gradient(135deg, var(--accent) 0%, #4a75e8 100%);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+
   /* Timestamp */
   .image-timestamp {
     font-family: 'JetBrains Mono', monospace;
@@ -124,24 +202,6 @@
     color: var(--text3);
     text-align: center;
     letter-spacing: 0.05em;
-  }
-
-  /* Refresh button in header */
-  .refresh-btn-header {
-    padding: 0.5rem 1rem;
-    border-radius: var(--r);
-    border: 1px solid var(--accent);
-    background: transparent;
-    color: var(--accent);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .refresh-btn-header:hover {
-    background: var(--accent);
-    color: #fff;
   }
 
   /* Error State */
@@ -169,6 +229,23 @@
     font-family: 'Space Grotesk', sans-serif;
   }
 
+  .refresh-btn-header {
+    padding: 0.5rem 1rem;
+    border-radius: var(--r);
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .refresh-btn-header:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
@@ -177,13 +254,21 @@
 
 {% block content %}
 <header class="page-header">
-  <h1 class="page-title">📸 ToqueImg</h1>
+  <h1 class="page-title">📸 Imagen</h1>
   <button id="refresh-btn" class="back-button" aria-label="Actualizar imagen">
     <span>⟳</span>
   </button>
 </header>
 
 <div class="polaroid-container">
+  <!-- Source Selector -->
+  <div class="image-source-selector">
+    <button class="source-btn active" data-source="tasalo">📊 Tasalo</button>
+    <button class="source-btn" data-source="eltoque">📱 El Toque</button>
+    <button class="source-btn" data-source="bcc">🏛 BCC</button>
+    <button class="source-btn" data-source="cadeca">🏢 CADECA</button>
+  </div>
+
   <!-- Polaroid Frame -->
   <div class="polaroid-frame" id="polaroid-frame">
     <div class="polaroid-image-wrapper loading" id="rates-image-container">
@@ -200,6 +285,18 @@
 
   <!-- Timestamp -->
   <div class="image-timestamp" id="image-timestamp">Cargando imagen...</div>
+
+  <!-- Action Buttons -->
+  <div class="image-actions">
+    <button class="action-btn primary" id="download-btn" onclick="downloadImage()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Descargar
+    </button>
+    <button class="action-btn" id="share-btn" onclick="shareImage()">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Compartir
+    </button>
+  </div>
 </div>
 {% endblock %}
 
@@ -207,16 +304,16 @@
 <script src="{{ url_for('static', filename='js/telegram-miniapp.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script>
-  // ElToque Image Viewer — uses the captured image from /toqueimg
+  // Image Viewer Page Logic
+  let currentSource = 'tasalo';
   let imageLoaded = false;
 
-  // The endpoint for the actual ElToque image file (same as /toqueimg in bot)
-  function getImageUrl() {
+  function getImageUrl(source) {
     const apiBase = window.TASALO_API_URL || '';
-    return `${apiBase}/api/v1/images/eltoque/file/latest?t=${Date.now()}`;
+    return `${apiBase}/api/v1/images/rates?source=${source}&t=${Date.now()}`;
   }
 
-  async function loadImage() {
+  async function loadImage(source = currentSource) {
     const container = document.getElementById('rates-image-container');
     const timestamp = document.getElementById('image-timestamp');
 
@@ -225,7 +322,7 @@
     timestamp.textContent = 'Cargando imagen...';
 
     try {
-      const imageUrl = getImageUrl();
+      const imageUrl = getImageUrl(source);
 
       const img = new Image();
       img.onload = function() {
@@ -272,12 +369,83 @@
     }
   }
 
+  async function downloadImage() {
+    if (!imageLoaded) return;
+
+    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+      const apiBase = window.TASALO_API_URL || '';
+      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
+      const today = new Date().toISOString().split('T')[0];
+
+      try {
+        const success = await tgMiniApp.downloadFile(imageUrl, `tasas_cuba_${today}.png`);
+        if (!success) {
+          fallbackDownload(imageUrl);
+        }
+      } catch (e) {
+        fallbackDownload(imageUrl);
+      }
+    } else {
+      const apiBase = window.TASALO_API_URL || '';
+      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
+      fallbackDownload(imageUrl);
+    }
+  }
+
+  function fallbackDownload(url) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tasas_cuba_${new Date().toISOString().split('T')[0]}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  async function shareImage() {
+    if (!imageLoaded) return;
+
+    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+      const apiBase = window.TASALO_API_URL || '';
+      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
+      tgMiniApp.getRaw().openLink(imageUrl);
+    } else {
+      const apiBase = window.TASALO_API_URL || '';
+      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Tasas de Cambio Cuba — TASALO',
+            text: 'Últimas tasas de cambio del dólar en Cuba',
+            url: imageUrl,
+          });
+        } catch (e) {
+          // User cancelled
+        }
+      }
+    }
+  }
+
   function refreshImage() {
     if (tgMiniApp && tgMiniApp.isInsideTelegram) {
       tgMiniApp.haptic('tap');
     }
     loadImage();
   }
+
+  // Source button handlers
+  document.querySelectorAll('.source-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentSource = btn.dataset.source;
+      loadImage(currentSource);
+
+      if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+        tgMiniApp.haptic('select');
+      }
+    });
+  });
 
   // Refresh button
   const refreshBtn = document.getElementById('refresh-btn');
@@ -290,7 +458,7 @@
 
   // Load image on page load
   document.addEventListener('DOMContentLoaded', () => {
-    loadImage();
+    loadImage('tasalo');
   });
 </script>
 {% endblock %}
