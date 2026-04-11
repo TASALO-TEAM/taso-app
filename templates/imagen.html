@@ -3,8 +3,11 @@
 {% block title %}Imagen de Tasas — TASALO{% endblock %}
 
 {% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
-  /* Polaroid Image Viewer */
+  /* Polaroid Image Viewer — ElToque Only */
   .polaroid-container {
     display: flex;
     flex-direction: column;
@@ -13,54 +16,35 @@
     padding-bottom: 6rem;
   }
 
-  .polaroid-header {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .polaroid-title {
-    font-size: 1.125rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
   /* Polaroid Frame */
   .polaroid-frame {
     width: 100%;
-    max-width: 420px;
-    background: #ffffff;
-    border-radius: 4px;
+    max-width: 400px;
+    background: #fefefe;
+    border-radius: 3px;
     box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.15),
-      0 12px 48px rgba(0, 0, 0, 0.1),
-      0 0 0 1px rgba(0, 0, 0, 0.05);
-    padding: 16px 16px 80px 16px;
+      0 2px 20px rgba(0, 0, 0, 0.12),
+      0 8px 40px rgba(0, 0, 0, 0.08);
+    padding: 14px 14px 72px 14px;
     position: relative;
-    transform: rotate(-1deg);
-    transition: transform 0.3s ease;
+    transform: rotate(-0.5deg);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .polaroid-frame:hover {
-    transform: rotate(0deg) scale(1.01);
+    transform: rotate(0deg) scale(1.005);
   }
 
   body.theme-light .polaroid-frame {
     box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.1),
-      0 12px 48px rgba(0, 0, 0, 0.08),
-      0 0 0 1px rgba(0, 0, 0, 0.08);
+      0 2px 20px rgba(0, 0, 0, 0.08),
+      0 8px 40px rgba(0, 0, 0, 0.06);
   }
 
   .polaroid-image-wrapper {
     width: 100%;
     aspect-ratio: 1 / 1;
-    background: #f0f0f0;
+    background: #e8e8e8;
     border-radius: 2px;
     overflow: hidden;
     display: flex;
@@ -81,135 +65,69 @@
 
   .polaroid-image-wrapper.loading::after {
     content: '';
-    width: 32px;
-    height: 32px;
-    border: 3px solid #ccc;
-    border-top-color: var(--accent);
+    width: 28px;
+    height: 28px;
+    border: 2.5px solid #ccc;
+    border-top-color: #5b8aff;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.7s linear infinite;
     position: absolute;
   }
 
-  /* Polaroid Caption Area (Marketing) */
+  /* Marketing Caption (Polaroid caption strip) */
   .polaroid-caption {
     position: absolute;
-    bottom: 12px;
-    left: 16px;
-    right: 16px;
+    bottom: 10px;
+    left: 14px;
+    right: 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     text-align: center;
   }
 
-  .polaroid-bot-name {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 14px;
+  .polaroid-bot-brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
     font-weight: 700;
     color: #1a1a2e;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #1a1a2e 0%, #3b6ee8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .polaroid-bot-handle {
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: #5b8aff;
-    font-weight: 600;
+    font-weight: 500;
+    color: #3b6ee8;
+    letter-spacing: 0.03em;
   }
 
   .polaroid-bot-tagline {
-    font-size: 9px;
-    color: #888;
-    letter-spacing: 0.08em;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 8px;
+    color: #999;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
+    margin-top: 1px;
   }
 
-  .polaroid-bot-qr {
-    width: 32px;
-    height: 32px;
-    margin-top: 2px;
-    opacity: 0.6;
+  /* Timestamp */
+  .image-timestamp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    text-align: center;
+    letter-spacing: 0.05em;
   }
 
-  /* Source Selector */
-  .image-source-selector {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .source-btn {
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--r);
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text2);
-    font-size: 0.8125rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  .source-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text);
-  }
-
-  .source-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-  }
-
-  /* Action Buttons */
-  .image-actions {
-    display: flex;
-    gap: 0.75rem;
-    width: 100%;
-    max-width: 420px;
-  }
-
-  .action-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-radius: var(--r);
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-decoration: none;
-  }
-
-  .action-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .action-btn svg {
-    width: 18px;
-    height: 18px;
-    stroke: currentColor;
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  .action-btn.primary {
-    background: linear-gradient(135deg, var(--accent) 0%, #4a75e8 100%);
-    border-color: var(--accent);
-    color: #fff;
-    box-shadow: 0 4px 16px var(--accent-glow);
-  }
-
-  .refresh-btn {
+  /* Refresh button in header */
+  .refresh-btn-header {
     padding: 0.5rem 1rem;
     border-radius: var(--r);
     border: 1px solid var(--accent);
@@ -221,7 +139,7 @@
     transition: all 0.2s ease;
   }
 
-  .refresh-btn:hover {
+  .refresh-btn-header:hover {
     background: var(--accent);
     color: #fff;
   }
@@ -233,24 +151,22 @@
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    padding: 2rem;
+    padding: 2rem 1.5rem;
     text-align: center;
     color: var(--text2);
   }
 
   .polaroid-error svg {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     stroke: var(--text3);
     fill: none;
     stroke-width: 1.5;
   }
 
-  /* Timestamp */
-  .image-timestamp {
-    font-size: 0.75rem;
-    color: var(--text3);
-    text-align: center;
+  .polaroid-error-msg {
+    font-size: 13px;
+    font-family: 'Space Grotesk', sans-serif;
   }
 
   @keyframes spin {
@@ -261,81 +177,29 @@
 
 {% block content %}
 <header class="page-header">
-  <h1 class="page-title">📸 Imagen</h1>
+  <h1 class="page-title">📸 ToqueImg</h1>
   <button id="refresh-btn" class="back-button" aria-label="Actualizar imagen">
     <span>⟳</span>
   </button>
 </header>
 
 <div class="polaroid-container">
-  <!-- Source Selector -->
-  <div class="image-source-selector">
-    <button class="source-btn active" data-source="tasalo">📊 Tasalo</button>
-    <button class="source-btn" data-source="eltoque">📱 El Toque</button>
-    <button class="source-btn" data-source="bcc">🏛 BCC</button>
-    <button class="source-btn" data-source="cadeca">🏢 CADECA</button>
-  </div>
-
   <!-- Polaroid Frame -->
   <div class="polaroid-frame" id="polaroid-frame">
     <div class="polaroid-image-wrapper loading" id="rates-image-container">
       <!-- Image or loading spinner -->
     </div>
 
-    <!-- Marketing Caption (Polaroid-style) -->
+    <!-- Marketing Caption (Polaroid-style caption strip) -->
     <div class="polaroid-caption">
-      <div class="polaroid-bot-name">TASALO</div>
-      <div class="polaroid-bot-handle">@tasalo_bot</div>
+      <div class="polaroid-bot-brand">TASALO</div>
+      <div class="polaroid-bot-handle">@tasalobot</div>
       <div class="polaroid-bot-tagline">Tasas de cambio Cuba · Tiempo real</div>
-      <!-- QR Code placeholder -->
-      <svg class="polaroid-bot-qr" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="2" y="2" width="8" height="8" fill="#1a1a2e"/>
-        <rect x="4" y="4" width="4" height="4" fill="#fff"/>
-        <rect x="22" y="2" width="8" height="8" fill="#1a1a2e"/>
-        <rect x="24" y="4" width="4" height="4" fill="#fff"/>
-        <rect x="2" y="22" width="8" height="8" fill="#1a1a2e"/>
-        <rect x="4" y="24" width="4" height="4" fill="#fff"/>
-        <rect x="12" y="2" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="16" y="2" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="12" y="6" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="12" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="16" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="20" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="2" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="6" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="12" y="16" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="20" y="16" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="24" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="28" y="12" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="24" y="16" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="28" y="20" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="12" y="20" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="16" y="20" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="12" y="24" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="16" y="28" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="20" y="24" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="24" y="24" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="28" y="28" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="20" y="28" width="2" height="2" fill="#1a1a2e"/>
-        <rect x="28" y="24" width="2" height="2" fill="#1a1a2e"/>
-      </svg>
     </div>
   </div>
 
   <!-- Timestamp -->
   <div class="image-timestamp" id="image-timestamp">Cargando imagen...</div>
-
-  <!-- Action Buttons -->
-  <div class="image-actions">
-    <button class="action-btn primary" id="download-btn" onclick="downloadImage()">
-      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Descargar
-    </button>
-    <button class="action-btn" id="share-btn" onclick="shareImage()">
-      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      Compartir
-    </button>
-  </div>
 </div>
 {% endblock %}
 
@@ -343,16 +207,16 @@
 <script src="{{ url_for('static', filename='js/telegram-miniapp.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script>
-  // Polaroid Image Viewer Page Logic
-  let currentSource = 'tasalo';
+  // ElToque Image Viewer — uses the captured image from /toqueimg
   let imageLoaded = false;
 
-  function getImageUrl(source) {
+  // The endpoint for the actual ElToque image file (same as /toqueimg in bot)
+  function getImageUrl() {
     const apiBase = window.TASALO_API_URL || '';
-    return `${apiBase}/api/v1/images/rates?source=${source}&t=${Date.now()}`;
+    return `${apiBase}/api/v1/images/eltoque/file/latest?t=${Date.now()}`;
   }
 
-  async function loadImage(source = currentSource) {
+  async function loadImage() {
     const container = document.getElementById('rates-image-container');
     const timestamp = document.getElementById('image-timestamp');
 
@@ -361,7 +225,7 @@
     timestamp.textContent = 'Cargando imagen...';
 
     try {
-      const imageUrl = getImageUrl(source);
+      const imageUrl = getImageUrl();
 
       const img = new Image();
       img.onload = function() {
@@ -397,8 +261,8 @@
     container.innerHTML = `
       <div class="polaroid-error">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        <div>No se pudo cargar la imagen</div>
-        <button class="refresh-btn" onclick="loadImage()">Reintentar</button>
+        <div class="polaroid-error-msg">No se pudo cargar la imagen</div>
+        <button class="refresh-btn-header" onclick="loadImage()">Reintentar</button>
       </div>
     `;
     timestamp.textContent = 'Error al cargar';
@@ -408,83 +272,12 @@
     }
   }
 
-  async function downloadImage() {
-    if (!imageLoaded) return;
-
-    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
-      const apiBase = window.TASALO_API_URL || '';
-      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
-      const today = new Date().toISOString().split('T')[0];
-
-      try {
-        const success = await tgMiniApp.downloadFile(imageUrl, `tasas_cuba_${today}.png`);
-        if (!success) {
-          fallbackDownload(imageUrl);
-        }
-      } catch (e) {
-        fallbackDownload(imageUrl);
-      }
-    } else {
-      const apiBase = window.TASALO_API_URL || '';
-      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
-      fallbackDownload(imageUrl);
-    }
-  }
-
-  function fallbackDownload(url) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `tasas_cuba_${new Date().toISOString().split('T')[0]}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  async function shareImage() {
-    if (!imageLoaded) return;
-
-    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
-      const apiBase = window.TASALO_API_URL || '';
-      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
-      tgMiniApp.getRaw().openLink(imageUrl);
-    } else {
-      const apiBase = window.TASALO_API_URL || '';
-      const imageUrl = `${apiBase}/api/v1/images/rates?source=${currentSource}`;
-
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: 'Tasas de Cambio Cuba — TASALO',
-            text: 'Últimas tasas de cambio del dólar en Cuba',
-            url: imageUrl,
-          });
-        } catch (e) {
-          // User cancelled
-        }
-      }
-    }
-  }
-
   function refreshImage() {
     if (tgMiniApp && tgMiniApp.isInsideTelegram) {
       tgMiniApp.haptic('tap');
     }
     loadImage();
   }
-
-  // Source button handlers
-  document.querySelectorAll('.source-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentSource = btn.dataset.source;
-      loadImage(currentSource);
-
-      if (tgMiniApp && tgMiniApp.isInsideTelegram) {
-        tgMiniApp.haptic('select');
-      }
-    });
-  });
 
   // Refresh button
   const refreshBtn = document.getElementById('refresh-btn');
@@ -497,7 +290,7 @@
 
   // Load image on page load
   document.addEventListener('DOMContentLoaded', () => {
-    loadImage('tasalo');
+    loadImage();
   });
 </script>
 {% endblock %}
