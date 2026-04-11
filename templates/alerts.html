@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas — TASALO{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<header class="page-header">
+  <h1 class="page-title">🔔 Alertas</h1>
+  <button id="create-alert-btn" class="btn-primary-v2 text-sm py-2 px-4" aria-label="Crear alerta">
+    ＋ Nueva
+  </button>
+</header>
+
+<!-- Loading State -->
+<div id="loading" class="space-y-4">
+  <div class="glass-card-v2">
+    <div class="skeleton-v2 h-16 w-full mb-2 rounded"></div>
+    <div class="skeleton-v2 h-16 w-full mb-2 rounded"></div>
+    <div class="skeleton-v2 h-16 w-2/3 rounded"></div>
+  </div>
+</div>
+
+<!-- Empty State -->
+<div id="empty-state" class="hidden text-center py-12">
+  <div class="text-6xl mb-4">🔔</div>
+  <h3 class="text-lg font-semibold mb-2" style="color: var(--text);">Sin alertas</h3>
+  <p class="text-sm mb-6" style="color: var(--text2);">Crea tu primera alerta para recibir notificaciones cuando las tasas cambien.</p>
+  <button id="create-alert-fab" class="btn-primary-v2">＋ Crear Alerta</button>
+</div>
+
+<!-- Alert List -->
+<div id="alerts-container" class="space-y-3 hidden">
+  <!-- Alerts rendered by JS -->
+</div>
+
+<!-- Last Update -->
+<div id="alerts-timestamp" class="text-center text-3 text-sm mt-4 mb-24"></div>
+
+<!-- Floating Navigation -->
+<nav class="floating-nav">
+  <div class="floating-nav-inner">
+    <a href="/" data-nav-link class="nav-item">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Inicio</span>
+    </a>
+    <a href="/history" data-nav-link class="nav-item">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">Historial</span>
+    </a>
+    <a href="/provincias" data-nav-link class="nav-item">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Provincias</span>
+    </a>
+    <a href="/alerts" data-nav-link class="nav-item active">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Alertas</span>
+    </a>
+    <a href="/settings" data-nav-link class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </a>
+  </div>
+</nav>
+
+<script>
+  document.querySelectorAll('[data-nav-link]').forEach(link => {
+    const basePath = window.TASALO_BASE_PATH || '';
+    const href = link.getAttribute('href');
+    if (basePath && !href.startsWith(basePath)) {
+      link.setAttribute('href', basePath + href);
+    }
+  });
+  const currentPath = window.location.pathname.replace('/miniapp', '') || '/';
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const href = item.getAttribute('href');
+    if (href === currentPath) item.classList.add('active');
+    else item.classList.remove('active');
+  });
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/telegram-miniapp.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+(function() {
+  const API_BASE = window.TASALO_API_URL || '';
+  let alerts = [];
+
+  function getHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+      h['X-Init-Data'] = tgMiniApp.getInitData();
+    }
+    return h;
+  }
+
+  // --- Load Alerts ---
+  async function loadAlerts() {
+    const loading = document.getElementById('loading');
+    const empty = document.getElementById('empty-state');
+    const container = document.getElementById('alerts-container');
+    loading.classList.remove('hidden');
+    empty.classList.add('hidden');
+    container.classList.add('hidden');
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/alerts`, { headers: getHeaders() });
+      if (!resp.ok) { throw new Error(`HTTP ${resp.status}`); }
+      alerts = await resp.json();
+      renderAlerts();
+    } catch (e) {
+      console.error('[TASALO] Load alerts error:', e);
+      loading.classList.add('hidden');
+      empty.classList.remove('hidden');
+      empty.querySelector('p').textContent = 'Error al cargar alertas. Reintentar.';
+      if (tgMiniApp) tgMiniApp.haptic('error');
+    }
+  }
+
+  function renderAlerts() {
+    const loading = document.getElementById('loading');
+    const empty = document.getElementById('empty-state');
+    const container = document.getElementById('alerts-container');
+    loading.classList.add('hidden');
+
+    if (!alerts || alerts.length === 0) {
+      empty.classList.remove('hidden');
+      container.classList.add('hidden');
+      document.getElementById('alerts-timestamp').textContent = '';
+      return;
+    }
+
+    empty.classList.add('hidden');
+    container.classList.remove('hidden');
+
+    container.innerHTML = alerts.map(a => `
+      <div class="glass-card-v2 p-4" data-alert-id="${a.id}">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${a.type === 'price' ? '💰' : a.type === 'interval' ? '⏱️' : '🕐'}</span>
+            <span class="font-bold text-sm" style="color: var(--text);">${a.currency}</span>
+            <span class="text-xs px-2 py-0.5 rounded" style="background: var(--accent); color: #fff;">${a.source || 'all'}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            ${a.last_triggered ? `<span class="text-xs" style="color: var(--text3);">Act: ${new Date(a.last_triggered).toLocaleTimeString('es-CU', {hour:'2-digit',minute:'2-digit'})}</span>` : ''}
+            <span class="text-xs font-mono" style="color: var(--text3);">×${a.trigger_count || 0}</span>
+          </div>
+        </div>
+        <div class="text-sm mb-3" style="color: var(--text2);">
+          ${renderAlertDescription(a)}
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs" style="color: var(--text3);">
+            ${new Date(a.created_at).toLocaleDateString('es-CU')}
+          </span>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input type="checkbox" ${a.active ? 'checked' : ''} onchange="window.__toggleAlert('${a.id}', this.checked)" class="w-4 h-4 rounded accent-accent">
+              <span class="text-xs" style="color: var(--text2);">${a.active ? 'Activa' : 'Inactiva'}</span>
+            </label>
+            <button onclick="window.__deleteAlert('${a.id}')" class="text-xs px-2 py-1 rounded border border-red-500/30 text-red-400 hover:bg-red-500/10">
+              Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    const now = new Date();
+    document.getElementById('alerts-timestamp').textContent =
+      `${alerts.length} alerta${alerts.length > 1 ? 's' : ''} · ${now.toLocaleTimeString('es-CU', {hour:'2-digit',minute:'2-digit'})}`;
+  }
+
+  function renderAlertDescription(a) {
+    if (a.type === 'price') {
+      const dir = a.direction === 'above' ? 'suba por encima de' : 'baje por debajo de';
+      return `Notificar cuando USD ${dir} <strong>${a.threshold}</strong> CUP`;
+    } else if (a.type === 'interval') {
+      return `Notificar cada <strong>${a.interval_minutes} min</strong>`;
+    } else if (a.type === 'hourly') {
+      return `Notificar a las <strong>${String(a.hour).padStart(2,'0')}:00</strong> cada día`;
+    }
+    return '';
+  }
+
+  // --- Toggle Alert ---
+  window.__toggleAlert = async function(alertId, active) {
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/alerts/${alertId}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify({ active })
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (tgMiniApp) tgMiniApp.haptic(active ? 'success' : 'warning');
+      loadAlerts();
+    } catch (e) {
+      console.error('[TASALO] Toggle error:', e);
+      if (tgMiniApp) tgMiniApp.haptic('error');
+    }
+  };
+
+  // --- Delete Alert ---
+  window.__deleteAlert = async function(alertId) {
+    let confirmed = true;
+    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+      confirmed = await tgMiniApp.showConfirm('¿Eliminar esta alerta?');
+    } else {
+      confirmed = confirm('¿Eliminar esta alerta?');
+    }
+    if (!confirmed) return;
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/alerts/${alertId}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      if (tgMiniApp) tgMiniApp.haptic('warning');
+      loadAlerts();
+    } catch (e) {
+      console.error('[TASALO] Delete error:', e);
+      if (tgMiniApp) tgMiniApp.showAlert('Error al eliminar la alerta');
+    }
+  };
+
+  // --- Create Alert Flow ---
+  async function createAlertFlow() {
+    // Prevent accidental closure during form creation
+    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+      tgMiniApp.enableClosingConfirmation();
+    }
+
+    try {
+      if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+        await createAlertFlowNative();
+      } else {
+        await createAlertFlowForm();
+      }
+    } finally {
+      // Restore default closing behavior after flow completes
+      if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+        tgMiniApp.disableClosingConfirmation();
+      }
+    }
+  }
+
+  async function createAlertFlowNative() {
+    // Step 1: Type
+    const type = await tgMiniApp.showPopup({
+      title: '📢 Nueva Alerta',
+      message: '¿Qué tipo de alerta quieres crear?',
+      buttons: [
+        { id: 'price', type: 'default', text: '💰 Por precio' },
+        { id: 'interval', type: 'default', text: '⏱️ Por intervalo' },
+        { id: 'hourly', type: 'default', text: '🕐 Hora fija' },
+        { id: 'cancel', type: 'cancel' }
+      ]
+    });
+    if (type === 'cancel' || !type) return;
+
+    // Step 2: Currency
+    const currency = await tgMiniApp.showPopup({
+      title: '💱 Moneda',
+      message: 'Selecciona la moneda:',
+      buttons: [
+        { id: 'USD', type: 'default', text: '🇺🇸 USD' },
+        { id: 'EUR', type: 'default', text: '🇪🇺 EUR' },
+        { id: 'MLC', type: 'default', text: '🛒 MLC' },
+        { id: 'cancel', type: 'cancel' }
+      ]
+    });
+    if (currency === 'cancel' || !currency) return;
+
+    // Step 3: Type-specific params
+    const alertData = { type, currency, source: 'all' };
+
+    if (type === 'price') {
+      const result = await tgMiniApp.showPopup({
+        title: '💰 Precio umbral',
+        message: 'Dirección del alerta:',
+        buttons: [
+          { id: 'above', type: 'default', text: '📈 Sube (above)' },
+          { id: 'below', type: 'default', text: '📉 Baja (below)' },
+          { id: 'cancel', type: 'cancel' }
+        ]
+      });
+      if (result === 'cancel' || !result) return;
+      alertData.direction = result;
+      alertData.threshold = 500; // Default threshold
+    } else if (type === 'interval') {
+      const result = await tgMiniApp.showPopup({
+        title: '⏱️ Intervalo',
+        message: 'Cada cuántos minutos:',
+        buttons: [
+          { id: '15', type: 'default', text: '15 min' },
+          { id: '30', type: 'default', text: '30 min' },
+          { id: '60', type: 'default', text: '60 min' },
+          { id: 'cancel', type: 'cancel' }
+        ]
+      });
+      if (result === 'cancel' || !result) return;
+      alertData.interval_minutes = parseInt(result);
+    } else if (type === 'hourly') {
+      alertData.hour = 8; // Default 8 AM
+    }
+
+    // Confirm
+    const summary = buildAlertSummary(alertData);
+    const ok = await tgMiniApp.showConfirm(`Crear alerta:\n\n${summary}`);
+    if (!ok) return;
+
+    await saveAlert(alertData);
+  }
+
+  async function createAlertFlowForm() {
+    // Fallback for standalone browser: simple prompt-based
+    const type = prompt('Tipo (price/interval/hourly):', 'price');
+    if (!type) return;
+    const currency = prompt('Moneda (USD/EUR/MLC):', 'USD');
+    if (!currency) return;
+
+    const alertData = { type, currency, source: 'all' };
+
+    if (type === 'price') {
+      alertData.direction = prompt('Dirección (above/below):', 'above');
+      alertData.threshold = parseFloat(prompt('Umbral (precio):', '500'));
+    } else if (type === 'interval') {
+      alertData.interval_minutes = parseInt(prompt('Minutos (15/30/60):', '30'));
+    } else if (type === 'hourly') {
+      alertData.hour = parseInt(prompt('Hora (0-23):', '8'));
+    }
+
+    if (confirm(`Crear alerta:\n\n${buildAlertSummary(alertData)}`)) {
+      await saveAlert(alertData);
+    }
+  }
+
+  function buildAlertSummary(a) {
+    if (a.type === 'price') {
+      const dir = a.direction === 'above' ? 'suba por encima' : 'baje por debajo';
+      return `${a.currency}: notificar cuando ${dir} de ${a.threshold} CUP`;
+    } else if (a.type === 'interval') {
+      return `${a.currency}: notificar cada ${a.interval_minutes} min`;
+    } else if (a.type === 'hourly') {
+      return `${a.currency}: notificar a las ${String(a.hour).padStart(2,'0')}:00`;
+    }
+    return JSON.stringify(a);
+  }
+
+  async function saveAlert(data) {
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/alerts`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const created = await resp.json();
+      if (tgMiniApp) {
+        tgMiniApp.haptic('success');
+        tgMiniApp.showAlert('✅ Alerta creada exitosamente');
+      } else {
+        alert('✅ Alerta creada exitosamente');
+      }
+      loadAlerts();
+    } catch (e) {
+      console.error('[TASALO] Create alert error:', e);
+      if (tgMiniApp) {
+        tgMiniApp.haptic('error');
+        tgMiniApp.showAlert('Error al crear la alerta');
+      } else {
+        alert('Error al crear la alerta');
+      }
+    }
+  }
+
+  // --- Event Listeners ---
+  document.getElementById('create-alert-btn').addEventListener('click', () => {
+    if (tgMiniApp) tgMiniApp.haptic('tap');
+    createAlertFlow();
+  });
+
+  document.getElementById('create-alert-fab').addEventListener('click', () => {
+    if (tgMiniApp) tgMiniApp.haptic('tap');
+    createAlertFlow();
+  });
+
+  // --- Init ---
+  document.addEventListener('DOMContentLoaded', loadAlerts);
+})();
+</script>
+{% endblock %}

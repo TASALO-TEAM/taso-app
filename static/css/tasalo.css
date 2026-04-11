@@ -1381,6 +1381,35 @@ body.theme-light .horizontal-rate-name {
   display: none;
 }
 
+/* ═══════════════════════════════════════════════
+   SAFE AREA PADDING (Notched Devices)
+   For Telegram Mini App on devices with notches
+═══════════════════════════════════════════════ */
+
+/* Safe area padding for main container */
+.container-safe {
+  padding-top: max(0.5rem, var(--safe-top));
+  padding-bottom: max(0.5rem, var(--safe-bottom));
+  padding-left: max(0.5rem, var(--safe-left));
+  padding-right: max(0.5rem, var(--safe-right));
+}
+
+/* Floating nav safe area positioning */
+.floating-nav {
+  bottom: calc(max(1rem, var(--safe-bottom)) + 1rem);
+}
+
+/* ═══════════════════════════════════════════════
+   STANDALONE BROWSER MODE
+   Styles for when the app is NOT inside Telegram
+═══════════════════════════════════════════════ */
+
+body.standalone-mode {
+  /* Override any Telegram-specific assumptions */
+  --tg-theme-bg-color: var(--bg, #09091e);
+  --tg-theme-text-color: var(--text, #eeeef8);
+}
+
 /* Utility Classes */
 .text-accent { color: var(--accent); }
 .text-up { color: var(--up); }

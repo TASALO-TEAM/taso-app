@@ -196,3 +196,102 @@ def test_settings_has_show_flags_option(client):
     response = client.get("/settings")
     assert response.status_code == 200
     assert b"Show Flags on Cards" in response.data
+
+
+def test_imagen_endpoint_returns_html(client):
+    """GET /imagen devuelve HTML con visor de imagen."""
+    response = client.get("/imagen")
+    assert response.status_code == 200
+    assert b"Imagen de Tasas" in response.data
+    assert b"rates-image-container" in response.data
+
+
+def test_imagen_has_source_selector(client):
+    """GET /imagen incluye selector de fuente."""
+    response = client.get("/imagen")
+    assert response.status_code == 200
+    assert b"source-btn" in response.data
+    assert b"Tasalo" in response.data
+    assert b"El Toque" in response.data
+    assert b"BCC" in response.data
+    assert b"CADECA" in response.data
+
+
+def test_imagen_has_action_buttons(client):
+    """GET /imagen incluye botones de descarga y compartir."""
+    response = client.get("/imagen")
+    assert response.status_code == 200
+    assert b"download-btn" in response.data
+    assert b"share-btn" in response.data
+    assert b"Descargar" in response.data
+    assert b"Compartir" in response.data
+
+
+def test_imagen_has_refresh_button(client):
+    """GET /imagen incluye botón de actualizar."""
+    response = client.get("/imagen")
+    assert response.status_code == 200
+    assert b"refresh-image-btn" in response.data
+    assert b"Actualizar" in response.data
+
+
+def test_imagen_includes_telegram_miniapp_script(client):
+    """GET /imagen incluye telegram-miniapp.js."""
+    response = client.get("/imagen")
+    assert response.status_code == 200
+    assert b"telegram-miniapp.js" in response.data
+
+
+def test_alerts_endpoint_returns_html(client):
+    """GET /alerts devuelve HTML con gestión de alertas."""
+    response = client.get("/alerts")
+    assert response.status_code == 200
+    assert b"Alertas" in response.data
+    assert b"alerts-container" in response.data
+
+
+def test_alerts_has_create_button(client):
+    """GET /alerts incluye botón de crear alerta."""
+    response = client.get("/alerts")
+    assert response.status_code == 200
+    assert b"create-alert-btn" in response.data
+    assert b"Nueva" in response.data
+
+
+def test_alerts_has_empty_state(client):
+    """GET /alerts incluye estado vacío cuando no hay alertas."""
+    response = client.get("/alerts")
+    assert response.status_code == 200
+    assert b"empty-state" in response.data
+    assert b"Sin alertas" in response.data
+    assert b"Crear Alerta" in response.data
+
+
+def test_index_has_telegram_mainbutton_setup(client):
+    """GET / incluye telegram-miniapp.js para MainButton integration."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"telegram-miniapp.js" in response.data
+
+
+def test_history_has_backbutton_integration(client):
+    """GET /history incluye telegram-miniapp.js para BackButton."""
+    response = client.get("/history")
+    assert response.status_code == 200
+    assert b"telegram-miniapp.js" in response.data
+
+
+def test_imagen_has_download_button(client):
+    """GET /imagen incluye botón de descarga."""
+    response = client.get("/imagen")
+    assert response.status_code == 200
+    assert b"download-btn" in response.data
+    assert b"Descargar" in response.data
+
+
+def test_alerts_has_mainbutton_create(client):
+    """GET /alerts incluye botón de crear alerta."""
+    response = client.get("/alerts")
+    assert response.status_code == 200
+    assert b"create-alert" in response.data
+    assert b"Nueva" in response.data

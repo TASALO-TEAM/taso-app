@@ -51,6 +51,16 @@ def create_app():
         """Vista configuración - preferencias de usuario."""
         return render_template("settings.html", tasalo_api_url=settings.tasalo_api_url)
 
+    @app.route("/imagen")
+    def imagen():
+        """Vista imagen de tasas - equivalente a /toqueimg del bot."""
+        return render_template("imagen.html", tasalo_api_url=settings.tasalo_api_url)
+
+    @app.route("/alerts")
+    def alerts_view():
+        """Vista de gestión de alertas."""
+        return render_template("alerts.html", tasalo_api_url=settings.tasalo_api_url)
+
     @app.route("/stats")
     def stats():
         """Vista de estadísticas del bot (solo admin)."""

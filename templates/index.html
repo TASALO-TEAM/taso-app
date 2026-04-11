@@ -76,6 +76,14 @@
       <span class="nav-icon">🗺️</span>
       <span class="nav-label">Provincias</span>
     </a>
+    <a href="/alerts" data-nav-link class="nav-item">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Alertas</span>
+    </a>
+    <a href="/imagen" data-nav-link class="nav-item">
+      <span class="nav-icon">🖼️</span>
+      <span class="nav-label">Imagen</span>
+    </a>
     <a href="/settings" data-nav-link class="nav-item">
       <span class="nav-icon">⚙️</span>
       <span class="nav-label">Settings</span>
@@ -107,5 +115,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/telegram-miniapp.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 {% endblock %}

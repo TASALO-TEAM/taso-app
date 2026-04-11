@@ -3,6 +3,31 @@
  * Fetches rates from taso-api and renders to DOM
  */
 
+// ============================================================
+// Telegram Mini App Integration (FASE 1)
+// ============================================================
+let tgMiniApp = null;
+
+async function initTelegramIntegration() {
+  if (window.tgApp) {
+    tgMiniApp = window.tgApp;
+    const isInside = await tgMiniApp.init();
+    if (isInside) {
+      console.log('[TASALO] Running inside Telegram Mini App');
+
+      // Sync data when app is activated (Telegram specific)
+      const raw = tgMiniApp.getRaw();
+      if (raw && typeof raw.onEvent === 'function') {
+        raw.onEvent('activated', () => {
+          if (window.networkStatus && window.networkStatus.isOnline) {
+            window.networkStatus._syncData();
+          }
+        });
+      }
+    }
+  }
+}
+
 // Settings storage key
 const SETTINGS_KEY = 'tasalo_settings';
 
@@ -1327,6 +1352,7 @@ async function loadRates() {
     }
   } catch (error) {
     console.error('[TASALO DEBUG] loadRates error:', error);
+    if (tgMiniApp) tgMiniApp.haptic('error');
     showError();
   }
 }
@@ -1405,11 +1431,17 @@ function saveSettings(settings) {
  * @param {string} theme - 'light', 'dark', or 'auto'
  */
 function applyTheme(theme) {
+  // Use Telegram Mini App if available and inside Telegram
+  if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+    // Theme is already applied by tgMiniApp.init()
+    return;
+  }
+
   const body = document.body;
-  
+
   // Remove existing theme classes
   body.classList.remove('theme-light', 'theme-dark');
-  
+
   if (theme === 'light') {
     body.classList.add('theme-light');
   } else if (theme === 'dark') {
@@ -1421,12 +1453,12 @@ function applyTheme(theme) {
       body.classList.add('theme-light');
     }
   }
-  
-  // Sync with Telegram WebApp (version-aware)
-  if (window.Telegram && window.Telegram.WebApp) {
+
+  // Sync with Telegram WebApp (version-aware) - only if not using tgMiniApp
+  if (window.Telegram && window.Telegram.WebApp && !tgMiniApp) {
     const tg = window.Telegram.WebApp;
     const bgColor = getComputedStyle(body).getPropertyValue('--bg') || '#09091e';
-    
+
     // Only set colors if Telegram WebApp API supports it (v7.0+)
     // Version 6.0 doesn't support setHeaderColor/setBackgroundColor
     try {
@@ -1547,6 +1579,9 @@ function initSettingsPage() {
         applyTheme(theme);
         console.log('[TASALO DEBUG] Applying refresh interval:', interval);
         applyRefreshInterval(interval);
+
+        // Haptic feedback on successful save
+        if (tgMiniApp) tgMiniApp.haptic('success');
 
         // Show success message
         const successMsg = document.getElementById('success-message');
@@ -1745,7 +1780,10 @@ function initHistoryPage() {
 /**
  * Initialize the app
  */
-function initApp() {
+async function initApp() {
+  // Initialize Telegram Mini App FIRST
+  await initTelegramIntegration();
+
   // Normalize path by removing /miniapp prefix if present
   let path = window.location.pathname;
   const originalPath = path;
@@ -1831,14 +1869,215 @@ function initApp() {
     const refreshBtn = document.getElementById('refresh-btn');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', () => {
+        if (tgMiniApp) tgMiniApp.haptic('tap');
         loadRates();
       });
     }
 
     // Auto-refresh with configured interval
     applyRefreshInterval(settings.refreshInterval);
+
+    // Haptic success when rates load
+    if (tgMiniApp && tgMiniApp.isInsideTelegram) {
+      // Will be called after rates load
+      const origLoadRates = loadRates;
+      window.loadRates = function() {
+        origLoadRates();
+      };
+    }
+
+    // Prompt homescreen after 3 visits
+    promptHomescreen();
+  }
+
+  // ============================================================
+  // FASE 4: Contextual MainButton + BackButton Integration
+  // ============================================================
+  setupPageButtons(path);
+}
+
+/**
+ * Setup contextual MainButton and BackButton based on current page.
+ * FASE 4: Telegram Mini App native button integration.
+ */
+function setupPageButtons(path) {
+  if (!tgMiniApp || !tgMiniApp.isInsideTelegram) return;
+
+  // Hide both buttons by default first
+  tgMiniApp.hideMainButton();
+  tgMiniApp.hideBackButton();
+
+  switch (path) {
+    case '/':
+      // Home: MainButton = "Crear Alerta" → /alerts
+      tgMiniApp.setMainButton({
+        text: '🔔 Crear Alerta',
+        onClick: () => window.location.href = `${window.TASALO_BASE_PATH || ''}/alerts`
+      });
+      break;
+
+    case '/imagen':
+      // Image: MainButton = "Descargar Imagen"
+      tgMiniApp.setMainButton({
+        text: '📥 Descargar Imagen',
+        onClick: () => {
+          if (typeof downloadImage === 'function') downloadImage();
+        }
+      });
+      // BackButton → home
+      tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
+      break;
+
+    case '/alerts':
+      // Alerts: MainButton = "Nueva Alerta" (handled by inline button)
+      tgMiniApp.setMainButton({
+        text: '➕ Nueva Alerta',
+        onClick: () => {
+          const fab = document.getElementById('create-alert-fab');
+          if (fab) fab.click();
+        }
+      });
+      // BackButton → home
+      tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
+      break;
+
+    case '/history':
+      // History: BackButton → home
+      tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
+      break;
+
+    case '/provincias':
+      // Provincias: BackButton → home
+      tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
+      break;
+
+    case '/settings':
+      // Settings: BackButton → home
+      tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
+      break;
+
+    default:
+      // Unknown page: no buttons
+      break;
   }
 }
+
+// ============================================================
+// FASE 6: Offline Support + Homescreen + Polish
+// ============================================================
+
+/**
+ * NetworkStatus — handles online/offline detection and offline caching.
+ */
+class NetworkStatus {
+  constructor() {
+    this._online = navigator.onLine;
+    window.addEventListener('online', () => this._onOnline());
+    window.addEventListener('offline', () => this._onOffline());
+  }
+
+  get isOnline() { return this._online; }
+
+  _onOnline() {
+    this._online = true;
+    this._showToast('Conexión restaurada', 'success');
+    if (tgMiniApp) tgMiniApp.haptic('success');
+    this._syncData();
+  }
+
+  _onOffline() {
+    this._online = false;
+    this._showToast('Sin conexión — mostrando datos en caché', 'warning');
+    if (tgMiniApp) tgMiniApp.haptic('warning');
+    this._loadFromCache();
+  }
+
+  async _syncData() {
+    // Re-fetch current page data
+    const path = window.location.pathname.replace('/miniapp', '') || '/';
+    if (path === '/') loadRates();
+    else if (path === '/provincias') loadProvincias();
+  }
+
+  async _loadFromCache() {
+    // Try to load rates from DeviceStorage (if available)
+    if (!tgMiniApp || !tgMiniApp.isInsideTelegram) return;
+
+    try {
+      const raw = tgMiniApp.getRaw();
+      if (raw && raw.DeviceStorage) {
+        // DeviceStorage is callback-based
+        const cached = await new Promise((resolve) => {
+          raw.DeviceStorage.getItem('rates_cache', (err, val) => {
+            resolve(val ? JSON.parse(val) : null);
+          });
+        });
+
+        if (cached && cached.data) {
+          renderRates(cached.data);
+          document.getElementById('loading')?.classList.add('hidden');
+          document.getElementById('rates-container')?.classList.remove('hidden');
+          document.getElementById('error')?.classList.add('hidden');
+        }
+      }
+    } catch (e) {
+      console.warn('[TASALO] Failed to load from cache:', e);
+    }
+  }
+
+  _showToast(message, type) {
+    // Simple toast notification — could be enhanced with a proper toast component
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: ${type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#f59e0b'};
+      color: #fff; padding: 8px 16px; border-radius: 8px; font-size: 14px;
+      z-index: 1000; opacity: 0; transition: opacity 0.2s;
+    `;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 200);
+    }, 2500);
+  }
+}
+
+/**
+ * Prompt user to add homescreen shortcut (after 3 visits).
+ */
+async function promptHomescreen() {
+  if (!tgMiniApp || !tgMiniApp.isInsideTelegram) return;
+
+  try {
+    const status = await tgMiniApp.checkHomeScreenStatus();
+    if (status === 'unsupported' || status === 'added') return;
+
+    // Show subtle banner
+    const visitCount = parseInt(localStorage.getItem('tasalo_visit_count') || '0') + 1;
+    localStorage.setItem('tasalo_visit_count', String(visitCount));
+
+    if (visitCount >= 3) {
+      tgMiniApp.haptic('light');
+      // Use Telegram native alert to prompt
+      tgMiniApp.showAlert('💡 Tip: Agrega TASALO a tu pantalla de inicio para acceso rápido');
+
+      // Wait a bit, then attempt to add
+      setTimeout(async () => {
+        const success = await tgMiniApp.addToHomeScreen();
+        if (success) {
+          localStorage.removeItem('tasalo_visit_count');
+        }
+      }, 2000);
+    }
+  } catch (e) {
+    console.warn('[TASALO] Homescreen prompt failed:', e);
+  }
+}
+
+// Create global network status instance
+window.networkStatus = new NetworkStatus();
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
