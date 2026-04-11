@@ -1910,27 +1910,12 @@ function setupPageButtons(path) {
       break;
 
     case '/imagen':
-      // Image: MainButton = "Descargar Imagen"
-      tgMiniApp.setMainButton({
-        text: '📥 Descargar',
-        onClick: () => {
-          if (typeof downloadImage === 'function') downloadImage();
-        }
-      });
-      // BackButton → home
+      // Image: BackButton → home (download button is in-page, below image)
       tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
       break;
 
     case '/alerts':
-      // Alerts: MainButton = "Nueva Alerta" (handled by inline button)
-      tgMiniApp.setMainButton({
-        text: '➕ Nueva Alerta',
-        onClick: () => {
-          const fab = document.getElementById('create-alert-fab');
-          if (fab) fab.click();
-        }
-      });
-      // BackButton → home
+      // Alerts: BackButton → home (create alert button is in-page)
       tgMiniApp.showBackButton(() => window.location.href = `${window.TASALO_BASE_PATH || ''}/`);
       break;
 
