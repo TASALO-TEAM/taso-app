@@ -23,11 +23,9 @@ def create_app():
     app.config["DEBUG"] = settings.debug
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
 
-    # Logging
-    logging.basicConfig(
-        level=getattr(logging, settings.log_level),
-        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
-    )
+    # Logging (consola + archivo rotado con archivado por fecha)
+    from src.logging_config import setup_logging
+    setup_logging(level=getattr(logging, settings.log_level))
     logger = logging.getLogger("taso-miniapp")
 
     # Rutas
