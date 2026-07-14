@@ -476,6 +476,7 @@ Los datos históricos se recopilan automáticamente cada 5 minutos desde el desp
 
 - **taso-api:** https://github.com/TASALO-TEAM/taso-api
 - **taso-bot:** https://github.com/TASALO-TEAM/taso-bot
+- **taso-gcg** (moderación de grupos/canales + RSS): https://github.com/TASALO-TEAM/taso-gcg
 - **Documentación oficial:** https://github.com/TASALO-TEAM/tasalo
 
 ---
