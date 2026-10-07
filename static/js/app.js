@@ -684,7 +684,7 @@ function showNoDataMessage(days) {
       <div class="text-center py-8">
         <p class="text-2 mb-4">📊 No hay datos históricos disponibles aún</p>
         <p class="text-3 text-sm">
-          Los datos se recopilan automáticamente cada 5 minutos.
+          Los datos se recopilan automáticamente cada 15 minutos.
           ${days === 1 ? 'Vuelve mañana para ver el histórico de 1 día.' : 'Vuelve más tarde.'}
         </p>
       </div>

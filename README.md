@@ -457,7 +457,7 @@ La página de historial muestra la evolución de las tasas de cambio con datos l
 - Diseño responsivo con Glass 2.0 styling
 
 ### Nota Importante
-Los datos históricos se recopilan automáticamente cada 5 minutos desde el despliegue. El sistema comienza con 1 día de datos y expande a medida que se acumula información.
+Los datos históricos se recopilan automáticamente cada 15 minutos desde el despliegue. El sistema comienza con 1 día de datos y expande a medida que se acumula información.
 
 ---
 
