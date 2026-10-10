@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     admin_chat_ids: str = ""
     # Edad máxima del initData en segundos (24 h)
     initdata_max_age: int = 86400
+    # Peticiones por minuto y usuario al BFF (0 = sin límite)
+    api_rate_limit_per_minute: int = 120
 
     # Prefijo bajo el que se publica la app (p. ej. "/miniapp"); vacío si cuelga de la raíz.
     # La app acepta las rutas con y sin ese prefijo, así funciona con Caddy haciendo

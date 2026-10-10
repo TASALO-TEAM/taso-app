@@ -13,7 +13,7 @@ CSP = "; ".join(
         "script-src 'self' https://telegram.org",
         "style-src 'self'",
         "font-src 'self'",
-        "img-src 'self' data: https:",
+        "img-src 'self' data: blob: https:",
         "connect-src 'self'",
         "base-uri 'none'",
         "form-action 'none'",

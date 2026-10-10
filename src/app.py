@@ -6,6 +6,7 @@ from datetime import timedelta
 from config import settings
 from asgiref.wsgi import WsgiToAsgi
 from src.security import PrefixStripMiddleware, apply_security_headers
+from src.services.cache import RateLimiter, TTLCache
 
 
 def _read_version(root_dir: str) -> str:
@@ -33,6 +34,9 @@ def create_app():
     app.config["DEBUG"] = settings.debug
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
     app.config["TASALO_SETTINGS"] = settings
+    # Estado en memoria por app (los tests no comparten nada)
+    app.config["TASALO_CACHE"] = TTLCache()
+    app.config["TASALO_LIMITER"] = RateLimiter(settings.api_rate_limit_per_minute, 60.0)
 
     # Acepta las rutas con y sin prefijo (/miniapp), sea cual sea el modo de Caddy
     app.wsgi_app = PrefixStripMiddleware(app.wsgi_app, settings.base_path)

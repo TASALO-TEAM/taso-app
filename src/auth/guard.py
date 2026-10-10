@@ -62,6 +62,11 @@ def require_user(view: Callable) -> Callable:
             return _error(401, "unauthenticated", _PUBLIC_MESSAGE)
         g.init_data = init
         g.user_id = init.user_id
+        limiter = current_app.config.get("TASALO_LIMITER")
+        if limiter is not None and not limiter.allow(init.user_id):
+            resp = _error(429, "rate_limited", "Demasiadas peticiones; espera un momento")
+            resp.headers["Retry-After"] = "30"
+            return resp
         return view(*args, **kwargs)
 
     return wrapper
