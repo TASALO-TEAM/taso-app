@@ -1,0 +1,76 @@
+/* TASALO Miniapp — tokens de diseño (Quiet Glass v3). Fuente: docs/DISENO.md
+   Formato fijo "--nombre: valor;" una por línea: tests/test_contrast.py lo lee. */
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/space_grotesk.woff2") format("woff2");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/jetbrains_mono.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+  --bg: #0E1621;
+  --surface: #121C28;
+  --card: #16212F;
+  --card-high: #1C2937;
+  --accent: #3DD6C0;
+  --on-accent: #06201C;
+  --text: #E8EEF5;
+  --text2: #9FB0C3;
+  --outline: #5F7389;
+  --red: #F2555F;
+  --green: #34D399;
+  --up: var(--red);
+  --down: var(--green);
+  --neutral: #8FA0B3;
+  --error: #F2555F;
+  --error-bg: #3A1A20;
+  --accent-soft: rgba(61, 214, 192, 0.14);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-accent: rgba(61, 214, 192, 0.35);
+
+  --font-ui: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius-card: 20px;
+  --radius-field: 12px;
+  --tap: 44px;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #E6EEF1;
+  --surface: #DDE7EB;
+  --card: #EEF4F6;
+  --card-high: #F4F8FA;
+  --accent: #09665B;
+  --on-accent: #FFFFFF;
+  --text: #1B2A33;
+  --text2: #4F6470;
+  --outline: #6E818C;
+  --red: #BC2C3C;
+  --green: #13724F;
+  --up: var(--red);
+  --down: var(--green);
+  --neutral: #566873;
+  --error: #B52A39;
+  --error-bg: #F8D9DD;
+  --accent-soft: rgba(9, 102, 91, 0.10);
+  --border: rgba(30, 48, 64, 0.09);
+  --border-accent: rgba(9, 102, 91, 0.28);
+}
+
+/* Convención invertida (sube verde / baja rojo): intercambia los colores base, sin ciclos */
+:root[data-invert] {
+  --up: var(--green);
+  --down: var(--red);
+}

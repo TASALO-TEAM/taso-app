@@ -5,6 +5,16 @@ from flask import Flask, jsonify, render_template, request, session, redirect, u
 from datetime import timedelta
 from config import settings
 from asgiref.wsgi import WsgiToAsgi
+from src.security import PrefixStripMiddleware, apply_security_headers
+
+
+def _read_version(root_dir: str) -> str:
+    """Versión de version.txt (para cache-busting y mostrarla en Ajustes)."""
+    try:
+        with open(os.path.join(root_dir, "version.txt"), encoding="utf-8") as fh:
+            return fh.read().strip() or "0"
+    except OSError:
+        return "0"
 
 
 def create_app():
@@ -22,18 +32,38 @@ def create_app():
     app.secret_key = settings.flask_secret_key
     app.config["DEBUG"] = settings.debug
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
+    app.config["TASALO_SETTINGS"] = settings
+
+    # Acepta las rutas con y sin prefijo (/miniapp), sea cual sea el modo de Caddy
+    app.wsgi_app = PrefixStripMiddleware(app.wsgi_app, settings.base_path)
+
+    # Helpers de plantilla: URLs de estáticos con prefijo y cache-busting por versión
+    app_version = _read_version(root_dir)
+
+    @app.context_processor
+    def _template_globals():
+        def asset(path: str) -> str:
+            return f"{settings.base_path}/static/{path}?v={app_version}"
+        return {"asset": asset, "app_version": app_version}
+
+    # Rutas nuevas: shell + API del BFF (CSP estricta)
+    from src.routes import pages, api_public
+    app.register_blueprint(pages.bp)
+    app.register_blueprint(api_public.bp)
+
+    @app.after_request
+    def _security_headers(response):
+        return apply_security_headers(
+            response, request.blueprint, request.path.startswith("/api/")
+        )
 
     # Logging (consola + archivo rotado con archivado por fecha)
     from src.logging_config import setup_logging
     setup_logging(level=getattr(logging, settings.log_level))
     logger = logging.getLogger("taso-miniapp")
 
-    # Rutas
-    @app.route("/")
-    def index():
-        """Vista principal - tasas actuales."""
-        return render_template("index.html", tasalo_api_url=settings.tasalo_api_url)
-
+    # Rutas heredadas (se reemplazan sección a sección; ver docs/HANDOFF_AGENTE.md)
+    # (La ruta "/" ahora es el shell nuevo: src/routes/pages.py)
     @app.route("/history")
     def history():
         """Vista historial - gráfica de evolución."""
@@ -84,7 +114,7 @@ def create_app():
     def stats_logout():
         """Cerrar sesión de estadísticas."""
         session.pop('is_admin', None)
-        return redirect(url_for('index'))
+        return redirect(url_for('pages.shell'))
 
     @app.route("/api/stats")
     def api_stats():

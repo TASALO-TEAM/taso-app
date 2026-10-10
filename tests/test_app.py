@@ -19,43 +19,11 @@ def test_health_endpoint(client):
     assert data["ok"] is True
 
 
-def test_index_endpoint_returns_html(client):
-    """GET / devuelve HTML con título TASALO."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"TASALO" in response.data
-    assert b"index.html" not in response.data  # Template se renderiza
-
-
 def test_history_endpoint_returns_html(client):
     """GET /history devuelve HTML con título Historial."""
     response = client.get("/history")
     assert response.status_code == 200
     assert b"Historial" in response.data
-
-
-def test_index_includes_js_script(client):
-    """GET / incluye referencia al archivo app.js."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"app.js" in response.data
-    assert b"refresh-btn" in response.data
-
-
-def test_index_has_loading_and_error_states(client):
-    """GET / incluye estados de loading y error."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"id=\"loading\"" in response.data
-    assert b"id=\"error\"" in response.data
-    assert b"id=\"rates-container\"" in response.data
-
-
-def test_index_has_api_url_injected(client):
-    """GET / inyecta TASALO_API_URL como variable JS."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"window.TASALO_API_URL" in response.data
 
 
 def test_history_has_chart_canvas(client):
@@ -144,23 +112,6 @@ def test_provincias_has_back_navigation(client):
     response = client.get("/provincias")
     assert response.status_code == 200
     assert b"href=\"/\"" in response.data
-
-
-def test_index_has_ticker_container(client):
-    """GET / incluye contenedor del Binance ticker (sin header, solo monedas)."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"id=\"tickerContainer\"" in response.data
-    # Header "Binance Top 10" eliminado en v0.11.1 - ticker muestra solo monedas
-    assert b"Binance Top 10" not in response.data
-    assert b"id=\"tickerStrip\"" in response.data
-
-
-def test_index_has_horizontal_cards_container(client):
-    """GET / incluye contenedor de tarjetas horizontales."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"id=\"horizontalRatesContainer\"" in response.data
 
 
 def test_settings_has_display_preferences(client):
@@ -275,13 +226,6 @@ def test_alerts_has_save_button(client):
     assert response.status_code == 200
     assert b"save-alert-btn" in response.data
     assert b"Guardar" in response.data
-
-
-def test_index_has_telegram_mainbutton_setup(client):
-    """GET / incluye telegram-miniapp.js para MainButton integration."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"telegram-miniapp.js" in response.data
 
 
 def test_history_has_backbutton_integration(client):

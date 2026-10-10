@@ -1,0 +1,185 @@
+/* TASALO Miniapp — shell y componentes base. Sin estilos en línea en las plantillas (CSP). */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--text);
+  background: radial-gradient(circle at 8% -5%, var(--accent-soft), transparent 70%), var(--bg);
+  background-attachment: fixed;
+  /* Zonas seguras: las de Telegram (v8+) y las del sistema */
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--tg-content-safe-area-inset-top, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-safe-area-inset-bottom, 0px));
+  --safe-left: max(env(safe-area-inset-left, 0px), var(--tg-safe-area-inset-left, 0px));
+  --safe-right: max(env(safe-area-inset-right, 0px), var(--tg-safe-area-inset-right, 0px));
+}
+
+[hidden] { display: none !important; }
+
+h1, h2, p { margin: 0; }
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.sub { font-size: 0.8125rem; color: var(--text2); }
+
+/* ---------- Foco visible ---------- */
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Layout ---------- */
+.app {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+.shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: calc(var(--safe-top) + 0.75rem) 1rem 0.25rem;
+}
+
+.hd-title { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+
+.view {
+  flex: 1;
+  padding: 0.5rem 1rem calc(6rem + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.view:focus { outline: none; }
+
+/* ---------- Tarjetas ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 0.875rem 1rem;
+}
+
+.card-title { font-weight: 600; }
+
+/* ---------- Botones ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0 1.25rem;
+  border: 0;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ---------- Barra flotante tipo cápsula ---------- */
+.nav {
+  position: fixed;
+  left: calc(0.75rem + var(--safe-left));
+  right: calc(0.75rem + var(--safe-right));
+  bottom: calc(0.875rem + var(--safe-bottom));
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 0.375rem;
+  border-radius: 2rem;
+  background: var(--card-high);
+  border: 1px solid var(--border);
+}
+
+.nv {
+  flex: 1;
+  min-width: 3rem;
+  min-height: 3.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  border-radius: 1.625rem;
+  color: var(--text2);
+  font-size: 0.625rem;
+  text-decoration: none;
+}
+
+.nv svg, .state-icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nv svg { width: 1.375rem; height: 1.375rem; }
+
+.nv[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------- Estados globales ---------- */
+.state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: calc(var(--safe-top) + 2rem) 1.5rem calc(var(--safe-bottom) + 2rem);
+  text-align: center;
+}
+
+.state-icon { width: 2.5rem; height: 2.5rem; color: var(--accent); }
+.state-title { font-size: 1.375rem; font-weight: 700; }
+.state-text { color: var(--text2); max-width: 24rem; }
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid var(--border-accent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.banner {
+  padding: calc(var(--safe-top) + 0.5rem) 1rem 0.5rem;
+  background: var(--error-bg);
+  color: var(--error);
+  font-size: 0.8125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: 2.4s; }
+  * { scroll-behavior: auto !important; transition: none !important; }
+}
