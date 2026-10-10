@@ -1,15 +1,18 @@
 // Pestaña Tasas: selector de fuente, tarjetas, aviso de datos viejos, año y frase del día, imagen de El Toque.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). La lógica pura vive en modules/*.
-import { ApiError, getEltoqueImage, getRates, getYear } from "../modules/api.js";
+import { ApiError, getEltoqueImage, getHistorySummary, getRates, getYear } from "../modules/api.js";
+import { sparkline } from "../modules/charts.js";
 import { cubaDateKey, cubaParts } from "../modules/cuba-time.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
+import { lastDays, SUMMARY_DAYS } from "../modules/history-math.js";
 import {
   bannerFor, DEFAULT_SOURCE, flagFor, nameFor, normalizeSource, SOURCES, sourceById, visibleRates,
 } from "../modules/rates.js";
 import { hideBack, showBack } from "../modules/sdk.js";
 import { load, save } from "../modules/storage.js";
 import { compute as computeYear, resolveQuote } from "../modules/year.js";
+import { openHistory } from "./historico.js";
 
 const SOURCE_KEY = "tasalo:source";
 const RATES_KEY = "tasalo:rates";
@@ -17,6 +20,7 @@ const QUOTE_KEY = "tasalo:quote";
 const REFRESH_MS = 5 * 60 * 1000; // refresco automático mientras la pestaña está visible
 const FOCUS_REFRESH_MS = 2 * 60 * 1000; // al volver a la app, solo si lo guardado tiene más de esto
 const TICK_MS = 30 * 1000; // «hace X min» se reescribe sin pedir nada
+const HISTORY_REFRESH_MS = 10 * 60 * 1000; // el historial cambia una vez al día; el servidor ya lo cachea
 const MONTH_LETTERS = ["E", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 
 function validCache(cache) {
@@ -34,6 +38,8 @@ export function mount(ctx) {
     data: validCache(cache) ? cache.data : null,
     savedAt: validCache(cache) && Number.isFinite(cache.savedAt) ? cache.savedAt : 0,
     year: null,
+    history: null,
+    historyAt: 0,
     apiError: false,
     offlineError: false,
     refreshing: false,
@@ -41,7 +47,7 @@ export function mount(ctx) {
   };
   let alive = true;
   let lastFetch = state.savedAt;
-  let closeImage = null;
+  let closeOverlay = null;
 
   // ---------- Esqueleto fijo de la pantalla (los huecos se rellenan al renderizar) ----------
   const bannerSlot = h("div", { class: "slot" });
@@ -78,7 +84,12 @@ export function mount(ctx) {
     state.refreshing = true;
     renderChrome();
     renderContent();
-    const [ratesResult, yearResult] = await Promise.allSettled([getRates(), getYear()]);
+    const wantHistory = !state.history || Date.now() - state.historyAt > HISTORY_REFRESH_MS;
+    const [ratesResult, yearResult, historyResult] = await Promise.allSettled([
+      getRates(),
+      getYear(),
+      wantHistory ? getHistorySummary() : Promise.resolve(null),
+    ]);
     if (!alive) return;
     state.now = Date.now();
     state.refreshing = false;
@@ -95,6 +106,10 @@ export function mount(ctx) {
       state.apiError = !state.offlineError;
     }
     if (yearResult.status === "fulfilled") state.year = yearResult.value;
+    if (historyResult.status === "fulfilled" && historyResult.value && historyResult.value.sources) {
+      state.history = historyResult.value;
+      state.historyAt = state.now;
+    }
     render();
   }
 
@@ -136,9 +151,22 @@ export function mount(ctx) {
     const sell = r.sell === null || r.sell === undefined ? "—" : fmt.rate(r.sell);
     const showBuySell = src.hasBuySell && (r.buy !== null || r.sell !== null);
     const kind = r.change === "up" || r.change === "down" ? r.change : "neutral";
+    const spark = sparkline(sparkPoints(r.code));
     return h(
       "article",
-      { class: "rcard" },
+      {
+        class: "rcard",
+        role: "button",
+        tabindex: "0",
+        "aria-label": `${r.code}, ${nameFor(state.source, r.code)}, ${fmt.rate(r.rate)}. Ver historial`,
+        onClick: () => openDetail(r),
+        onKeydown: (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openDetail(r);
+          }
+        },
+      },
       h("div", { class: "rc-head" }, flag ? h("span", { class: "rc-flag", "aria-hidden": "true", text: flag }) : null, h("span", { class: "rc-code", text: r.code })),
       h("div", { class: "rc-name", text: nameFor(state.source, r.code) }),
       h("div", { class: "rc-rate mono", text: fmt.rate(r.rate) }),
@@ -150,7 +178,26 @@ export function mount(ctx) {
         h("span", { "aria-hidden": "true", text: fmt.change(r) }),
         h("span", { class: "sr-only", text: fmt.changeDescription(r.change) }),
       ),
+      spark ? h("div", { class: "rc-spark" }, spark) : null,
     );
+  }
+
+  /** Últimos 30 días de una moneda de la fuente elegida (vacío si el historial aún no llegó o no existe). */
+  function sparkPoints(code) {
+    const bySource = state.history && state.history.sources ? state.history.sources[state.source] : null;
+    return lastDays(bySource ? bySource[code] : null, SUMMARY_DAYS, cubaDateKey(state.now));
+  }
+
+  function openDetail(r) {
+    if (closeOverlay) return;
+    closeOverlay = openHistory({
+      source: state.source,
+      code: r.code,
+      rate: r.rate,
+      onClose: () => {
+        closeOverlay = null;
+      },
+    });
   }
 
   function renderContent() {
@@ -245,7 +292,7 @@ export function mount(ctx) {
 
   // ---------- Imagen de El Toque (overlay) ----------
   function openImage() {
-    if (closeImage) return;
+    if (closeOverlay) return;
     const opener = document.activeElement;
     let objectUrl = null;
     const loadingNodes = () => [h("div", { class: "spinner", "aria-hidden": "true" }), h("p", { class: "sub", text: "Cargando imagen…" })];
@@ -266,7 +313,7 @@ export function mount(ctx) {
       document.removeEventListener("keydown", onKey);
       hideBack();
       overlay.remove();
-      closeImage = null;
+      closeOverlay = null;
       if (opener && typeof opener.focus === "function") opener.focus();
     }
 
@@ -274,17 +321,17 @@ export function mount(ctx) {
       body.replaceChildren(...loadingNodes());
       try {
         const blob = await getEltoqueImage();
-        if (!closeImage) return;
+        if (!closeOverlay) return;
         objectUrl = URL.createObjectURL(blob);
         body.replaceChildren(h("img", { class: "ov-img", src: objectUrl, alt: "Imagen de tasas publicada por El Toque" }));
       } catch (e) {
-        if (!closeImage) return;
+        if (!closeOverlay) return;
         const message = e instanceof ApiError && e.status === 404 ? "Todavía no hay imagen disponible." : "No se pudo cargar la imagen.";
         body.replaceChildren(h("p", { text: message }), h("button", { type: "button", class: "btn", text: "Reintentar", onClick: loadImage }));
       }
     }
 
-    closeImage = close;
+    closeOverlay = close;
     document.addEventListener("keydown", onKey);
     document.getElementById("app").append(overlay);
     showBack(close);
@@ -325,7 +372,7 @@ export function mount(ctx) {
     document.removeEventListener("visibilitychange", onVisible);
     window.removeEventListener("online", onOnline);
     window.removeEventListener("offline", onOffline);
-    if (closeImage) closeImage();
+    if (closeOverlay) closeOverlay();
     ctx.actions.replaceChildren();
     ctx.setSubtitle("");
   };

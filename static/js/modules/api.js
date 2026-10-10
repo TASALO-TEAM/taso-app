@@ -74,3 +74,6 @@ export const getMe = () => apiFetch("/me");
 export const getRates = () => apiFetch("/rates");
 export const getYear = () => apiFetch("/year");
 export const getEltoqueImage = () => apiBlob("/image/eltoque");
+export const getHistorySummary = () => apiFetch("/history/summary");
+export const getHistoryDaily = (source, currency, days) =>
+  apiFetch(`/history/daily?source=${encodeURIComponent(source)}&currency=${encodeURIComponent(currency)}&days=${days}`);
