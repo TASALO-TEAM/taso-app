@@ -61,6 +61,36 @@ export function applyTheme() {
 
 let initialised = false;
 
+let backHandler = null;
+
+/** Botón «Atrás» de Telegram para overlays. false si el cliente no lo tiene (el overlay trae su propio botón). */
+export function showBack(handler) {
+  const tg = webApp();
+  if (!tg || !tg.BackButton || !supports("6.1")) return false;
+  hideBack();
+  backHandler = handler;
+  try {
+    tg.BackButton.onClick(handler);
+    tg.BackButton.show();
+    return true;
+  } catch (_) {
+    backHandler = null;
+    return false;
+  }
+}
+
+export function hideBack() {
+  const tg = webApp();
+  if (!tg || !tg.BackButton) return;
+  try {
+    if (backHandler) tg.BackButton.offClick(backHandler);
+    tg.BackButton.hide();
+  } catch (_) {
+    /* sin BackButton: nada que ocultar */
+  }
+  backHandler = null;
+}
+
 /** Arranque único: ready() una sola vez, expandir, tema y gestos. Idempotente. */
 export function init() {
   if (initialised) return;

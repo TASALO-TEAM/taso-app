@@ -45,7 +45,15 @@ function renderPlaceholder(tab) {
   view.replaceChildren(card);
 }
 
-function route() {
+// Vistas ya construidas; las demás pestañas muestran el marcador hasta su sección.
+const VIEWS = {
+  tasas: () => import("./views/tasas.js"),
+};
+
+let unmountCurrent = null;
+let routeToken = 0;
+
+async function route() {
   const tab = currentTab();
   for (const link of document.querySelectorAll(".nv")) {
     if (link.dataset.tab === tab) link.setAttribute("aria-current", "page");
@@ -54,7 +62,31 @@ function route() {
   $("view-title").textContent = TABS[tab];
   $("view-subtitle").textContent = "";
   document.title = `TASALO · ${TABS[tab]}`;
-  renderPlaceholder(tab);
+
+  const token = ++routeToken;
+  if (unmountCurrent) {
+    unmountCurrent();
+    unmountCurrent = null;
+  }
+  const loader = VIEWS[tab];
+  if (!loader) {
+    $("view-actions").replaceChildren();
+    renderPlaceholder(tab);
+    return;
+  }
+  try {
+    const mod = await loader();
+    if (token !== routeToken) return; // el usuario ya cambió de pestaña
+    unmountCurrent = mod.mount({
+      view: $("view"),
+      actions: $("view-actions"),
+      setSubtitle: (text) => {
+        $("view-subtitle").textContent = text;
+      },
+    });
+  } catch (_) {
+    if (token === routeToken) renderPlaceholder(tab);
+  }
 }
 
 function showError(message) {
