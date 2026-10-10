@@ -48,6 +48,7 @@ function renderPlaceholder(tab) {
 // Vistas ya construidas; las demás pestañas muestran el marcador hasta su sección.
 const VIEWS = {
   tasas: () => import("./views/tasas.js"),
+  combustible: () => import("./views/combustible.js"),
 };
 
 let unmountCurrent = null;

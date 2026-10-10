@@ -72,6 +72,7 @@ export async function apiBlob(path, options = { timeoutMs: 20000 }) {
 
 export const getMe = () => apiFetch("/me");
 export const getRates = () => apiFetch("/rates");
+export const getFuel = () => apiFetch("/fuel");
 export const getYear = () => apiFetch("/year");
 export const getEltoqueImage = () => apiBlob("/image/eltoque");
 export const getHistorySummary = () => apiFetch("/history/summary");
