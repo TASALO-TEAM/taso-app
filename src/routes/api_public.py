@@ -1,8 +1,9 @@
 """API del BFF (blueprint ``api``, prefijo ``/api``): sesión, tasas, año e imagen de El Toque."""
 
-from flask import Blueprint, Response, current_app, g, jsonify
+from flask import Blueprint, Response, current_app, g, jsonify, request
 
 from src.auth.guard import require_user
+from src.services import history as history_service
 from src.services import rates as rates_service
 from src.services.cache import UpstreamError, UpstreamNotFound
 
@@ -83,3 +84,39 @@ def eltoque_image():
     except UpstreamError:
         return _err(502, "upstream_unavailable", "No se pudo cargar la imagen")
     return Response(data, mimetype=content_type)
+
+
+@bp.route("/history/summary")
+@require_user
+def history_summary():
+    """Últimos 30 días de todas las tarjetas (fondo de las tarjetas de Tasas)."""
+    cache = current_app.config["TASALO_CACHE"]
+    try:
+        result = history_service.get_summary(cache)
+    except UpstreamError:
+        return _err(502, "upstream_unavailable", "No se pudo cargar el historial")
+    return jsonify({"ok": True, "stale": result.stale, "days": history_service.SUMMARY_DAYS, **result.value})
+
+
+@bp.route("/history/daily")
+@require_user
+def history_daily():
+    """Serie diaria de una moneda de una fuente (detalle histórico)."""
+    source = request.args.get("source", "")
+    code = request.args.get("currency", "").strip().upper()
+    days_raw = request.args.get("days", "180")
+    if source not in rates_service.SOURCES:
+        return _err(400, "bad_request", "Fuente no válida")
+    if not history_service.CODE_RE.match(code):
+        return _err(400, "bad_request", "Moneda no válida")
+    if not days_raw.isdigit() or int(days_raw) not in history_service.ALLOWED_DAYS:
+        return _err(400, "bad_request", "Rango no válido")
+    days = int(days_raw)
+    cache = current_app.config["TASALO_CACHE"]
+    try:
+        result = history_service.get_daily(cache, source, code, days)
+    except UpstreamError:
+        return _err(502, "upstream_unavailable", "No se pudo cargar el historial")
+    return jsonify(
+        {"ok": True, "stale": result.stale, "source": source, "currency": code, "days": days, "points": result.value}
+    )
