@@ -13,6 +13,7 @@ from __future__ import annotations
 import contextlib
 import os
 import sqlite3
+import threading
 from datetime import datetime, timezone
 from typing import Iterator
 
@@ -79,9 +80,17 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+_ready: set[str] = set()
+_ready_lock = threading.Lock()
+
+
 @contextlib.contextmanager
 def connect() -> Iterator[sqlite3.Connection]:
-    """Conexión nueva en autocommit (usa ``BEGIN IMMEDIATE`` para bloques atómicos)."""
+    """Conexión nueva en autocommit (usa ``BEGIN IMMEDIATE`` para bloques atómicos).
+
+    La primera vez que se usa cada archivo crea las tablas que falten (idempotente), así que no hace falta
+    llamar a ``init_db()`` al arrancar.
+    """
     path = db_file()
     os.makedirs(os.path.dirname(path), exist_ok=True)
     conn = sqlite3.connect(path, timeout=10, isolation_level=None)
@@ -89,6 +98,11 @@ def connect() -> Iterator[sqlite3.Connection]:
     try:
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=10000")
+        if path not in _ready:
+            with _ready_lock:
+                if path not in _ready:
+                    conn.executescript(SCHEMA)
+                    _ready.add(path)
         yield conn
     finally:
         conn.close()

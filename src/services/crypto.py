@@ -498,3 +498,65 @@ def fetch_confirmation(ref: CoinRef, primary_source: str) -> Optional[Reading]:
         if usable(reading):
             return reading
     return None
+
+
+def _usd(market: dict, key: str) -> Any:
+    value = market.get(key)
+    return value.get("usd") if isinstance(value, dict) else None
+
+
+def cg_enrichment(symbol: str) -> Optional[dict]:
+    """Datos de ``/coins/{id}`` de CoinGecko para el bloque extra de Mercado (y como fuente primaria de último recurso).
+
+    - None: CoinGecko no está configurado o falló la consulta de la moneda (se sigue sin el bloque).
+    - ``{"not_found": True}``: CoinGecko confirma que el símbolo no existe.
+    - Lanza ``CoinGeckoNetworkError`` si ni siquiera se pudo resolver el símbolo (no se sabe si existe).
+    """
+    if not len(coingecko_ring()):
+        return None
+    coin_id = cg_resolve_id(symbol)
+    if not coin_id:
+        return {"not_found": True}
+    try:
+        data = _cg_get(
+            f"/coins/{coin_id}",
+            {
+                "localization": "false",
+                "tickers": "false",
+                "market_data": "true",
+                "community_data": "true",
+                "developer_data": "false",
+                "sparkline": "false",
+            },
+        )
+    except CoinGeckoNetworkError as exc:
+        logger.warning("CoinGecko /coins/%s falló: %s", coin_id, exc)
+        return None
+    if not isinstance(data, dict):
+        return None
+    market = data.get("market_data") if isinstance(data.get("market_data"), dict) else {}
+    categories = [c for c in data.get("categories") or [] if c]
+    return {
+        "not_found": False,
+        "cg_id": coin_id,
+        "symbol_used": str(data.get("symbol") or symbol).upper(),
+        "ath": _usd(market, "ath"),
+        "ath_change_pct": _usd(market, "ath_change_percentage"),
+        "ath_date": _usd(market, "ath_date"),
+        "atl": _usd(market, "atl"),
+        "atl_date": _usd(market, "atl_date"),
+        "circulating_supply": market.get("circulating_supply"),
+        "total_supply": market.get("total_supply"),
+        "max_supply": market.get("max_supply"),
+        "category": categories[0] if categories else None,
+        "sentiment_up_pct": data.get("sentiment_votes_up_percentage"),
+        "market_cap_rank": market.get("market_cap_rank") or data.get("market_cap_rank"),
+        # Solo se usan como fuente primaria cuando CMC no tiene la moneda.
+        "price": _usd(market, "current_price"),
+        "percent_change_24h": market.get("price_change_percentage_24h"),
+        "percent_change_7d": market.get("price_change_percentage_7d"),
+        "market_cap": _usd(market, "market_cap"),
+        "volume_24h": _usd(market, "total_volume"),
+        "high_24h": _usd(market, "high_24h"),
+        "low_24h": _usd(market, "low_24h"),
+    }

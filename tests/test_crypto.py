@@ -391,3 +391,57 @@ def test_price_alerts_rechaza_estado_y_direccion_invalidos(tmp_path, monkeypatch
             conn.execute(
                 "INSERT INTO price_alerts (user_id, symbol, target, direction, status, created_at) VALUES (1,'BTC',1,'ABOVE','DONE','x')"
             )
+
+
+# ------------------------------------------------------------------ cg_enrichment
+
+
+COIN_BODY = {
+    "symbol": "sol",
+    "categories": [None, "Smart Contract Platform", "Layer 1"],
+    "sentiment_votes_up_percentage": 80.5,
+    "market_cap_rank": 7,
+    "market_data": {
+        "ath": {"usd": 260.0}, "ath_change_percentage": {"usd": -40.0}, "ath_date": {"usd": "2021-11-06T14:24:11.849Z"},
+        "atl": {"usd": 0.5}, "atl_date": {"usd": "2020-05-11T19:35:23.449Z"},
+        "circulating_supply": 430e6, "total_supply": 590e6, "max_supply": None,
+        "current_price": {"usd": 150.0}, "price_change_percentage_24h": -2.0, "price_change_percentage_7d": 8.0,
+        "market_cap": {"usd": 9e10}, "total_volume": {"usd": 4e9}, "high_24h": {"usd": 155.0}, "low_24h": {"usd": 145.0},
+    },
+}
+
+
+def test_cg_enrichment_parsea_la_moneda(net):
+    net.on("/search", Resp(200, {"coins": [{"id": "solana", "symbol": "sol"}]}))
+    net.on("/coins/solana", Resp(200, COIN_BODY))
+    e = crypto.cg_enrichment("sol")
+    assert e["not_found"] is False and e["cg_id"] == "solana" and e["symbol_used"] == "SOL"
+    assert e["ath"] == 260.0 and e["ath_change_pct"] == -40.0 and e["atl"] == 0.5
+    assert e["category"] == "Smart Contract Platform" and e["max_supply"] is None
+    assert e["price"] == 150.0 and e["high_24h"] == 155.0 and e["market_cap_rank"] == 7
+
+
+def test_cg_enrichment_not_found_sin_keys_y_fallos(net, monkeypatch):
+    net.on("/search", Resp(200, {"coins": []}))
+    assert crypto.cg_enrichment("NOPE") == {"not_found": True}
+    # la moneda existe pero /coins falla: se sigue sin el bloque
+    crypto._cg_id_cache.clear()
+    net.routes.clear()
+    net.on("/search", Resp(200, {"coins": [{"id": "solana", "symbol": "sol"}]}))
+    net.on("/coins/solana", Resp(500, {}))
+    assert crypto.cg_enrichment("SOL") is None
+    # /search caído: se propaga para no afirmar que no existe
+    crypto._cg_id_cache.clear()
+    net.routes.clear()
+    net.on("/search", httpx.ConnectError("x"))
+    with pytest.raises(crypto.CoinGeckoNetworkError):
+        crypto.cg_enrichment("SOL")
+    monkeypatch.setattr(settings, "coingecko_api_key", "")
+    assert crypto.cg_enrichment("SOL") is None
+
+
+def test_cg_enrichment_tolera_cuerpo_raro(net):
+    net.on("/search", Resp(200, {"coins": [{"id": "x", "symbol": "x"}]}))
+    net.on("/coins/x", Resp(200, {"market_data": "basura", "categories": None}))
+    e = crypto.cg_enrichment("X")
+    assert e["ath"] is None and e["category"] is None and e["price"] is None
