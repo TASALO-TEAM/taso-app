@@ -37,6 +37,21 @@ class Settings(BaseSettings):
     # o no "strip" del prefijo.
     tasalo_base_path: str = ""
 
+    # --- Mercado /p y alertas de precio cripto (S10) ---
+    # Claves copiadas del .env de taso-bot; cada una admite varias separadas por coma (rotacion round-robin).
+    groq_api_key: str = ""
+    coinmarketcap_api_key: str = ""
+    # Pool de CMC dedicado a las alertas; si esta vacio se usa el interactivo.
+    cmc_api_key_alerta: str = ""
+    coingecko_api_key: str = ""
+    # Base de la API publica de mercado de Binance. api.binance.com da 451 desde el VPS (zona restringida);
+    # data-api.binance.vision ofrece los mismos endpoints de mercado y si responde.
+    binance_base_url: str = "https://data-api.binance.vision"
+    # Base de datos SQLite propia de la app (alertas de precio, uso de monedas). Relativa a la raiz del proyecto.
+    db_path: str = "data/taso-app.db"
+    # Revision de alertas cada N segundos (300 = 5 min). 0 desactiva el hilo (tests, tareas puntuales).
+    price_check_interval_seconds: int = 300
+
     # Logging
     log_level: str = "INFO"
 
@@ -76,6 +91,29 @@ class Settings(BaseSettings):
             if part.lstrip("-").isdigit():
                 ids.add(int(part))
         return frozenset(ids)
+
+
+    @staticmethod
+    def _split_keys(value: str) -> list[str]:
+        return [k.strip() for k in (value or "").split(",") if k.strip()]
+
+    @property
+    def groq_keys(self) -> list[str]:
+        return self._split_keys(self.groq_api_key)
+
+    @property
+    def cmc_keys(self) -> list[str]:
+        """Pool interactivo de CMC (pantalla Mercado)."""
+        return self._split_keys(self.coinmarketcap_api_key)
+
+    @property
+    def cmc_alert_keys(self) -> list[str]:
+        """Pool de CMC para el chequeo de alertas; si no hay uno propio, el interactivo."""
+        return self._split_keys(self.cmc_api_key_alerta) or self.cmc_keys
+
+    @property
+    def coingecko_keys(self) -> list[str]:
+        return self._split_keys(self.coingecko_api_key)
 
 
 settings = Settings()

@@ -32,3 +32,7 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Copias de seguridad del .env y base de datos local (S10)
+.env.bak*
+data/
