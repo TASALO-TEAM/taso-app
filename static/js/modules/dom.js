@@ -41,4 +41,7 @@ export const ICONS = {
   refresh: ["M20 11a8 8 0 1 0-2.3 5.7", "M20 4v7h-7"],
   close: ["M6 6l12 12M18 6L6 18"],
   image: ["M4 5h16v14H4z", "M4 15l5-5 4 4 3-3 4 4"],
+  copy: ["M9 9h11v11H9z", "M5 15V4h11"],
+  share: ["M12 15V3", "M8 7l4-4 4 4", "M5 12v8h14v-8"],
+  swap: ["M8 4v16", "M4 16l4 4 4-4", "M16 20V4", "M12 8l4-4 4 4"],
 };

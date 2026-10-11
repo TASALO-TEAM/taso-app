@@ -49,6 +49,7 @@ function renderPlaceholder(tab) {
 const VIEWS = {
   tasas: () => import("./views/tasas.js"),
   combustible: () => import("./views/combustible.js"),
+  calculadora: () => import("./views/calculadora.js"),
 };
 
 let unmountCurrent = null;

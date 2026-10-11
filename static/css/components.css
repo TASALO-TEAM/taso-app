@@ -162,3 +162,40 @@
 .fc-name { font-weight: 700; overflow-wrap: anywhere; }
 .fc-end { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
 .fc-range { font-size: 1.375rem; font-weight: 700; line-height: 1.2; }
+
+/* ---------- Calculadora (S4) ---------- */
+.conv { display: flex; flex-direction: column; gap: 0.5rem; }
+.conv-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.cur-select {
+  flex: none; max-width: 48%; min-height: 2.75rem; padding: 0 0.75rem;
+  border: 1px solid var(--border-accent); border-radius: 1rem; background: var(--accent-soft); color: var(--text);
+  font: inherit; font-weight: 700; cursor: pointer;
+}
+.cur-select:focus-visible, .conv-amount:focus-visible, .inv-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.conv-amount {
+  flex: 1; min-width: 0; padding: 0.25rem 0; border: 0; background: transparent; color: var(--text);
+  font-family: var(--font-mono); font-size: 1.875rem; font-weight: 700; text-align: right;
+}
+.conv-amount::placeholder { color: var(--text2); }
+.conv-result {
+  flex: 1; min-width: 0; color: var(--accent); font-size: 1.875rem; font-weight: 700; text-align: right;
+  overflow-wrap: anywhere;
+}
+.conv-sep { display: flex; align-items: center; gap: 0.75rem; }
+.conv-line { flex: 1; height: 1px; background: var(--border); }
+.conv-unit { margin: 0.25rem 0 0; color: var(--text2); font-size: 0.8125rem; text-align: right; overflow-wrap: anywhere; }
+.conv-unit:empty { display: none; }
+.inv-head { display: flex; align-items: center; gap: 0.25rem; }
+.inv-id { flex: 1; min-width: 0; }
+.inv-title { color: var(--accent); font-size: 0.8125rem; font-weight: 700; }
+.inv-status { color: var(--text2); font-size: 0.75rem; }
+.inv-rows { display: flex; flex-direction: column; }
+.inv-row {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%; min-height: 3.25rem; padding: 0.5rem 0;
+  border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--text);
+  font: inherit; text-align: left; cursor: pointer;
+}
+.inv-cur { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.inv-val { font-size: 1.125rem; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.inv-row.on .inv-val { color: var(--accent); }
+.clip-fallback { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }

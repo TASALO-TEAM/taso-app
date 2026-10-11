@@ -59,6 +59,30 @@ export function applyTheme() {
   }
 }
 
+/** Usuario del bot (sin @) tal como lo pone el servidor en la página; vacío si no está. */
+export function botUsername() {
+  const meta = document.querySelector('meta[name="tasalo-bot"]');
+  const value = meta && meta.content ? meta.content.trim() : "";
+  return /^[A-Za-z0-9_]{3,64}$/.test(value) ? value : "";
+}
+
+/**
+ * Abre el selector de chats de Telegram con `text` (y un enlace al bot). false si el cliente no puede hacerlo
+ * (navegador normal o Telegram antiguo): el llamador decide el plan B.
+ */
+export function shareText(text) {
+  const tg = webApp();
+  if (!tg || typeof tg.openTelegramLink !== "function" || !supports("6.1")) return false;
+  const bot = botUsername();
+  const link = bot ? `https://t.me/${bot}` : "https://t.me/";
+  try {
+    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 let initialised = false;
 
 let backHandler = null;
