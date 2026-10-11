@@ -12,8 +12,24 @@ Fuente de la tarea: `PROMPT_REESCRITURA_MINIAPP.md` (subido por Ernesto en el ch
 - `pytest` no corre bien en su Windows local (faltan dependencias): compilar con `py -3 -m py_compile`, `node --test` para JS puro; pytest completo lo corre él en el VPS.
 - Commits en Conventional Commits, por repo, comandos separados. Hay hook post-commit que sube `version.txt` (esquema 4 niveles MAJOR.MINOR.PATCH.TWEAK).
 - Planes en `C:\Users\ernes\Documents\tasalo\docs\plans\` (carpeta compartida). Plan primero, código después de aprobación.
-- Despliegue en el VPS (`git pull` + `systemctl restart`) lo hace Ernesto; no hay SSH desde aquí. No se toca `taso-bot` ni `taso-api` sin permiso (se lista en el plan y se aprueba en G1). Sin `push` sin que lo pida.
+- Despliegue en el VPS: `git pull` y `sudo systemctl restart` los hace Ernesto (sudo pide contraseña, ver «Acceso al VPS» abajo). Sí hay SSH desde aquí (`ssh pan`) para leer, diagnosticar y editar `.env` (con copia previa). No se toca `taso-bot` ni `taso-api` sin permiso (se lista en el plan y se aprueba en G1). Sin `push` sin que lo pida.
 - Mapa en disco: `C:\Users\ernes\Documents\tasalo\` → `taso-app` (este repo), `taso-bot`, `taso-api`, `taso-android`, `ui-ux-pro-max` (copia de la skill).
+
+## Acceso al VPS (verificado en la sesión 6)
+- **Conexión:** `ssh pan` desde la terminal de Windows (alias ya configurado en `~/.ssh/config` de Ernesto; entra sin contraseña). Usuario `ersus`, host `usipipo`. Desde Desktop Commander funciona (`start_process`); usa siempre `-o BatchMode=yes` para que no se quede esperando contraseña.
+- **Rutas:** repos en `/home/ersus/tasalo/` (`taso-app`, `taso-api`, `taso-bot`, `taso-gcg`…). `taso-app` en `/home/ersus/tasalo/taso-app`, con `.venv` (Python 3.11, `pip`, sin `uv`) y servicio systemd `taso-app` (uvicorn en `127.0.0.1:5040`). `taso-api` escucha en `127.0.0.1:8040`. Caddy (`/etc/caddy/Caddyfile`) termina TLS en `https://tasalo.duckdns.org` y enruta `/api/*` → 8040 y `/miniapp` → 5040.
+- **Cómo ejecutar comandos (PowerShell estropea las comillas y el `$`):** no pases el comando entre comillas a `ssh`. Manda un script por la entrada estándar:
+  ```powershell
+  @'
+  cd /home/ersus/tasalo/taso-app
+  git log --oneline -1
+  grep ^TASALO_API_URL .env
+  '@ | ssh -o BatchMode=yes pan 'bash -s'
+  ```
+  Para algo de una línea sin `$` ni comillas internas vale `ssh -o BatchMode=yes pan "cd /home/ersus/tasalo/taso-app && git log --oneline -1"`. Los heredocs anidados (`<<'PY'`) fallan por los saltos de línea de Windows: evítalos o pasa el código por otro camino. El aviso «Pseudo-terminal will not be allocated» es normal. En PowerShell, la salida por stderr de `git push`/`ssh` aparece como «NativeCommandError» aunque haya ido bien: mira el contenido.
+- **Límites:** `sudo` pide contraseña, así que NO se puede reiniciar servicios (`sudo systemctl restart taso-app`) ni leer `journalctl` (el usuario no está en `adm`/`systemd-journal`): esas dos cosas las hace Ernesto. Sí se puede leer archivos, `curl` local, correr Python del `.venv`, `git pull`/`git log` y editar `.env` (haz antes `cp .env .env.bak-<fecha>`).
+- **Prueba rápida del servidor sin reiniciar:** desde `/home/ersus/tasalo/taso-app`, `.venv/bin/python -c "from src.services import rates; from src.services.cache import TTLCache; print(rates.get_rates(TTLCache()).value['sources'].keys())"` (usa el `.env` actual). Salud del servicio ya levantado: `curl -s http://127.0.0.1:5040/health`.
+- **Despliegue de `taso-app` (lo hace Ernesto):** `cd /home/ersus/tasalo/taso-app && git pull && sudo systemctl restart taso-app`. Variables en su `.env`: `TASALO_API_URL=http://localhost:8040` (**no** `https://…:8040`: ese puerto no tiene TLS), `TELEGRAM_BOT_TOKEN`, `ADMIN_CHAT_IDS`, `TASALO_BASE_PATH=/miniapp`, `TASALO_ADMIN_KEY`.
 
 ## 2. Estado (`[ ]` pendiente · `[~]` en curso · `[x]` hecho)
 - [x] F0 Arranque: handoff, rama `rewrite/miniapp`, skill leída
@@ -23,7 +39,7 @@ Fuente de la tarea: `PROMPT_REESCRITURA_MINIAPP.md` (subido por Ernesto en el ch
 - [x] F4 Diseño: sistema de diseño (`docs/DISENO.md`) + 16 maquetas Design publicadas (URL en §4). **G2 APROBADA por Ernesto (sesión 2: «me gusta lo que veo»)**
 - [x] Análisis `/p`, `/ta`, `/graf` → `docs/ANALISIS_CRIPTO.md` (pedido de Ernesto tras G2). Recomendación: construir `/p` en fase 1 (nueva pantalla «Mercado» desde un icono de búsqueda en Tasas) con **opción B** (BFF en `taso-app` con Binance/CoinGecko públicos + Groq en servidor, caché y límite por usuario); `/graf` (SVG propio) y `/ta` (indicadores en JS) en fases posteriores. **ESPERANDO respuesta de Ernesto** a las 3 preguntas de §5 del doc (D8-a opción A/B, límites de IA, alcance). NO implementar hasta entonces; mientras tanto, lo no relacionado con cripto puede avanzar
 - [x] (HECHO en sesión 3, ver abajo) C-API-1…4 en `taso-api` (aprobado en G1; Ernesto dijo «si con lo de api»). Primero verificar que el bot manda `X-API-Key` en image_alerts/year/tspl; sin desplegar; sin push
-- [x] S0 Cimientos: **hecha y verificada por Ernesto en el VPS/Telegram (2026-10-10): abre, las 5 pestañas funcionan** (taso-app 0.3.0.x en `main`) · [x] S1 Tasas (en `main`, falta prueba visual de Ernesto en Telegram) · [x] S2 Detalle histórico (en `main`, ídem) · [x] S3 Combustible (sesión 6; ver abajo) · [ ] S4 Calculadora
+- [x] S0 Cimientos: **hecha y verificada por Ernesto en el VPS/Telegram (2026-10-10): abre, las 5 pestañas funcionan** (taso-app 0.3.0.x en `main`) · [x] S1 Tasas (en `main`; **carga bien en el VPS desde la sesión 6**, Ernesto: «ahora sí perfecto») · [x] S2 Detalle histórico (en `main`, falta confirmación visual) · [x] S3 Combustible (en `main`; muestra datos viejos por un problema de `taso-api`, ver sesión 6) · [ ] S4 Calculadora
 - [ ] S5 Blog + Spotlight · [ ] S6 Alertas · [ ] S7 Ajustes + mensajes · [ ] S8 Admin · [ ] S9 Cierre técnico
 - [ ] F6 Cierre: tests, README, CHANGELOG, versión
 
@@ -94,4 +110,6 @@ Cómo continuar: `Artifact` action `read` con la URL → abrir `project/Main.dc.
 - **S3 Combustible hecho** (rama `feat/s3-combustible`): `src/services/fuel.py` + `GET /api/fuel` → `{ok, stale, fetched_at, items:[{key,min,max,change}]}`; `fetched_at` = `updated_at` real de `/tasas/fuel` (C-API-3 ya cubierto en `taso-api`); una lectura sin precios cuenta como fallo del origen (se sigue sirviendo la última buena); TTL 5 min, máx. antigüedad servible 6 h. Cliente: `modules/fuel.js` (nombres/unidades de Android, `fuelRange`, `fuelBanner`: sin `fetched_at` nunca afirma que es fresco), `views/combustible.js`, registrado en `main.js`. **Decisión:** 5 tipos como Android (B-94, B-90, B-83, Petróleo, Gas_LP), no los 4 del plan; para quitar Gas_LP basta editar `FUEL_ORDER`. Tarjetas sin clic (el historial de combustible no existe en el BFF).
 - Pruebas: `node --test` 61 pasan; pytest 277 pasan + la 1 previa (`test_config` por `FLASK_ENV` local); smokes jsdom `_shots/smoke.mjs` (S2) y `_shots/smoke3.mjs` (S3) en TODO OK (no se commitean; `_shots/` necesita `npm i jsdom` en esa carpeta).
 - Commits en `feat/s3-combustible`: `003309b` servidor, `2c3c7cd` cliente (versión 0.9.0.0).
-- Dejado en: S3 completa. SIGUIENTE: **S4 Calculadora** (portar casos de `ConverterTest.kt` a `node --test`, ver §3 sesión 2). Pendiente de Ernesto: prueba visual en Telegram de Tasas, Historial y Combustible.
+- **Despliegue y diagnóstico en el VPS (sesión 6):** al probar, Tasas no cargaba. Causa: `TASALO_API_URL=https://tasalo.duckdns.org:8040` en el `.env` del VPS (el puerto 8040 no tiene TLS; `curl` daba `000`). Corregido por SSH a `http://localhost:8040` (copia `.env.bak-<fecha>`); Ernesto reinició `taso-app` y confirmó que carga. Ver «Acceso al VPS» arriba.
+- **Hallazgo abierto en `taso-api` (no tocado, pendiente de permiso de Ernesto):** `GET /tasas/fuel` devuelve una lectura del **2026-07-26** y solo 4 tipos (sin `Gas_LP`): el scraper de combustible no está actualizando y la API sirve lo último de la base de datos. Combustible en la miniapp lo muestra bien con «Datos desactualizados». Si Ernesto lo pide: revisar `src/scrapers/fuel.py` y el job que llama a `fuel_service` en `taso-api` (el scraper lee `__NEXT_DATA__` y necesita `Accept-Encoding: identity` en el VPS).
+- Dejado en: S3 completa y desplegada. SIGUIENTE: **S4 Calculadora** (portar casos de `ConverterTest.kt` a `node --test`, ver §3 sesión 2). Pendiente de Ernesto: confirmar visualmente Historial y Combustible en Telegram.
