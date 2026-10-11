@@ -9,10 +9,10 @@ export const ACCOUNTS = [
 export const DEFAULT_ACCOUNT = "tasalo";
 
 /**
- * «Recibir cada día» lleva a la alerta de Spotlight, que vive en la pestaña Alertas (S6). Hasta que exista,
- * el botón no se muestra (no se deja al usuario en una pantalla vacía). S6 pone esto en true y lee `#/alertas?nueva=tspl`.
+ * «Recibir cada día» lleva a la alerta de Spotlight, que vive en la pestaña Alertas (S6): la vista de Alertas lee
+ * `#/alertas?nueva=tspl` y abre el panel de Spotlight.
  */
-export const SPOTLIGHT_ALERT_READY = false;
+export const SPOTLIGHT_ALERT_READY = true;
 export const SPOTLIGHT_ALERT_HASH = "#/alertas?nueva=tspl";
 
 /** Una cuenta guardada que ya no existe (o un valor raro) cae a la de TASALO. */
