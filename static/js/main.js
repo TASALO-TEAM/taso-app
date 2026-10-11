@@ -51,6 +51,7 @@ const VIEWS = {
   combustible: () => import("./views/combustible.js"),
   calculadora: () => import("./views/calculadora.js"),
   blog: () => import("./views/blog.js"),
+  alertas: () => import("./views/alertas.js"),
 };
 
 let unmountCurrent = null;
