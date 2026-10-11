@@ -50,7 +50,8 @@ class FakeNet:
 def net(monkeypatch):
     fake = FakeNet()
     monkeypatch.setattr(crypto, "_http_get", fake)
-    monkeypatch.setattr(settings, "binance_base_url", "https://bn.test")
+    monkeypatch.setattr(settings, "binance_base_url", "https://bn-us.test")
+    monkeypatch.setattr(settings, "binance_fallback_url", "https://bn-global.test")
     monkeypatch.setattr(settings, "coinmarketcap_api_key", "cmc1,cmc2")
     monkeypatch.setattr(settings, "cmc_api_key_alerta", "")
     monkeypatch.setattr(settings, "coingecko_api_key", "cg1,cg2")
@@ -150,7 +151,42 @@ def test_binance_prices_si_un_par_no_existe_pide_el_listado_completo(net):
 
     net.on("/ticker/price", handler)
     assert crypto.binance_prices(["BTCUSDT", "NOEXISTE"]) == {"BTCUSDT": 65000.0}
-    assert net.count("/ticker/price") == 2
+    assert net.count("/ticker/price") == 3  # lista en US (400), lista en global (400), listado completo en US
+
+
+def test_binance_usa_primero_la_de_us_y_no_toca_la_global(net):
+    net.on("/ticker/price", Resp(200, [{"symbol": "BTCUSDT", "price": "65000"}]))
+    assert crypto.binance_prices(["BTCUSDT"]) == {"BTCUSDT": 65000.0}
+    assert [u for u, _, _ in net.calls] == ["https://bn-us.test/api/v3/ticker/price"]
+
+
+def test_binance_cae_a_la_global_si_la_de_us_falla_o_no_tiene_el_par(net):
+    net.on("bn-us.test", httpx.ConnectError("caída"))
+    net.on("bn-global.test", Resp(200, {"symbol": "ABCUSDT", "price": "3.5"}))
+    assert crypto.binance_resolve_pair("abc") == ("ABCUSDT", 3.5)
+    net.routes.clear()
+    net.calls.clear()
+    net.on("bn-us.test", Resp(400, {"code": -1121}))
+    net.on("bn-global.test", Resp(200, {"symbol": "ABCUSDT", "price": "3.6"}))
+    assert crypto.binance_resolve_pair("ABC") == ("ABCUSDT", 3.6)
+    assert [u.split("/api")[0] for u, _, _ in net.calls] == ["https://bn-us.test", "https://bn-global.test"]
+
+
+def test_binance_global_con_451_y_us_caida_devuelve_vacio(net):
+    net.on("bn-us.test", httpx.ReadTimeout("t"))
+    net.on("bn-global.test", Resp(451, {}))
+    assert crypto.binance_prices(["BTCUSDT"]) == {}
+
+
+def test_binance_sin_respaldo_configurado_o_igual_a_la_principal_no_repite(net, monkeypatch):
+    monkeypatch.setattr(settings, "binance_fallback_url", "https://bn-us.test/")
+    net.on("/ticker/price", Resp(400, {}))
+    assert crypto.binance_resolve_pair("ZZZ") is None
+    assert {u.split("/api")[0] for u, _, _ in net.calls} == {"https://bn-us.test"}
+    monkeypatch.setattr(settings, "binance_fallback_url", "")
+    net.calls.clear()
+    assert crypto.binance_resolve_pair("ZZZ") is None
+    assert {u.split("/api")[0] for u, _, _ in net.calls} == {"https://bn-us.test"}
 
 
 def test_binance_resolve_pair_prueba_usdt_y_luego_usdc(net):

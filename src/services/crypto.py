@@ -1,7 +1,7 @@
 """Fuentes de precios cripto de la app (S10): CoinMarketCap, Binance y CoinGecko. Todo síncrono (httpx).
 
 Es la adaptación a Flask de ``taso-bot/src/crypto_client.py`` y ``coingecko_client.py``. Diferencias a propósito:
-- Binance se consulta en ``settings.binance_base_url`` (``data-api.binance.vision``): ``api.binance.com`` da 451 desde el VPS.
+- Binance se consulta primero en Binance US (``settings.binance_base_url``) y, si falla o no tiene el par, en la global (``binance_fallback_url``), como el bot.
 - CryptoCompare ya no se usa (exige API key desde 2026); high/low 24h salen de Binance y, si no hay, de CoinGecko.
 - Las alertas se identifican por ids exactos (par de Binance, id de CMC, id de CoinGecko), no por símbolo.
 
@@ -186,20 +186,33 @@ def cmc_readings_by_id(ids: list[int], ring: Optional[KeyRing] = None) -> dict[i
 QUOTE_ASSETS = ("USDT", "USDC")
 
 
+def _binance_bases() -> list[str]:
+    """Primero Binance US y, como respaldo, la global (sin repetidas ni vacías)."""
+    bases: list[str] = []
+    for url in (settings.binance_base_url, settings.binance_fallback_url):
+        url = (url or "").strip().rstrip("/")
+        if url and url not in bases:
+            bases.append(url)
+    return bases
+
+
 def _binance_get(path: str, params: Optional[dict] = None) -> Any:
-    """GET a Binance (``settings.binance_base_url``). None si falla o el código no es 200."""
-    try:
-        resp = _http_get(settings.binance_base_url.rstrip("/") + path, params=params)
-    except httpx.HTTPError as exc:
-        logger.warning("Binance %s falló: %s", path, type(exc).__name__)
-        return None
-    if resp.status_code != 200:
-        logger.info("Binance %s respondió %s", path, resp.status_code)
-        return None
-    try:
-        return resp.json()
-    except ValueError:
-        return None
+    """GET a Binance: primero ``binance_base_url`` (US) y, si falla o no responde 200 (red, 451, par que no existe
+    ahí), prueba ``binance_fallback_url`` (global). None si ninguna da una respuesta válida."""
+    for base in _binance_bases():
+        try:
+            resp = _http_get(base + path, params=params)
+        except httpx.HTTPError as exc:
+            logger.warning("Binance %s%s falló: %s", base, path, type(exc).__name__)
+            continue
+        if resp.status_code != 200:
+            logger.info("Binance %s%s respondió %s", base, path, resp.status_code)
+            continue
+        try:
+            return resp.json()
+        except ValueError:
+            continue
+    return None
 
 
 def binance_prices(pairs: list[str]) -> dict[str, float]:

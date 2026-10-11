@@ -44,9 +44,10 @@ class Settings(BaseSettings):
     # Pool de CMC dedicado a las alertas; si esta vacio se usa el interactivo.
     cmc_api_key_alerta: str = ""
     coingecko_api_key: str = ""
-    # Base de la API publica de mercado de Binance. api.binance.com da 451 desde el VPS (zona restringida);
-    # data-api.binance.vision ofrece los mismos endpoints de mercado y si responde.
-    binance_base_url: str = "https://data-api.binance.vision"
+    # API publica de mercado de Binance: primero la de EE. UU. (api.binance.us) y, si falla o no tiene el par,
+    # la global (api.binance.com) como respaldo, igual que el bot. api.binance.com puede dar 451 desde el VPS.
+    binance_base_url: str = "https://api.binance.us"
+    binance_fallback_url: str = "https://api.binance.com"
     # Base de datos SQLite propia de la app (alertas de precio, uso de monedas). Relativa a la raiz del proyecto.
     db_path: str = "data/taso-app.db"
     # Revision de alertas cada N segundos (300 = 5 min). 0 desactiva el hilo (tests, tareas puntuales).
