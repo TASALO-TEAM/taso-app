@@ -3,6 +3,7 @@
 from flask import Blueprint, Response, current_app, g, jsonify, request
 
 from src.auth.guard import require_user
+from src.services import blog as blog_service
 from src.services import fuel as fuel_service
 from src.services import history as history_service
 from src.services import rates as rates_service
@@ -79,6 +80,45 @@ def fuel():
             "items": result.value["items"],
         }
     )
+
+
+@bp.route("/blog/<account>")
+@require_user
+def blog_list(account: str):
+    """Últimos posts de una cuenta de Hive permitida (sin cuerpo: el lector lo pide aparte). ``spotlight`` marca el diario."""
+    if account not in blog_service.ACCOUNTS:
+        return _err(404, "not_found", "Cuenta no disponible")
+    cache = current_app.config["TASALO_CACHE"]
+    try:
+        result = blog_service.get_posts(cache, account)
+    except UpstreamError:
+        return _err(502, "upstream_unavailable", "No se pudo cargar el blog")
+    return jsonify(
+        {
+            "ok": True,
+            "stale": result.stale,
+            "account": account,
+            "fetched_at": result.value["fetched_at"],
+            "posts": [blog_service.public_post(p) for p in result.value["posts"]],
+        }
+    )
+
+
+@bp.route("/blog/<account>/<permlink>")
+@require_user
+def blog_post(account: str, permlink: str):
+    """Un post (con su cuerpo en Markdown) de los últimos que ya tiene el servidor de esa cuenta."""
+    if account not in blog_service.ACCOUNTS or not blog_service.PERMLINK_RE.match(permlink):
+        return _err(404, "not_found", "Post no encontrado")
+    cache = current_app.config["TASALO_CACHE"]
+    try:
+        result = blog_service.get_posts(cache, account)
+    except UpstreamError:
+        return _err(502, "upstream_unavailable", "No se pudo cargar el post")
+    post = blog_service.find_post(result.value, permlink)
+    if post is None:
+        return _err(404, "not_found", "Post no encontrado")
+    return jsonify({"ok": True, "stale": result.stale, "post": blog_service.public_post(post, with_body=True)})
 
 
 @bp.route("/year")
