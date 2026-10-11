@@ -76,5 +76,8 @@ export const getFuel = () => apiFetch("/fuel");
 export const getYear = () => apiFetch("/year");
 export const getEltoqueImage = () => apiBlob("/image/eltoque");
 export const getHistorySummary = () => apiFetch("/history/summary");
+export const getBlog = (account) => apiFetch(`/blog/${encodeURIComponent(account)}`);
+export const getBlogPost = (account, permlink) =>
+  apiFetch(`/blog/${encodeURIComponent(account)}/${encodeURIComponent(permlink)}`);
 export const getHistoryDaily = (source, currency, days) =>
   apiFetch(`/history/daily?source=${encodeURIComponent(source)}&currency=${encodeURIComponent(currency)}&days=${days}`);

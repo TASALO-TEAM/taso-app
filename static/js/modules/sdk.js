@@ -83,6 +83,29 @@ export function shareText(text) {
   }
 }
 
+/**
+ * Abre un enlace externo en el navegador (solo http/https). Llamar siempre desde un toque del usuario.
+ * Fuera de Telegram, o con un cliente antiguo, usa window.open sin dar acceso a la miniapp (noopener).
+ */
+export function openLink(url) {
+  if (typeof url !== "string" || !/^https?:\/\//i.test(url)) return false;
+  const tg = webApp();
+  if (tg && typeof tg.openLink === "function" && supports("6.1")) {
+    try {
+      tg.openLink(url);
+      return true;
+    } catch (_) {
+      /* cae al plan B */
+    }
+  }
+  try {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 let initialised = false;
 
 let backHandler = null;

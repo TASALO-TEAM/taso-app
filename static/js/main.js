@@ -50,6 +50,7 @@ const VIEWS = {
   tasas: () => import("./views/tasas.js"),
   combustible: () => import("./views/combustible.js"),
   calculadora: () => import("./views/calculadora.js"),
+  blog: () => import("./views/blog.js"),
 };
 
 let unmountCurrent = null;
