@@ -131,6 +131,9 @@ def setup_logging(level: int = logging.INFO) -> logging.Logger:
     root_logger = logging.getLogger()
     root_logger.handlers = []
     root_logger.setLevel(logging.DEBUG)
+    # httpcore escribe ~15 líneas DEBUG por petición y llena los 2 MB de rotación en pocas horas;
+    # httpx (una línea INFO por petición) se conserva para poder diagnosticar.
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     formatter = logging.Formatter(LOG_FORMAT, datefmt=DATE_FORMAT)
 
