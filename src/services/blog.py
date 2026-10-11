@@ -34,7 +34,7 @@ BLOG_MAX_STALE = 24 * 3600.0   # si Hive no responde, se sirve lo último hasta 
 NODE_TIMEOUT = 8.0
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024  # 10 posts largos pesan menos; tope defensivo
 
-PERMLINK_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,255}$")
+PERMLINK_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,255}\Z")
 # Permlink real del Spotlight: tasalo-spotlight-09-oct-2026
 _SPOTLIGHT_PERMLINK = re.compile(r"^tasalo-spotlight-\d{2}-[a-z]{3}-\d{4}$")
 # Título real: «<emoji> TASALO Spotlight — 09 oct 2026», a veces con un espacio inicial. Se tolera cualquier

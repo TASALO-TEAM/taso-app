@@ -51,9 +51,10 @@ def create_app():
         return {"asset": asset, "app_version": app_version}
 
     # Rutas nuevas: shell + API del BFF (CSP estricta)
-    from src.routes import pages, api_public
+    from src.routes import pages, api_public, api_alerts
     app.register_blueprint(pages.bp)
     app.register_blueprint(api_public.bp)
+    app.register_blueprint(api_alerts.bp)
 
     @app.after_request
     def _security_headers(response):

@@ -56,6 +56,28 @@ def get_file(path: str, timeout: float = FILE_TIMEOUT) -> tuple[bytes, str]:
     return resp.content, resp.headers.get("content-type", "application/octet-stream")
 
 
+def call(method: str, path: str, *, json: Any = None, params: dict | None = None, timeout: float = JSON_TIMEOUT) -> tuple[int, Any]:
+    """Llamada AUTENTICADA a taso-api (``X-API-Key``) para las alertas del usuario.
+
+    Devuelve ``(status, cuerpo_json_o_None)`` sin juzgar el código: quien llama decide qué es 404 o 409.
+    Lanza UpstreamError solo si no hubo respuesta (red, timeout). La clave nunca se registra.
+    """
+    headers = {"Accept": "application/json"}
+    key = settings.admin_key
+    if key:
+        headers["X-API-Key"] = key
+    try:
+        resp = httpx.request(method, _url(path), json=json, params=params, headers=headers, timeout=timeout)
+    except httpx.HTTPError as exc:
+        logger.warning("taso-api %s %s falló: %s", method, path, type(exc).__name__)
+        raise UpstreamError(path) from exc
+    try:
+        body = resp.json()
+    except ValueError:
+        body = None
+    return resp.status_code, body
+
+
 def probe(path: str, timeout: float = JSON_TIMEOUT) -> bool:
     """¿Responde 200? No descarga el cuerpo."""
     try:

@@ -21,7 +21,7 @@ CSP = "; ".join(
     ]
 )
 
-STRICT_BLUEPRINTS = frozenset({"pages", "api"})
+STRICT_BLUEPRINTS = frozenset({"pages", "api", "api_alerts"})
 
 
 def apply_security_headers(response, blueprint: str | None, is_api: bool):
