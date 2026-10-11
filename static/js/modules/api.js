@@ -81,3 +81,14 @@ export const getBlogPost = (account, permlink) =>
   apiFetch(`/blog/${encodeURIComponent(account)}/${encodeURIComponent(permlink)}`);
 export const getHistoryDaily = (source, currency, days) =>
   apiFetch(`/history/daily?source=${encodeURIComponent(source)}&currency=${encodeURIComponent(currency)}&days=${days}`);
+
+// Alertas del usuario (S6). El servidor identifica al usuario SOLO por el initData: nada de uid en estas llamadas.
+export const getAlerts = () => apiFetch("/alerts");
+export const deletePriceAlert = (id) => apiFetch(`/alerts/price/${encodeURIComponent(id)}`, { method: "DELETE" });
+export const putImageAlert = (alertTime, formatType, enabled) =>
+  apiFetch("/alerts/image", { method: "PUT", body: { alert_time: alertTime, format_type: formatType, enabled } });
+export const deleteImageAlert = () => apiFetch("/alerts/image", { method: "DELETE" });
+export const putYearAlert = (hour) => apiFetch("/alerts/year", { method: "PUT", body: { hour } });
+export const deleteYearAlert = () => apiFetch("/alerts/year", { method: "DELETE" });
+export const addSpotlightHour = (hour) => apiFetch("/alerts/spotlight", { method: "POST", body: { hour } });
+export const deleteSpotlightHour = (hour) => apiFetch(`/alerts/spotlight/${encodeURIComponent(hour)}`, { method: "DELETE" });

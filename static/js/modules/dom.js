@@ -44,4 +44,6 @@ export const ICONS = {
   copy: ["M9 9h11v11H9z", "M5 15V4h11"],
   share: ["M12 15V3", "M8 7l4-4 4 4", "M5 12v8h14v-8"],
   swap: ["M8 4v16", "M4 16l4 4 4-4", "M16 20V4", "M12 8l4-4 4 4"],
+  trash: ["M4 7h16", "M10 11v6M14 11v6", "M6 7l1 13h10l1-13", "M9 7V4h6v3"],
+  chevron: ["M9 6l6 6-6 6"],
 };

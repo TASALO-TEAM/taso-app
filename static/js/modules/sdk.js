@@ -154,3 +154,122 @@ export function init() {
     /* un cliente antiguo no debe romper el arranque */
   }
 }
+
+// ---------- Formularios (S6): háptica, confirmaciones, botón principal, cierre con cambios y permiso del bot ----------
+
+/** Vibración corta: "success" | "error" | "warning" (notificación) o "select" (cambio de selección). Sin soporte: nada. */
+export function haptic(kind) {
+  const tg = webApp();
+  if (!tg || !tg.HapticFeedback || !supports("6.1")) return;
+  try {
+    if (kind === "select") tg.HapticFeedback.selectionChanged();
+    else tg.HapticFeedback.notificationOccurred(kind);
+  } catch (_) {
+    /* sin háptica: no pasa nada */
+  }
+}
+
+/**
+ * Pregunta sí/no (borrar, descartar). Usa el diálogo nativo de Telegram (6.2+); en navegador, window.confirm.
+ * El mensaje de Telegram admite hasta 256 caracteres.
+ */
+export function confirmAction(message) {
+  const tg = webApp();
+  const text = String(message).slice(0, 250);
+  if (tg && typeof tg.showConfirm === "function" && supports("6.2")) {
+    return new Promise((resolve) => {
+      try {
+        tg.showConfirm(text, (ok) => resolve(Boolean(ok)));
+      } catch (_) {
+        resolve(window.confirm(text));
+      }
+    });
+  }
+  return Promise.resolve(typeof window.confirm === "function" ? window.confirm(text) : false);
+}
+
+/** Pide a Telegram confirmar antes de cerrar la miniapp (para formularios con cambios sin guardar). */
+export function setClosingConfirmation(on) {
+  const tg = webApp();
+  if (!tg || !supports("6.2")) return;
+  try {
+    if (on) tg.enableClosingConfirmation();
+    else tg.disableClosingConfirmation();
+  } catch (_) {
+    /* cliente sin esta función */
+  }
+}
+
+let mainHandler = null;
+
+/** Muestra el botón principal de Telegram. false si el cliente no lo tiene: el formulario pinta el suyo. */
+export function showMain(text, handler) {
+  const tg = webApp();
+  if (!tg || !tg.MainButton) return false;
+  hideMain();
+  mainHandler = handler;
+  try {
+    tg.MainButton.setText(text);
+    tg.MainButton.onClick(handler);
+    tg.MainButton.show();
+    return true;
+  } catch (_) {
+    mainHandler = null;
+    return false;
+  }
+}
+
+/** Botón principal en curso (círculo de progreso y sin toques) o libre. */
+export function setMainBusy(busy) {
+  const tg = webApp();
+  if (!tg || !tg.MainButton || !mainHandler) return;
+  try {
+    if (busy) {
+      tg.MainButton.showProgress(false);
+      tg.MainButton.disable();
+    } else {
+      tg.MainButton.hideProgress();
+      tg.MainButton.enable();
+    }
+  } catch (_) {
+    /* cliente sin progreso */
+  }
+}
+
+export function hideMain() {
+  const tg = webApp();
+  if (!tg || !tg.MainButton) return;
+  try {
+    if (mainHandler) tg.MainButton.offClick(mainHandler);
+    tg.MainButton.hideProgress();
+    tg.MainButton.enable();
+    tg.MainButton.hide();
+  } catch (_) {
+    /* nada que ocultar */
+  }
+  mainHandler = null;
+}
+
+/**
+ * ¿El bot puede escribirle al usuario? true/false según `allows_write_to_pm` del initData; null si no se sabe
+ * (navegador o cliente antiguo): en ese caso no se bloquea nada.
+ */
+export function canWriteToPm() {
+  const tg = webApp();
+  const user = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+  if (!user || typeof user.allows_write_to_pm !== "boolean") return null;
+  return user.allows_write_to_pm;
+}
+
+/** Pide permiso para que el bot escriba al usuario (6.9+). true si lo concede o no hace falta pedirlo. */
+export function requestWriteAccess() {
+  const tg = webApp();
+  if (!tg || typeof tg.requestWriteAccess !== "function" || !supports("6.9")) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    try {
+      tg.requestWriteAccess((allowed) => resolve(Boolean(allowed)));
+    } catch (_) {
+      resolve(true);
+    }
+  });
+}
