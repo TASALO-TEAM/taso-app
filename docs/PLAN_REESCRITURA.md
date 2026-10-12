@@ -117,3 +117,13 @@ Cada sección es una rebanada completa: UI + datos + estados + tests + handoff a
 3. **Cambios C-API-1…4 y C-BOT-1…3:** ¿aprobados en bloque? Si sí, los hago **después de G2**, API primero y bot después, sin desplegar.
 4. **BotFather** (Main Mini App y menú): lo haces tú cuando quieras; no bloquea nada.
 Tras G1 sigo con F4 (sistema de diseño y maquetas) y me detengo en G2.
+
+---
+
+## Reajuste 2026-10-12: Perfil, Ajustes y Admin (leer `docs/PLAN_PERFIL.md`)
+Por orden de Ernesto la pestaña **Alertas** pasó a ser **Perfil** y cambian estas filas de la tabla de secciones:
+- **S6 Alertas (pestaña):** hecha, pero ahora vive en Perfil → «Mis avisos» (`views/perfil.js` monta `views/alertas.js`). `#/alertas` y `tab_alertas` son alias.
+- **S7 Ajustes + mensajes:** sustituida por **P3 Ajustes** (icono de engranaje en Perfil → `#/ajustes`) y **P5 Novedades** (dentro de Ajustes).
+- **S8 Admin:** sustituida por **P4**: estadísticas del bot y de la app dentro de Perfil, solo para ids admin; la vieja `/stats` con clave se retira.
+- **F4 (alertas de precio propias de S10):** su UI va en Perfil → «Mis avisos»; se hace después de P4.
+- **Contratos nuevos:** `GET /api/me` ampliado (`username`, `last_name`, `photo_url`, `is_premium`) y `GET /api/admin/overview` (solo admin). Orden pendiente: P3 → P4 → P5 → F4 → S9 → F6.
