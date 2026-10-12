@@ -1,9 +1,21 @@
 // Pantalla Mercado (el /p del bot): búsqueda por símbolo, top 5 de monedas más consultadas y tarjeta con los datos.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). El formato y las reglas puras viven en modules/market.js.
-import { ApiError, getMarket, getMarketTop } from "../modules/api.js";
+import { ApiError, getMarket, getMarketTop, postPanorama } from "../modules/api.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
-import { changes, cleanTop, detailRows, extraRows, marketBanner, normalizeSymbol, sourceNote, usd } from "../modules/market.js";
+import {
+  PANORAMA_DISCLAIMER,
+  changes,
+  cleanTop,
+  detailRows,
+  extraRows,
+  marketBanner,
+  normalizeSymbol,
+  panoramaError,
+  panoramaParagraphs,
+  sourceNote,
+  usd,
+} from "../modules/market.js";
 import { load, save } from "../modules/storage.js";
 
 const LAST_KEY = "tasalo:market:last";
@@ -35,6 +47,7 @@ export function mount(ctx) {
     offline: false,
     inputError: "",
     now: Date.now(),
+    pan: new Map(), // símbolo -> {status: loading|ready|error, ...}; sobrevive a los refrescos y al cambio de moneda
   };
   let alive = true;
   let fetchToken = 0;
@@ -147,6 +160,31 @@ export function mount(ctx) {
     render();
   }
 
+  // ---------- Panorama IA (S10 F3) ----------
+  async function generatePanorama(symbol) {
+    const current = state.pan.get(symbol);
+    if (current && current.status === "loading") return;
+    state.pan.set(symbol, { status: "loading" });
+    render();
+    try {
+      const res = await postPanorama(symbol);
+      if (!alive) return;
+      const paragraphs = panoramaParagraphs(res && res.text);
+      state.pan.set(
+        symbol,
+        paragraphs.length
+          ? { status: "ready", paragraphs, disclaimer: res && typeof res.disclaimer === "string" && res.disclaimer ? res.disclaimer : PANORAMA_DISCLAIMER }
+          : { status: "error", message: panoramaError({ status: 503 }), retry: true },
+      );
+    } catch (e) {
+      if (!alive) return;
+      const status = e instanceof ApiError ? e.status : 503;
+      state.pan.set(symbol, { status: "error", message: panoramaError({ status }), retry: status !== 429 });
+    }
+    state.now = Date.now();
+    render();
+  }
+
   // ---------- Render ----------
   function renderInputError() {
     errorSlot.textContent = state.inputError;
@@ -182,6 +220,30 @@ export function mount(ctx) {
       { class: "mk-row" },
       h("dt", { class: "mk-label", text: r.label }),
       h("dd", { class: "mk-val mono" }, r.value, r.sub ? h("small", { class: "mk-sub", text: r.sub }) : null),
+    );
+  }
+
+  function panoramaCard(m) {
+    const p = state.pan.get(m.symbol) || { status: "idle" };
+    const go = () => generatePanorama(m.symbol);
+    let body;
+    if (p.status === "loading") {
+      body = [h("p", { class: "mk-ai-wait", role: "status", text: `Generando el panorama de ${m.symbol}…` }), h("div", { class: "skeleton", "aria-hidden": "true" })];
+    } else if (p.status === "ready") {
+      body = [...p.paragraphs.map((t) => h("p", { class: "mk-ai-p", text: t })), h("p", { class: "note", text: p.disclaimer })];
+    } else if (p.status === "error") {
+      body = [h("p", { class: "mk-err", role: "alert", text: p.message }), p.retry ? h("button", { type: "button", class: "btn btn-ghost", text: "Reintentar", onClick: go }) : null];
+    } else {
+      body = [
+        h("p", { class: "mk-ai-hint", text: `Un comentario en lenguaje sencillo sobre cómo se mueve ${m.symbol}.` }),
+        h("button", { type: "button", class: "btn", text: "Generar Panorama IA", onClick: go }),
+      ];
+    }
+    return h(
+      "section",
+      { class: "card mk-card", "aria-label": "Panorama IA", "aria-busy": p.status === "loading" ? "true" : "false" },
+      h("div", { class: "mk-head" }, h("h2", { class: "card-title", text: "Panorama IA" }), h("span", { class: "mk-src", text: "Groq" })),
+      ...body,
     );
   }
 
@@ -226,6 +288,7 @@ export function mount(ctx) {
           : null,
         rows.length ? h("dl", { class: "mk-rows" }, rows.map(row)) : null,
       ),
+      panoramaCard(m),
       extra.length
         ? h(
             "section",

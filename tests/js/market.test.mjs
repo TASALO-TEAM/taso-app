@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  changes, cleanTop, compact, detailRows, extraRows, kindOf, marketBanner, normalizeSymbol, pct, plain, SEED_TOP, sourceNote, usd, usdCompact,
+  changes, cleanTop, compact, detailRows, extraRows, kindOf, marketBanner, normalizeSymbol, panoramaError, panoramaParagraphs, PANORAMA_DISCLAIMER, pct, plain, SEED_TOP, sourceNote, usd, usdCompact,
 } from "../../static/js/modules/market.js";
 
 const NB = "\u00a0";
@@ -101,4 +101,22 @@ test("marketBanner: nunca afirma frescura sin hora de lectura", () => {
   assert.equal(marketBanner({ stale: false, fetchedAt: null, now }).kind, "stale");
   assert.match(marketBanner({ stale: true, fetchedAt: null, now }).text, /lo último/);
   assert.equal(marketBanner({ offline: true, now }).kind, "offline");
+});
+
+test("panoramaParagraphs: separa por línea en blanco, limpia espacios y no interpreta HTML", () => {
+  assert.deepEqual(panoramaParagraphs("Uno  dos\n\n\nTres\r\n\r\nCuatro"), ["Uno dos", "Tres", "Cuatro"]);
+  assert.deepEqual(panoramaParagraphs("<b>hola</b>"), ["<b>hola</b>"]); // se pinta con textContent: queda como texto
+  for (const v of [null, undefined, 42, {}, "", "   \n\n  "]) assert.deepEqual(panoramaParagraphs(v), []);
+  assert.equal(panoramaParagraphs(Array.from({ length: 20 }, (_, i) => `p${i}`).join("\n\n")).length, 8);
+});
+
+test("panoramaError: texto propio según el estado, sin usar lo que diga el servidor", () => {
+  assert.match(panoramaError({ status: 0 }), /Sin conexión/);
+  assert.match(panoramaError({ status: 429 }), /límite/);
+  assert.match(panoramaError({ status: 404 }), /No encontré/);
+  assert.match(panoramaError({ status: 400 }), /No encontré/);
+  assert.match(panoramaError({ status: 503 }), /no está disponible/);
+  assert.match(panoramaError({ status: 502 }), /no está disponible/);
+  assert.match(panoramaError(), /no está disponible/);
+  assert.match(PANORAMA_DISCLAIMER, /asesoramiento financiero/);
 });

@@ -152,3 +152,25 @@ export function marketBanner({ stale, fetchedAt, now, offline }) {
   if (isStale(fetchedAt, now, MARKET_STALE_MINUTES)) return { kind: "stale", text: `Datos de ${when}.` };
   return null;
 }
+
+// ---------- Panorama IA (S10 F3) ----------
+export const PANORAMA_DISCLAIMER = "Análisis generado por IA. No constituye asesoramiento financiero.";
+
+/** Texto del servidor -> lista de párrafos (el cliente los pinta con textContent; nunca se interpreta como HTML). */
+export function panoramaParagraphs(text) {
+  if (typeof text !== "string") return [];
+  return text
+    .replace(/\r\n/g, "\n")
+    .split(/\n{2,}/)
+    .map((p) => p.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+/** Mensaje para el usuario según el fallo. Texto propio: no se muestra lo que diga el servidor. */
+export function panoramaError({ status } = {}) {
+  if (status === 0) return "Sin conexión. Inténtalo cuando tengas internet.";
+  if (status === 429) return "Llegaste al límite de análisis de IA de esta hora. Inténtalo más tarde.";
+  if (status === 404 || status === 400) return "No encontré esa moneda.";
+  return "La IA no está disponible ahora. Inténtalo en un momento.";
+}

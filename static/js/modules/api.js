@@ -76,6 +76,8 @@ export const getYear = () => apiFetch("/year");
 // Mercado (S10): el servidor valida el símbolo; aquí solo se codifica para la ruta.
 export const getMarketTop = () => apiFetch("/market/top");
 export const getMarket = (symbol) => apiFetch(`/market/${encodeURIComponent(symbol)}`);
+// Panorama IA: Groq puede tardar hasta ~25 s en el servidor; el servidor lee los datos y limita a 5 por hora y usuario.
+export const postPanorama = (symbol) => apiFetch(`/market/${encodeURIComponent(symbol)}/panorama`, { method: "POST", timeoutMs: 40000 });
 export const getEltoqueImage = () => apiBlob("/image/eltoque");
 export const getHistorySummary = () => apiFetch("/history/summary");
 export const getBlog = (account) => apiFetch(`/blog/${encodeURIComponent(account)}`);
