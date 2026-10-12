@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     initdata_max_age: int = 86400
     # Peticiones por minuto y usuario al BFF (0 = sin límite)
     api_rate_limit_per_minute: int = 120
+    # Analisis de IA (Panorama) por usuario y hora (0 = sin limite). Solo cuentan los que de verdad llaman a Groq.
+    ai_rate_limit_per_hour: int = 5
 
     # Prefijo bajo el que se publica la app (p. ej. "/miniapp"); vacío si cuelga de la raíz.
     # La app acepta las rutas con y sin ese prefijo, así funciona con Caddy haciendo

@@ -37,6 +37,7 @@ def create_app():
     # Estado en memoria por app (los tests no comparten nada)
     app.config["TASALO_CACHE"] = TTLCache()
     app.config["TASALO_LIMITER"] = RateLimiter(settings.api_rate_limit_per_minute, 60.0)
+    app.config["TASALO_AI_LIMITER"] = RateLimiter(settings.ai_rate_limit_per_hour, 3600.0)
 
     # Acepta las rutas con y sin prefijo (/miniapp), sea cual sea el modo de Caddy
     app.wsgi_app = PrefixStripMiddleware(app.wsgi_app, settings.base_path)

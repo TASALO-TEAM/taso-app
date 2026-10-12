@@ -81,6 +81,10 @@ def coingecko_ring() -> KeyRing:
     return _ring("cg", settings.coingecko_keys)
 
 
+def groq_ring() -> KeyRing:
+    return _ring("groq", settings.groq_keys)
+
+
 _rings: dict[str, tuple[tuple, KeyRing]] = {}
 
 
