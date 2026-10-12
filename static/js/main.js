@@ -1,6 +1,7 @@
 // Arranque de la miniapp: identidad, estados globales y navegación por pestañas.
 import * as sdk from "./modules/sdk.js";
 import { getMe, ApiError } from "./modules/api.js";
+import { resolveTab } from "./modules/tabs.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -9,7 +10,7 @@ const TABS = {
   mercado: "Mercado",
   calculadora: "Calculadora",
   blog: "Blog",
-  alertas: "Alertas",
+  perfil: "Perfil",
 };
 const DEFAULT_TAB = "tasas";
 
@@ -21,14 +22,15 @@ function showScreen(id) {
 
 function currentTab() {
   const m = location.hash.match(/^#\/([a-z]+)/);
-  return m && Object.hasOwn(TABS, m[1]) ? m[1] : DEFAULT_TAB;
+  return (m && resolveTab(m[1], TABS)) || DEFAULT_TAB;
 }
 
-/** Enlace profundo desde el bot: ?startapp=tab_alertas → #/alertas (solo pestañas conocidas). */
+/** Enlace profundo desde el bot: ?startapp=tab_perfil → #/perfil (solo pestañas conocidas; tab_alertas sigue valiendo). */
 function applyStartParam() {
   if (location.hash) return;
   const m = sdk.startParam().match(/^tab_([a-z]+)$/);
-  if (m && Object.hasOwn(TABS, m[1])) location.hash = `#/${m[1]}`;
+  const tab = m && resolveTab(m[1], TABS);
+  if (tab) location.hash = `#/${tab}`;
 }
 
 function renderPlaceholder(tab) {
@@ -51,7 +53,7 @@ const VIEWS = {
   mercado: () => import("./views/mercado.js"),
   calculadora: () => import("./views/calculadora.js"),
   blog: () => import("./views/blog.js"),
-  alertas: () => import("./views/alertas.js"),
+  perfil: () => import("./views/perfil.js"),
 };
 
 let unmountCurrent = null;

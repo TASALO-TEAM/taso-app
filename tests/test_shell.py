@@ -56,7 +56,7 @@ def test_shell_responde_con_los_estados_globales(client):
     for ident in ("state-loading", "state-unidentified", "state-error", "banner-offline", "shell", "retry"):
         assert f'id="{ident}"' in html
     assert "Ábrela desde @tasalobot" in html
-    for tab in ("tasas", "mercado", "calculadora", "blog", "alertas"):
+    for tab in ("tasas", "mercado", "calculadora", "blog", "perfil"):
         assert f'data-tab="{tab}"' in html
 
 

@@ -61,13 +61,13 @@ export function mount(ctx) {
     openDeepLink();
   }
 
-  /** «Recibir cada día» (desde el Blog) llega como #/alertas?nueva=tspl: abre el panel de Spotlight una sola vez. */
+  /** «Recibir cada día» (desde el Blog) llega como #/perfil?nueva=tspl (o el viejo #/alertas?…): abre el panel de Spotlight una sola vez. */
   function openDeepLink() {
     if (deepLinkDone || !data) return;
     deepLinkDone = true;
     if (/[?&]nueva=tspl(?:&|$)/.test(location.hash)) {
       try {
-        history.replaceState(null, "", "#/alertas");
+        history.replaceState(null, "", "#/perfil");
       } catch (_) {
         /* sin history: el enlace queda en la barra, no pasa nada */
       }

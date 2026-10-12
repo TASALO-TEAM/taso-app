@@ -9,11 +9,11 @@ export const ACCOUNTS = [
 export const DEFAULT_ACCOUNT = "tasalo";
 
 /**
- * «Recibir cada día» lleva a la alerta de Spotlight, que vive en la pestaña Alertas (S6): la vista de Alertas lee
- * `#/alertas?nueva=tspl` y abre el panel de Spotlight.
+ * «Recibir cada día» lleva a la alerta de Spotlight, que vive en «Mis avisos» de la pestaña Perfil: la vista lee
+ * `#/perfil?nueva=tspl` (el viejo `#/alertas?nueva=tspl` también vale) y abre el panel de Spotlight.
  */
 export const SPOTLIGHT_ALERT_READY = true;
-export const SPOTLIGHT_ALERT_HASH = "#/alertas?nueva=tspl";
+export const SPOTLIGHT_ALERT_HASH = "#/perfil?nueva=tspl";
 
 /** Una cuenta guardada que ya no existe (o un valor raro) cae a la de TASALO. */
 export function normalizeAccount(value) {
