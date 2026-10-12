@@ -10,8 +10,11 @@ const TABS = {
   calculadora: "Calculadora",
   blog: "Blog",
   alertas: "Alertas",
+  mercado: "Mercado", // no es pestaña de la barra: se entra desde la lupa de Tasas (o ?startapp=tab_mercado)
 };
 const DEFAULT_TAB = "tasas";
+// Pantallas que cuelgan de una pestaña: la barra resalta la pestaña madre.
+const PARENT_TAB = { mercado: "tasas" };
 
 const SCREENS = ["state-loading", "state-unidentified", "state-error", "shell"];
 
@@ -52,6 +55,7 @@ const VIEWS = {
   calculadora: () => import("./views/calculadora.js"),
   blog: () => import("./views/blog.js"),
   alertas: () => import("./views/alertas.js"),
+  mercado: () => import("./views/mercado.js"),
 };
 
 let unmountCurrent = null;
@@ -59,8 +63,9 @@ let routeToken = 0;
 
 async function route() {
   const tab = currentTab();
+  const navTab = PARENT_TAB[tab] || tab;
   for (const link of document.querySelectorAll(".nv")) {
-    if (link.dataset.tab === tab) link.setAttribute("aria-current", "page");
+    if (link.dataset.tab === navTab) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   }
   $("view-title").textContent = TABS[tab];

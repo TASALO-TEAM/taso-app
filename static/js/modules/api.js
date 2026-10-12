@@ -74,6 +74,9 @@ export const getMe = () => apiFetch("/me");
 export const getRates = () => apiFetch("/rates");
 export const getFuel = () => apiFetch("/fuel");
 export const getYear = () => apiFetch("/year");
+// Mercado (S10): el servidor valida el símbolo; aquí solo se codifica para la ruta.
+export const getMarketTop = () => apiFetch("/market/top");
+export const getMarket = (symbol) => apiFetch(`/market/${encodeURIComponent(symbol)}`);
 export const getEltoqueImage = () => apiBlob("/image/eltoque");
 export const getHistorySummary = () => apiFetch("/history/summary");
 export const getBlog = (account) => apiFetch(`/blog/${encodeURIComponent(account)}`);
