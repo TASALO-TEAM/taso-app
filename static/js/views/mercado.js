@@ -4,7 +4,6 @@ import { ApiError, getMarket, getMarketTop } from "../modules/api.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
 import { changes, cleanTop, detailRows, extraRows, marketBanner, normalizeSymbol, sourceNote, usd } from "../modules/market.js";
-import { hideBack, showBack } from "../modules/sdk.js";
 import { load, save } from "../modules/storage.js";
 
 const LAST_KEY = "tasalo:market:last";
@@ -21,7 +20,7 @@ function validCache(cache) {
 
 /**
  * Monta la pantalla. ctx = { view, actions, setSubtitle }.
- * Devuelve la función que la desmonta (quita temporizadores, escuchas y el botón Atrás).
+ * Devuelve la función que la desmonta (quita temporizadores y escuchas).
  */
 export function mount(ctx) {
   const cache = load(CACHE_KEY, null);
@@ -42,7 +41,6 @@ export function mount(ctx) {
   let lastFetch = 0;
 
   // ---------- Esqueleto fijo (los huecos se rellenan al renderizar; el campo de texto no se recrea) ----------
-  const backSlot = h("div", { class: "slot" });
   const bannerSlot = h("div", { class: "slot" });
   const input = h("input", {
     class: "mk-input",
@@ -88,16 +86,8 @@ export function mount(ctx) {
   );
   const chipsSlot = h("div", { class: "chips", role: "group", "aria-label": "Monedas más consultadas" });
   const content = h("div", { class: "slot" });
-  ctx.view.replaceChildren(backSlot, bannerSlot, form, errorSlot, chipsSlot, content);
+  ctx.view.replaceChildren(bannerSlot, form, errorSlot, chipsSlot, content);
   ctx.actions.replaceChildren();
-
-  // ---------- Navegación: Atrás de Telegram o un botón propio si el cliente no lo trae ----------
-  const goBack = () => {
-    location.hash = "#/tasas";
-  };
-  if (!showBack(goBack)) {
-    backSlot.replaceChildren(h("button", { type: "button", class: "btn-ghost mk-back", onClick: goBack }, "← Volver a Tasas"));
-  }
 
   // ---------- Datos ----------
   function select(symbol, force = false) {
@@ -326,7 +316,6 @@ export function mount(ctx) {
     document.removeEventListener("visibilitychange", onVisible);
     window.removeEventListener("online", onOnline);
     window.removeEventListener("offline", onOffline);
-    hideBack();
     ctx.actions.replaceChildren();
     ctx.setSubtitle("");
   };

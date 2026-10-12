@@ -72,19 +72,7 @@ export function mount(ctx) {
     { type: "button", class: "icon-btn", "aria-label": "Actualizar tasas", onClick: () => refresh() },
     icon(...ICONS.refresh),
   );
-  const searchBtn = h(
-    "button",
-    {
-      type: "button",
-      class: "icon-btn",
-      "aria-label": "Buscar una moneda",
-      onClick: () => {
-        location.hash = "#/mercado";
-      },
-    },
-    icon(...ICONS.search),
-  );
-  ctx.actions.replaceChildren(searchBtn, refreshBtn);
+  ctx.actions.replaceChildren(refreshBtn);
 
   // ---------- Datos ----------
   function sourceData() {

@@ -72,7 +72,6 @@ export async function apiBlob(path, options = { timeoutMs: 20000 }) {
 
 export const getMe = () => apiFetch("/me");
 export const getRates = () => apiFetch("/rates");
-export const getFuel = () => apiFetch("/fuel");
 export const getYear = () => apiFetch("/year");
 // Mercado (S10): el servidor valida el símbolo; aquí solo se codifica para la ruta.
 export const getMarketTop = () => apiFetch("/market/top");

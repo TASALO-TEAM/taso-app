@@ -4,7 +4,6 @@ from flask import Blueprint, Response, current_app, g, jsonify, request
 
 from src.auth.guard import require_user
 from src.services import blog as blog_service
-from src.services import fuel as fuel_service
 from src.services import history as history_service
 from src.services import rates as rates_service
 from src.services.cache import UpstreamError, UpstreamNotFound
@@ -62,24 +61,6 @@ def rates():
         }
     )
 
-
-@bp.route("/fuel")
-@require_user
-def fuel():
-    """Precios de combustible (rango min–max por tipo) con la hora REAL de la lectura en ``fetched_at``."""
-    cache = current_app.config["TASALO_CACHE"]
-    try:
-        result = fuel_service.get_fuel(cache)
-    except UpstreamError:
-        return _err(502, "upstream_unavailable", "No se pudo cargar el combustible")
-    return jsonify(
-        {
-            "ok": True,
-            "stale": result.stale,
-            "fetched_at": result.value["fetched_at"],
-            "items": result.value["items"],
-        }
-    )
 
 
 @bp.route("/blog/<account>")
