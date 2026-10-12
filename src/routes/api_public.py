@@ -29,6 +29,10 @@ def me():
             "user": {
                 "id": init.user_id,
                 "first_name": init.first_name,
+                "last_name": init.last_name,
+                "username": init.username,
+                "photo_url": init.photo_url,
+                "is_premium": init.is_premium,
                 "language_code": init.language_code,
                 "allows_write_to_pm": init.allows_write_to_pm,
                 "is_admin": init.user_id in cfg.admin_ids,

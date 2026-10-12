@@ -120,10 +120,22 @@ def test_me_valido_devuelve_identidad(client):
     body = r.get_json()
     assert body["ok"] is True
     assert body["user"] == {
-        "id": 424242, "first_name": "Ernesto", "language_code": "es",
-        "allows_write_to_pm": True, "is_admin": False,
+        "id": 424242, "first_name": "Ernesto", "last_name": "", "username": "", "photo_url": "", "is_premium": False,
+        "language_code": "es", "allows_write_to_pm": True, "is_admin": False,
     }
     assert body["start_param"] == "tab_alertas"
+
+
+def test_me_trae_username_foto_https_y_descarta_lo_raro(client):
+    user = {**USER, "last_name": "Sus", "username": "ersus93", "photo_url": "https://t.me/i/userpic/320/x.jpg", "is_premium": True}
+    u = client.get("/api/me", headers=tma(signed(user=user))).get_json()["user"]
+    assert (u["last_name"], u["username"], u["is_premium"]) == ("Sus", "ersus93", True)
+    assert u["photo_url"] == "https://t.me/i/userpic/320/x.jpg"
+    raro = {**USER, "username": "no valido!", "photo_url": "http://t.me/x.jpg"}
+    u = client.get("/api/me", headers=tma(signed(user=raro))).get_json()["user"]
+    assert u["username"] == "" and u["photo_url"] == ""
+    javascript = {**USER, "photo_url": "javascript:alert(1)"}
+    assert client.get("/api/me", headers=tma(signed(user=javascript))).get_json()["user"]["photo_url"] == ""
 
 
 def test_me_ignora_cualquier_uid_del_cliente(client):

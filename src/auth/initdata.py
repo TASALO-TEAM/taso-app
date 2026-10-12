@@ -20,6 +20,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional
@@ -55,6 +56,26 @@ class InitData:
     @property
     def language_code(self) -> Optional[str]:
         return self.user.get("language_code")
+
+    @property
+    def last_name(self) -> str:
+        return str(self.user.get("last_name") or "")[:64]
+
+    @property
+    def username(self) -> str:
+        """@usuario sin la arroba (vacío si no tiene)."""
+        name = str(self.user.get("username") or "").lstrip("@")
+        return name[:64] if re.fullmatch(r"[A-Za-z0-9_]{1,64}", name) else ""
+
+    @property
+    def photo_url(self) -> str:
+        """Foto de perfil solo si es una URL https corta; si no, vacío (la app pinta la inicial)."""
+        url = str(self.user.get("photo_url") or "")
+        return url if url.startswith("https://") and len(url) <= 512 and " " not in url else ""
+
+    @property
+    def is_premium(self) -> bool:
+        return bool(self.user.get("is_premium", False))
 
     @property
     def allows_write_to_pm(self) -> bool:
