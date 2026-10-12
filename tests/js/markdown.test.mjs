@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { parse, parseInline, safeImageUrl, safeLinkUrl } from "../../static/js/modules/markdown.js";
+import { inlineLength, parse, parseInline, safeImageUrl, safeLinkUrl, tableColumnChars } from "../../static/js/modules/markdown.js";
 
 /** Todos los nodos (bloques e inlines) del árbol, en orden. */
 function walk(nodes, out = []) {
@@ -154,6 +154,37 @@ test("tabla", () => {
 
 test("escapes de Markdown", () => {
   assert.equal(texts("\\*no cursiva\\* y \\[no enlace\\]"), "*no cursiva* y [no enlace]");
+});
+
+test("tabla: alineación por columna según la fila separadora", () => {
+  const [t] = parse("| A | B | C | D |\n| :-- | :-: | --: | --- |\n| 1 | 2 | 3 | 4 |");
+  assert.deepEqual(t.aligns, ["start", "center", "end", "start"]);
+  const [corta] = parse("| A | B | C |\n| --- |\n| 1 | 2 | 3 |");
+  assert.deepEqual(corta.aligns, ["start", "start", "start"], "separador corto: se completa");
+  const [larga] = parse("| A |\n| --- | --: | --: |\n| 1 |");
+  assert.equal(larga.aligns.length, 1, "separador largo: se recorta");
+});
+
+test("tabla: ancho de columna = celda más larga entre 5 y 40 caracteres (como Android)", () => {
+  const larga = "x".repeat(80);
+  const [t] = parse(`| Id | Moneda | Nota |\n| --- | --- | --- |\n| 1 | **Dólar** | ${larga} |\n| 22 | [EUR](https://a.com) | ok |`);
+  // «Id» y «1/22» son más cortas que el mínimo (5); «Dólar» (5) y «EUR» (3, enlace) no pasan de 6 con la cabecera «Moneda»;
+  // la nota de 80 caracteres se recorta al máximo de 40 (su texto se envuelve en la celda).
+  assert.deepEqual(tableColumnChars(t), [5, 6, 40]);
+});
+
+test("tabla: una tabla ancha no se comprime, suma el ancho de sus columnas", () => {
+  const cols = Array.from({ length: 10 }, (_, i) => `Columna número ${i}`);
+  const [t] = parse(`| ${cols.join(" | ")} |\n| ${cols.map(() => "---").join(" | ")} |\n| ${cols.map(() => "dato").join(" | ")} |`);
+  const chars = tableColumnChars(t);
+  assert.equal(chars.length, 10);
+  assert.ok(chars.every((c) => c === 16), "cada columna conserva el ancho de su cabecera");
+  assert.equal(chars.reduce((a, c) => a + c, 0), 160, "la tabla mide 10 × 16 caracteres, no el ancho de la pantalla");
+});
+
+test("inlineLength cuenta texto de enlaces y énfasis, no imágenes ni saltos", () => {
+  assert.equal(inlineLength(parseInline("**ab** [cde](https://a.com) `f`")), 2 + 1 + 3 + 1 + 1);
+  assert.equal(inlineLength(undefined), 0);
 });
 
 // ---------- Robustez ----------

@@ -4,7 +4,7 @@
 import { ApiError, getBlogPost } from "../modules/api.js";
 import { postDate } from "../modules/blog.js";
 import { h, icon, ICONS } from "../modules/dom.js";
-import { parse, safeLinkUrl } from "../modules/markdown.js";
+import { parse, safeLinkUrl, tableColumnChars } from "../modules/markdown.js";
 import { hideBack, openLink, showBack } from "../modules/sdk.js";
 
 // ---------- Markdown → DOM ----------
@@ -52,8 +52,33 @@ export function renderInline(nodes) {
   });
 }
 
-function renderCells(tag, cells) {
-  return cells.map((c) => h(tag, tag === "th" ? { scope: "col" } : null, renderInline(c)));
+function renderCells(tag, cells, aligns) {
+  return cells.map((c, i) => {
+    const props = { class: `md-a-${aligns?.[i] || "start"}` };
+    if (tag === "th") props.scope = "col";
+    return h(tag, props, renderInline(c));
+  });
+}
+
+/**
+ * Tabla con el mismo criterio que la app de Android: cada columna mide lo que su celda más larga (entre 5 y 40
+ * caracteres) y la tabla tiene ese ancho propio; si no cabe en la pantalla se desplaza en horizontal en vez de
+ * comprimirse. Los anchos van como variables CSS por CSSOM (la CSP no admite estilos en línea).
+ */
+function renderTable(b) {
+  const chars = tableColumnChars(b);
+  const total = chars.reduce((a, c) => a + c, 0);
+  return h(
+    "div",
+    { class: "md-table", role: "region", tabindex: "0", "aria-label": "Tabla (se desplaza en horizontal)" },
+    h(
+      "table",
+      { vars: { "--tw": `calc(${total}ch + ${chars.length * 1.5}rem)` } },
+      h("colgroup", null, chars.map((c) => h("col", { vars: { "--cw": `calc(${c}ch + 1.5rem)` } }))),
+      h("thead", null, h("tr", null, renderCells("th", b.head, b.aligns))),
+      h("tbody", null, b.rows.map((row) => h("tr", null, renderCells("td", row, b.aligns)))),
+    ),
+  );
 }
 
 export function renderBlocks(blocks) {
@@ -79,16 +104,7 @@ export function renderBlocks(blocks) {
       case "hr":
         return h("hr");
       case "table":
-        return h(
-          "div",
-          { class: "md-table" },
-          h(
-            "table",
-            null,
-            h("thead", null, h("tr", null, renderCells("th", b.head))),
-            h("tbody", null, b.rows.map((row) => h("tr", null, renderCells("td", row)))),
-          ),
-        );
+        return renderTable(b);
       default:
         return null;
     }

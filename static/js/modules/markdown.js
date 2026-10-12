@@ -230,6 +230,43 @@ function splitRow(line) {
   return cells;
 }
 
+/** Alineación de cada columna según la fila separadora (`:--`, `:-:`, `--:`); siempre `cols` valores. */
+function tableAligns(sepLine, cols) {
+  const out = splitRow(sepLine).map((c) => {
+    const left = c.startsWith(":");
+    const right = c.endsWith(":");
+    return left && right ? "center" : right ? "end" : "start";
+  });
+  while (out.length < cols) out.push("start");
+  return out.slice(0, cols);
+}
+
+/** Cantidad de caracteres visibles de una celda (los nodos inline no se interpretan: solo se cuenta texto). */
+export function inlineLength(nodes) {
+  let n = 0;
+  for (const node of nodes || []) {
+    if (typeof node.text === "string") n += node.text.length;
+    else if (node.type === "link" || node.type === "strong" || node.type === "em" || node.type === "del") n += inlineLength(node.children);
+  }
+  return n;
+}
+
+export const TABLE_MIN_CHARS = 5;
+export const TABLE_MAX_CHARS = 40;
+
+/**
+ * Ancho de cada columna en caracteres: la celda más larga de la columna (cabecera incluida), entre 5 y 40.
+ * Es el mismo criterio que la app de Android, para que la tabla no dependa del ancho de la pantalla:
+ * si no cabe, se desplaza en horizontal; si una celda es más larga que el máximo, su texto se envuelve.
+ */
+export function tableColumnChars(table) {
+  return table.head.map((headCell, column) => {
+    let longest = inlineLength(headCell);
+    for (const row of table.rows) longest = Math.max(longest, inlineLength(row[column]));
+    return Math.min(TABLE_MAX_CHARS, Math.max(TABLE_MIN_CHARS, longest));
+  });
+}
+
 function parseList(lines, start, depth) {
   const first = UL_RE.exec(lines[start]) || OL_RE.exec(lines[start]);
   const ordered = Boolean(OL_RE.exec(lines[start])) && !UL_RE.exec(lines[start]);
@@ -327,6 +364,7 @@ function parseBlocks(lines, depth = 0) {
 
     if (line.includes("|") && i + 1 < lines.length && TABLE_SEP_RE.test(lines[i + 1]) && lines[i + 1].includes("-")) {
       const head = splitRow(line).map((c) => parseInline(c));
+      const aligns = tableAligns(lines[i + 1], head.length);
       i += 2;
       const rows = [];
       while (i < lines.length && lines[i].trim() && lines[i].includes("|")) {
@@ -335,7 +373,7 @@ function parseBlocks(lines, depth = 0) {
         rows.push(cells.slice(0, head.length));
         i++;
       }
-      blocks.push({ type: "table", head, rows });
+      blocks.push({ type: "table", head, rows, aligns });
       continue;
     }
 
