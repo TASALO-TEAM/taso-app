@@ -6,6 +6,7 @@ from src.auth.guard import require_user
 from src.services import blog as blog_service
 from src.services import history as history_service
 from src.services import rates as rates_service
+from src.services import user_stats
 from src.services.cache import UpstreamError, UpstreamNotFound
 
 bp = Blueprint("api", __name__, url_prefix="/api")
@@ -40,6 +41,16 @@ def me():
             "start_param": init.start_param,
         }
     )
+
+
+@bp.route("/me/stats")
+@require_user
+def my_stats():
+    """«Mis estadísticas»: uso del bot y de la miniapp de ESTE usuario. El id sale SOLO del initData validado."""
+    data, stale = user_stats.get_user_stats(current_app.config["TASALO_CACHE"], g.user_id, request.args.get("window"))
+    resp = jsonify({"ok": True, "stale": stale, **data})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @bp.route("/rates")
