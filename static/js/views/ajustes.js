@@ -1,5 +1,5 @@
 // Sub-pantalla Ajustes (plan Perfil, P3). Se abre con el engranaje de Perfil. Todo se guarda al tocar (local + CloudStorage).
-// Apariencia (tema, colores sube/baja), Tasas (fuente de inicio, monedas visibles) y Acerca de.
+// Apariencia (tema, colores sube/baja en Tasas y en Mercado), Tasas (fuente de inicio, monedas visibles) y Acerca de.
 // Sin innerHTML ni estilos en línea (CSP). La lógica pura vive en modules/settings.js.
 import { getRates } from "../modules/api.js";
 import { h, icon, ICONS } from "../modules/dom.js";
@@ -54,7 +54,15 @@ export function mount(ctx) {
     getSettings().invert ? "on" : "off",
     (v) => { updateSettings({ invert: v === "on" }); applyTheme(); haptic("select"); },
   );
-  const preview = h("p", { class: "aj-preview", "aria-hidden": "true" }, h("span", { class: "aj-up", text: "▲ +1,2 %" }), h("span", { class: "aj-down", text: "▼ −0,8 %" }));
+  const market = segmented(
+    "Colores de subida y bajada en Mercado",
+    [{ value: "auto", label: "Como Tasas" }, { value: "red", label: "Sube en rojo" }, { value: "green", label: "Sube en verde" }],
+    getSettings().marketUp,
+    (v) => { updateSettings({ marketUp: v }); applyTheme(); haptic("select"); },
+  );
+  const arrows = (cls) => h("p", { class: `aj-preview ${cls}`.trim(), "aria-hidden": "true" }, h("span", { class: "aj-up", text: "▲ +1,2 %" }), h("span", { class: "aj-down", text: "▼ −0,8 %" }));
+  const preview = arrows("");
+  const previewMarket = arrows("aj-mk");
 
   // ---------- Tasas ----------
   const startSource = segmented(
@@ -124,7 +132,14 @@ export function mount(ctx) {
 
   ctx.view.replaceChildren(
     backToPerfil(),
-    section("Apariencia", row("Tema", null, theme.el), row("Subida y bajada", "Los colores de ▲ y ▼ en las tasas", invert.el), preview),
+    section(
+      "Apariencia",
+      row("Tema", null, theme.el),
+      row("Subida y bajada", "Los colores de ▲ y ▼ en las tasas", invert.el),
+      preview,
+      row("Mercado", "Los colores de ▲ y ▼ en las monedas", market.el),
+      previewMarket,
+    ),
     section("Tasas", row("Fuente de inicio", "La que se abre primero en Tasas", startSource.el), toggleBtn, panel),
     about,
   );

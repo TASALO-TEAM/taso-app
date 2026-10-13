@@ -10,14 +10,14 @@ const TABS = { tasas: "Tasas", mercado: "Mercado", calculadora: "Calculadora", b
 
 test("normalize: valores por defecto con cualquier entrada rara", () => {
   for (const bad of [null, undefined, 5, "x", [], [1], true]) {
-    assert.deepEqual(normalize(bad), { theme: "auto", invert: false, hidden: [] }, String(bad));
+    assert.deepEqual(normalize(bad), { theme: "auto", invert: false, marketUp: "auto", hidden: [] }, String(bad));
   }
-  assert.deepEqual({ ...DEFAULTS, hidden: [...DEFAULTS.hidden] }, { theme: "auto", invert: false, hidden: [] });
+  assert.deepEqual({ ...DEFAULTS, hidden: [...DEFAULTS.hidden] }, { theme: "auto", invert: false, marketUp: "auto", hidden: [] });
 });
 
 test("normalize: tema, convención y ocultas válidos se conservan; lo inválido se descarta", () => {
   const s = normalize({ theme: "dark", invert: true, hidden: ["ELTOQUE:USD", "ELTOQUE:USD", "x", 5, "ELTOQUE:<b>", "BCC:EUR"], extra: 1 });
-  assert.deepEqual(s, { theme: "dark", invert: true, hidden: ["ELTOQUE:USD", "BCC:EUR"] });
+  assert.deepEqual(s, { theme: "dark", invert: true, marketUp: "auto", hidden: ["ELTOQUE:USD", "BCC:EUR"] });
   assert.equal(normalize({ theme: "neon" }).theme, "auto");
   assert.equal(normalize({ invert: "true" }).invert, false, "solo true exacto");
   assert.equal(normalize({ hidden: "ELTOQUE:USD" }).hidden.length, 0);
@@ -77,4 +77,10 @@ test("avisosSummary: sin datos, todo apagado, algo activo y secciones caídas", 
   const down = { price: { ok: false }, image: { ok: false }, year: { ok: false }, spotlight: { ok: false } };
   assert.deepEqual(avisosSummary(down, now), { text: "No disponible", tone: "warn" });
   assert.equal(avisosSummary({ price: { ok: true } }, now).tone, "warn", "datos mal formados no lanzan");
+});
+
+test("normalize: marketUp acepta auto/red/green y descarta cualquier otra cosa", () => {
+  for (const ok of ["auto", "red", "green"]) assert.equal(normalize({ marketUp: ok }).marketUp, ok);
+  for (const bad of ["RED", "blue", "", null, 1, true, ["red"], undefined]) assert.equal(normalize({ marketUp: bad }).marketUp, "auto", String(bad));
+  assert.equal(normalize({ invert: true }).marketUp, "auto", "sin marketUp, Mercado sigue a Tasas");
 });

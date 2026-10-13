@@ -6,7 +6,9 @@ import { load, save } from "./storage.js";
 export const SETTINGS_KEY = "tasalo:settings";
 const CLOUD_KEY = "settings";
 export const THEMES = Object.freeze(["auto", "light", "dark"]);
-export const DEFAULTS = Object.freeze({ theme: "auto", invert: false, hidden: Object.freeze([]) });
+// `marketUp`: color de ▲ en Mercado. "auto" = el mismo criterio que Tasas (`invert`); "red"/"green" lo fija solo para Mercado.
+export const MARKET_UP = Object.freeze(["auto", "red", "green"]);
+export const DEFAULTS = Object.freeze({ theme: "auto", invert: false, marketUp: "auto", hidden: Object.freeze([]) });
 const HIDDEN_RE = /^[A-Z0-9_]{1,24}:[A-Z0-9_.-]{1,16}$/;
 const MAX_HIDDEN = 200;
 
@@ -16,7 +18,12 @@ export function normalize(raw) {
   const hidden = Array.isArray(r.hidden)
     ? [...new Set(r.hidden.filter((x) => typeof x === "string" && HIDDEN_RE.test(x)))].slice(0, MAX_HIDDEN)
     : [];
-  return { theme: THEMES.includes(r.theme) ? r.theme : DEFAULTS.theme, invert: r.invert === true, hidden };
+  return {
+    theme: THEMES.includes(r.theme) ? r.theme : DEFAULTS.theme,
+    invert: r.invert === true,
+    marketUp: MARKET_UP.includes(r.marketUp) ? r.marketUp : DEFAULTS.marketUp,
+    hidden,
+  };
 }
 
 /** Esquema real a pintar: «auto» sigue a Telegram/sistema (`system`), lo demás manda el usuario. */

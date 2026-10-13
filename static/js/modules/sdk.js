@@ -47,6 +47,9 @@ export function applyTheme() {
   const settings = getSettings(); // el usuario puede forzar claro/oscuro y la convención sube/baja (Ajustes)
   document.documentElement.dataset.theme = resolveScheme(settings.theme, system);
   document.documentElement.toggleAttribute("data-invert", settings.invert);
+  // Mercado puede tener su propia convención sube/baja; "auto" no pone nada y hereda la de Tasas.
+  if (settings.marketUp === "red" || settings.marketUp === "green") document.documentElement.dataset.marketUp = settings.marketUp;
+  else delete document.documentElement.dataset.marketUp;
 
   if (!tg) return;
   const bg = cssColor("--bg");
