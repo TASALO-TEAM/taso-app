@@ -250,3 +250,8 @@ Ernesto añadió: **cada usuario debe ver sus propias estadísticas de uso de co
 - Evidencia: `node --test "tests/js/*.test.mjs"` 164 pasan; pytest 502 pasan (shim de `asgiref`). Sin prueba visual en Telegram.
 - **Pendiente (P4b cliente):** `api.js` `getMyStats(window)`, `modules/userstats.js` (formato), `views/estadisticas.js` (`#/estadisticas`, barras como `#/admin`), tarjeta «Mis estadísticas» en Perfil, subruta `estadisticas` en `tabs.js`/`main.js`, tests de JS y smoke jsdom. Después P5 (Novedades en Ajustes), F4, S9, F6.
 - Dejado en: servidor de P4b listo y subido; cliente `[ ]`. El endpoint `/api/me/stats` existe pero ninguna pantalla lo usa todavía.
+
+- **P4b cliente (hecho, misma sesión 17):** `modules/userstats.js` (formato puro), `views/estadisticas.js` (`#/estadisticas`, periodo 24 h/7 d/30 d, por defecto 7 d; 4 indicadores, comandos y fuentes con barras, bloque «En la miniapp» con monedas; cada bloque con su «No disponible»; vacío, error con reintento y offline), `getMyStats` en `api.js` (sin ningún id), subruta en `tabs.js`, ruta en `main.js`, tarjeta «Mis estadísticas» en Perfil para todos (sin petición propia). `views/admin.js` ahora exporta `section`, `bars`, `kpi` y `unavailable` para reutilizarlos.
+- Evidencia: `node --test "tests/js/*.test.mjs"` 172 pasan (8 nuevos en `userstats.test.mjs`); `_shots/smoke_stats.mjs` (7 escenarios) y todos los smokes previos en verde; `smoke_perfil.mjs` ajustado: Perfil de un admin ahora tiene 3 tarjetas (avisos, estadísticas, admin).
+- Decisión: la tarjeta de Perfil no lleva píldora para no añadir una petición más a cada carga de Perfil.
+- Dejado en: P4b cerrado. Siguiente: P5 (Novedades en Ajustes), luego alertas de precio propias, F4, S9, F6. Desplegar `taso-api` antes que `taso-app`.
