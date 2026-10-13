@@ -351,3 +351,43 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .aj-coin-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .aj-check { flex: none; width: 1.25rem; height: 1.25rem; accent-color: var(--accent); }
 .aj-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Estado y estadísticas (plan Perfil, P4): barras con ancho por variable CSS, sin estilos en línea ---------- */
+.ad-body { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.ad-card { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.ad-sub { margin: 0.25rem 0 0; font-size: 0.8125rem; font-weight: 700; color: var(--text2); }
+.ad-health { display: flex; align-items: center; gap: 0.75rem; }
+.ad-health-text { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.ad-dot { flex: none; width: 0.875rem; height: 0.875rem; border-radius: 50%; box-sizing: border-box; }
+.ad-dot-ok { background: var(--green); }
+.ad-dot-bad { background: var(--error); }
+.ad-dot-warn { border: 3px solid var(--error); }
+.ad-dot-unknown { border: 3px solid var(--text2); }
+.ad-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.ad-kpi { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.ad-kpi-value { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ad-bars { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.ad-bar-row { display: grid; grid-template-columns: minmax(3.5rem, 28%) 1fr auto; align-items: center; gap: 0.5rem; min-width: 0; }
+.ad-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; }
+.ad-bar-track { display: block; height: 0.5rem; border-radius: 999px; background: var(--accent-soft); overflow: hidden; }
+.ad-bar { display: block; height: 100%; width: var(--w, 0%); border-radius: 999px; background: var(--accent); }
+.ad-bar-value { font-size: 0.8125rem; font-variant-numeric: tabular-nums; color: var(--text2); text-align: right; }
+.ad-stack { display: flex; height: 0.75rem; border-radius: 999px; overflow: hidden; background: var(--accent-soft); }
+.ad-seg { display: block; height: 100%; width: var(--w, 0%); }
+.ad-seg-0 { background: var(--accent); }
+.ad-seg-1 { background: var(--text2); }
+.ad-seg-2 { background: var(--green); }
+.ad-seg-3 { background: var(--red); }
+.ad-seg-4 { background: var(--border-accent); }
+.ad-legend { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.ad-legend li { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.ad-swatch { flex: none; width: 0.625rem; height: 0.625rem; border-radius: 3px; }
+.ad-legend-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; }
+.ad-jobs { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.ad-jobs li { display: flex; flex-direction: column; gap: 0.125rem; }
+.ad-job-name { font-size: 0.875rem; font-weight: 600; }
+.ad-job-err { overflow-wrap: anywhere; }
+.ad-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.ad-day { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.ad-day-bar-wrap { display: flex; align-items: flex-end; width: 100%; height: 3.5rem; border-radius: 6px; background: var(--accent-soft); overflow: hidden; }
+.ad-day-bar { display: block; width: 100%; height: var(--h, 0%); background: var(--accent); }

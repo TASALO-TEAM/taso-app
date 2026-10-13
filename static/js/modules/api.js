@@ -88,6 +88,7 @@ export const getHistoryDaily = (source, currency, days) =>
 
 // Alertas del usuario (S6). El servidor identifica al usuario SOLO por el initData: nada de uid en estas llamadas.
 export const getAlerts = () => apiFetch("/alerts");
+export const getAdminOverview = (window) => apiFetch(`/admin/overview?window=${encodeURIComponent(window)}`, { timeoutMs: 20000 });
 export const deletePriceAlert = (id) => apiFetch(`/alerts/price/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const putImageAlert = (alertTime, formatType, enabled) =>
   apiFetch("/alerts/image", { method: "PUT", body: { alert_time: alertTime, format_type: formatType, enabled } });

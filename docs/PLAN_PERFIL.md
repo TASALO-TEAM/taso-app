@@ -34,3 +34,6 @@ Fecha: 2026-10-12 · Pedido y **aprobado por Ernesto en el chat** («implementa,
 
 ## 6. Pruebas
 `node --test` (formato admin, ajustes, migración, alias de rutas); pytest (autorización, caché, degradación); humo jsdom `_shots/smoke8.mjs` (Perfil usuario, Perfil admin, Ajustes). Sin prueba visual en Telegram hasta que Ernesto la haga.
+
+## Ampliación 2026-10-12: «Mis estadísticas» para cada usuario (P4b)
+Pedido de Ernesto: cada usuario ve sus propias estadísticas de uso (comandos y demás), como el `/status` del bot pero personal. Requiere un endpoint nuevo de solo lectura en `taso-api` (`GET /api/v1/admin/stats/users/{user_id}`, agrega `bot_command_stats`; sin migración). **No aprobado todavía (G3)**: hasta entonces no se toca `taso-api`. En la miniapp: `GET /api/me/stats` (el `user_id` sale solo del `initData`), tarjeta en Perfil → `#/estadisticas`, barras reutilizando `modules/admin.js`. Parte local sin aprobación: consultas propias de Mercado y alertas de precio (SQLite de la miniapp).

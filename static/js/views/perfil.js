@@ -1,7 +1,8 @@
 // Pestaña Perfil (plan Perfil): tarjeta del usuario + tarjeta «Mis avisos» (resumen que lleva a las categorías).
 // Arriba a la derecha: recargar y el engranaje de Ajustes. La identidad sale SOLO del initData validado en el servidor (GET /api/me).
 // Sin innerHTML ni estilos en línea (CSP).
-import { ApiError, getAlerts, getMe } from "../modules/api.js";
+import { overviewPill } from "../modules/admin.js";
+import { ApiError, getAdminOverview, getAlerts, getMe } from "../modules/api.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import { avisosSummary, displayName, handleOf, initialOf, profileChips, safePhotoUrl } from "../modules/profile.js";
 
@@ -42,17 +43,30 @@ function avisosCard(summary) {
   );
 }
 
+/** Tarjeta solo para admins: lleva al panel de estado y estadísticas. La píldora resume la salud (o invita a abrirlo). */
+function adminCard(pill) {
+  return h(
+    "button",
+    { type: "button", class: "card acard", "aria-label": `Estado y estadísticas. ${pill.text}`, dataset: { go: "admin" }, onClick: () => { location.hash = "#/admin"; } },
+    h("span", { class: "acard-main" }, h("span", { class: "card-title", text: "Estado y estadísticas" }), h("span", { class: "sub", text: "Salud del sistema, bot y miniapp" })),
+    h("span", { class: `pill pill-${pill.tone}`, text: pill.text }),
+    icon(...ICONS.chevron),
+  );
+}
+
 /** Monta la pestaña. ctx = { view, actions, setSubtitle }. Devuelve la función que la desmonta. */
 export function mount(ctx) {
   let alive = true;
   let me = null;
   let meError = null; // null | "offline" | "api"
   let alerts = null; // respuesta de /api/alerts, solo para el resumen de la tarjeta
+  let overview = null; // solo admins: para la píldora de salud de su tarjeta
   let loading = false;
 
   const userSlot = h("section", { class: "slot", "aria-label": "Tu perfil" });
   const avisosSlot = h("div", { class: "slot" });
-  ctx.view.replaceChildren(userSlot, avisosSlot);
+  const adminSlot = h("div", { class: "slot" });
+  ctx.view.replaceChildren(userSlot, avisosSlot, adminSlot);
   ctx.setSubtitle("Tu cuenta y tus avisos");
 
   const refreshBtn = h("button", { type: "button", class: "icon-btn", "aria-label": "Actualizar perfil", onClick: () => load() }, icon(...ICONS.refresh));
@@ -75,6 +89,7 @@ export function mount(ctx) {
       );
     }
     avisosSlot.replaceChildren(avisosCard(avisosSummary(alerts, Date.now())));
+    adminSlot.replaceChildren(...(me && me.is_admin === true ? [adminCard(overviewPill(overview))] : []));
   }
 
   async function load() {
@@ -93,6 +108,17 @@ export function mount(ctx) {
     if (alertsRes.status === "fulfilled") alerts = alertsRes.value;
     loading = false;
     render();
+    // Solo admins: la píldora de salud llega aparte (puede tardar o fallar) y nunca retrasa el resto del perfil.
+    if (me && me.is_admin === true) {
+      try {
+        const ov = await getAdminOverview("24h");
+        if (!alive) return;
+        overview = ov;
+        render();
+      } catch (_) {
+        /* la tarjeta queda con «Ver estado» */
+      }
+    }
   }
 
   render();

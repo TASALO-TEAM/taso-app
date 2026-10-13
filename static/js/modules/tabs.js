@@ -8,6 +8,7 @@ export const TAB_ALIASES = Object.freeze({ alertas: "perfil" });
 export const SUBROUTES = Object.freeze({
   avisos: Object.freeze({ title: "Mis avisos", parent: "perfil" }),
   ajustes: Object.freeze({ title: "Ajustes", parent: "perfil" }),
+  admin: Object.freeze({ title: "Estado y estadísticas", parent: "perfil" }),
 });
 
 /** Nombre de pestaña conocido para `name` (resolviendo alias), o null si no existe. `tabs` = objeto clave → título. */
