@@ -6,6 +6,7 @@ from src.auth.guard import require_user
 from src.services import blog as blog_service
 from src.services import history as history_service
 from src.services import rates as rates_service
+from src.services import team_messages
 from src.services import user_stats
 from src.services.cache import UpstreamError, UpstreamNotFound
 
@@ -41,6 +42,19 @@ def me():
             "start_param": init.start_param,
         }
     )
+
+
+@bp.route("/messages")
+@require_user
+def messages():
+    """Novedades del equipo TASALO (mensajes de taso-api). Solo texto, con lista blanca y caché."""
+    try:
+        result = team_messages.get_messages(current_app.config["TASALO_CACHE"])
+    except UpstreamError:
+        return _err(502, "upstream_unavailable", "No se pudieron cargar las novedades")
+    resp = jsonify({"ok": True, "stale": result.stale, "items": result.value})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 
 @bp.route("/me/stats")

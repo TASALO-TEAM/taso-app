@@ -91,6 +91,8 @@ export const getAlerts = () => apiFetch("/alerts");
 export const getAdminOverview = (window) => apiFetch(`/admin/overview?window=${encodeURIComponent(window)}`, { timeoutMs: 20000 });
 // «Mis estadísticas»: el servidor usa SOLO el id del initData; aquí nunca se manda un uid.
 export const getMyStats = (window) => apiFetch(`/me/stats?window=${encodeURIComponent(window)}`, { timeoutMs: 20000 });
+// Novedades del equipo (P5): solo lectura, sin parámetros del usuario.
+export const getMessages = () => apiFetch("/messages");
 export const deletePriceAlert = (id) => apiFetch(`/alerts/price/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const putImageAlert = (alertTime, formatType, enabled) =>
   apiFetch("/alerts/image", { method: "PUT", body: { alert_time: alertTime, format_type: formatType, enabled } });

@@ -396,3 +396,14 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .ad-day { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 .ad-day-bar-wrap { display: flex; align-items: flex-end; width: 100%; height: 3.5rem; border-radius: 6px; background: var(--accent-soft); overflow: hidden; }
 .ad-day-bar { display: block; width: 100%; height: var(--h, 0%); background: var(--accent); }
+
+/* Novedades (Ajustes, P5) */
+.nv-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.nv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+.nv-item { display: flex; flex-direction: column; gap: 0.25rem; padding-top: 0.9rem; border-top: 1px solid var(--border, rgba(127, 127, 127, 0.25)); }
+.nv-item:first-child { border-top: 0; padding-top: 0; }
+.nv-item-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.nv-title { font-weight: 600; overflow-wrap: anywhere; }
+.nv-text { overflow-wrap: anywhere; }
+.nv-text > :first-child { margin-top: 0.25rem; }
+.nv-text > :last-child { margin-bottom: 0; }

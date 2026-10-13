@@ -1,5 +1,5 @@
 // Sub-pantalla Ajustes (plan Perfil, P3). Se abre con el engranaje de Perfil. Todo se guarda al tocar (local + CloudStorage).
-// Apariencia (tema, colores sube/baja en Tasas y en Mercado), Tasas (fuente de inicio, monedas visibles) y Acerca de.
+// Apariencia (tema, colores sube/baja en Tasas y en Mercado), Tasas (fuente de inicio, monedas visibles), Novedades y Acerca de.
 // Sin innerHTML ni estilos en línea (CSP). La lógica pura vive en modules/settings.js.
 import { getRates } from "../modules/api.js";
 import { h, icon, ICONS } from "../modules/dom.js";
@@ -8,6 +8,7 @@ import { applyTheme, haptic, openLink } from "../modules/sdk.js";
 import { getSettings, hiddenCount, hiddenKey, hiddenSet, updateSettings, withHidden } from "../modules/settings.js";
 import { load, save } from "../modules/storage.js";
 import { backToPerfil } from "./subnav.js";
+import { novedadesSection } from "./novedades.js";
 
 const SOURCE_KEY = "tasalo:source"; // la misma clave que lee Tasas: «fuente de inicio» = la fuente con la que abre
 const RATES_KEY = "tasalo:rates";
@@ -130,6 +131,8 @@ export function mount(ctx) {
     bot ? h("button", { type: "button", class: "btn btn-ghost block", text: `Abrir @${bot}`, onClick: () => openLink(`https://t.me/${bot}`) }) : null,
   );
 
+  const news = novedadesSection();
+
   ctx.view.replaceChildren(
     backToPerfil(),
     section(
@@ -141,6 +144,7 @@ export function mount(ctx) {
       previewMarket,
     ),
     section("Tasas", row("Fuente de inicio", "La que se abre primero en Tasas", startSource.el), toggleBtn, panel),
+    news.el,
     about,
   );
   ctx.setSubtitle("Apariencia y tasas");
@@ -158,6 +162,7 @@ export function mount(ctx) {
 
   return () => {
     alive = false;
+    news.destroy();
     ctx.setSubtitle("");
   };
 }
