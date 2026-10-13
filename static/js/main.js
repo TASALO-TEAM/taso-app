@@ -1,7 +1,8 @@
 // Arranque de la miniapp: identidad, estados globales y navegación por pestañas.
 import * as sdk from "./modules/sdk.js";
 import { getMe, ApiError } from "./modules/api.js";
-import { resolveTab } from "./modules/tabs.js";
+import { syncFromCloud } from "./modules/settings.js";
+import { resolveRoute } from "./modules/tabs.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,26 +21,27 @@ function showScreen(id) {
   for (const s of SCREENS) $(s).hidden = s !== id;
 }
 
-function currentTab() {
+/** Ruta actual: { name, tab (la resaltada en la barra), title }. Las sub-pantallas (avisos, ajustes) cuelgan de Perfil. */
+function currentRoute() {
   const m = location.hash.match(/^#\/([a-z]+)/);
-  return (m && resolveTab(m[1], TABS)) || DEFAULT_TAB;
+  return (m && resolveRoute(m[1], TABS)) || resolveRoute(DEFAULT_TAB, TABS);
 }
 
 /** Enlace profundo desde el bot: ?startapp=tab_perfil → #/perfil (solo pestañas conocidas; tab_alertas sigue valiendo). */
 function applyStartParam() {
   if (location.hash) return;
   const m = sdk.startParam().match(/^tab_([a-z]+)$/);
-  const tab = m && resolveTab(m[1], TABS);
-  if (tab) location.hash = `#/${tab}`;
+  const target = m && resolveRoute(m[1], TABS);
+  if (target) location.hash = `#/${target.name}`;
 }
 
-function renderPlaceholder(tab) {
+function renderPlaceholder(label) {
   const view = $("view");
   const card = document.createElement("div");
   card.className = "card";
   const title = document.createElement("p");
   title.className = "card-title";
-  title.textContent = TABS[tab];
+  title.textContent = label;
   const text = document.createElement("p");
   text.className = "sub";
   text.textContent = "Esta sección llega en la siguiente entrega.";
@@ -54,30 +56,33 @@ const VIEWS = {
   calculadora: () => import("./views/calculadora.js"),
   blog: () => import("./views/blog.js"),
   perfil: () => import("./views/perfil.js"),
+  avisos: () => import("./views/avisos.js"),
+  ajustes: () => import("./views/ajustes.js"),
 };
 
 let unmountCurrent = null;
 let routeToken = 0;
 
 async function route() {
-  const tab = currentTab();
+  const cur = currentRoute();
+  const tab = cur.tab;
   for (const link of document.querySelectorAll(".nv")) {
     if (link.dataset.tab === tab) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   }
-  $("view-title").textContent = TABS[tab];
+  $("view-title").textContent = cur.title;
   $("view-subtitle").textContent = "";
-  document.title = `TASALO · ${TABS[tab]}`;
+  document.title = `TASALO · ${cur.title}`;
 
   const token = ++routeToken;
   if (unmountCurrent) {
     unmountCurrent();
     unmountCurrent = null;
   }
-  const loader = VIEWS[tab];
+  const loader = VIEWS[cur.name];
   if (!loader) {
     $("view-actions").replaceChildren();
-    renderPlaceholder(tab);
+    renderPlaceholder(cur.title);
     return;
   }
   try {
@@ -91,7 +96,7 @@ async function route() {
       },
     });
   } catch (_) {
-    if (token === routeToken) renderPlaceholder(tab);
+    if (token === routeToken) renderPlaceholder(cur.title);
   }
 }
 
@@ -123,6 +128,9 @@ function updateOnline() {
 }
 
 sdk.init();
+syncFromCloud().then((changed) => {
+  if (changed) sdk.applyTheme(); // la nube trajo otro tema/convención
+});
 window.addEventListener("hashchange", () => {
   if (!$("shell").hidden) route();
 });

@@ -10,6 +10,7 @@ import {
   bannerFor, DEFAULT_SOURCE, flagFor, nameFor, normalizeSource, SOURCES, sourceById, visibleRates,
 } from "../modules/rates.js";
 import { hideBack, showBack } from "../modules/sdk.js";
+import { getSettings, hiddenSet } from "../modules/settings.js";
 import { load, save } from "../modules/storage.js";
 import { compute as computeYear, resolveQuote } from "../modules/year.js";
 import { openHistory } from "./historico.js";
@@ -218,7 +219,7 @@ export function mount(ctx) {
       );
       return;
     }
-    const rates = visibleRates(sourceData(), state.source, null);
+    const rates = visibleRates(sourceData(), state.source, hiddenSet(getSettings()));
     if (rates.length === 0) {
       content.replaceChildren(h("p", { class: "empty", text: "Sin datos para esta fuente" }));
       return;

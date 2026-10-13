@@ -1,20 +1,16 @@
-// Pestaña Perfil (plan Perfil, P2): datos del usuario que entra y, debajo, «Mis avisos» (los paneles de alertas de S6).
-// La identidad sale SOLO del initData validado en el servidor (GET /api/me); aquí no se manda ni se lee un uid.
-// Sin innerHTML ni estilos en línea (CSP). «Mis avisos» reutiliza views/alertas.js tal cual: mismo código, otro contenedor.
-import { ApiError, getMe } from "../modules/api.js";
-import { h } from "../modules/dom.js";
-import { displayName, handleOf, initialOf, profileChips, safePhotoUrl } from "../modules/profile.js";
-import * as avisos from "./alertas.js";
+// Pestaña Perfil (plan Perfil): tarjeta del usuario + tarjeta «Mis avisos» (resumen que lleva a las categorías).
+// Arriba a la derecha: recargar y el engranaje de Ajustes. La identidad sale SOLO del initData validado en el servidor (GET /api/me).
+// Sin innerHTML ni estilos en línea (CSP).
+import { ApiError, getAlerts, getMe } from "../modules/api.js";
+import { h, icon, ICONS } from "../modules/dom.js";
+import { avisosSummary, displayName, handleOf, initialOf, profileChips, safePhotoUrl } from "../modules/profile.js";
 
 /** Avatar: la inicial siempre está debajo; la foto (si hay y carga) la tapa. Si la foto falla, se quita y queda la inicial. */
 function avatar(user) {
   const box = h("div", { class: "pf-avatar", "aria-hidden": "true" }, h("span", { text: initialOf(user) }));
   const photo = safePhotoUrl(user.photo_url);
   if (photo) {
-    const img = h("img", {
-      src: photo, alt: "", referrerpolicy: "no-referrer", decoding: "async",
-      onError: () => img.remove(),
-    });
+    const img = h("img", { src: photo, alt: "", referrerpolicy: "no-referrer", decoding: "async", onError: () => img.remove() });
     box.append(img);
   }
   return box;
@@ -35,62 +31,75 @@ function userCard(user) {
   );
 }
 
+/** Tarjeta de categorías: mismo patrón que las tarjetas de alertas (título, subtítulo, píldora y flecha). */
+function avisosCard(summary) {
+  return h(
+    "button",
+    { type: "button", class: "card acard", "aria-label": `Mis avisos. ${summary.text}`, dataset: { go: "avisos" }, onClick: () => { location.hash = "#/avisos"; } },
+    h("span", { class: "acard-main" }, h("span", { class: "card-title", text: "Mis avisos" }), h("span", { class: "sub", text: "Precio, imagen, año y frase, Spotlight" })),
+    h("span", { class: `pill pill-${summary.tone}`, text: summary.text }),
+    icon(...ICONS.chevron),
+  );
+}
+
 /** Monta la pestaña. ctx = { view, actions, setSubtitle }. Devuelve la función que la desmonta. */
 export function mount(ctx) {
   let alive = true;
   let me = null;
   let meError = null; // null | "offline" | "api"
+  let alerts = null; // respuesta de /api/alerts, solo para el resumen de la tarjeta
+  let loading = false;
 
   const userSlot = h("section", { class: "slot", "aria-label": "Tu perfil" });
-  const avisosSlot = h("div", { class: "pf-avisos" });
-  ctx.view.replaceChildren(
-    userSlot,
-    h("h2", { class: "pf-h", text: "Mis avisos" }),
-    avisosSlot,
-  );
+  const avisosSlot = h("div", { class: "slot" });
+  ctx.view.replaceChildren(userSlot, avisosSlot);
   ctx.setSubtitle("Tu cuenta y tus avisos");
 
-  function renderUser() {
-    if (me) {
-      userSlot.replaceChildren(userCard(me));
-      return;
+  const refreshBtn = h("button", { type: "button", class: "icon-btn", "aria-label": "Actualizar perfil", onClick: () => load() }, icon(...ICONS.refresh));
+  const gear = h("a", { class: "icon-btn", href: "#/ajustes", "aria-label": "Ajustes", dataset: { go: "ajustes" } }, icon(...ICONS.settings));
+  ctx.actions.replaceChildren(refreshBtn, gear);
+
+  function render() {
+    refreshBtn.disabled = loading;
+    refreshBtn.classList.toggle("spinning", loading);
+    if (me) userSlot.replaceChildren(userCard(me));
+    else if (!meError) userSlot.replaceChildren(h("div", { class: "skeleton", "aria-busy": "true" }));
+    else {
+      userSlot.replaceChildren(
+        h(
+          "div",
+          { class: "card center" },
+          h("p", { text: meError === "offline" ? "Sin conexión. No se pudieron cargar tus datos." : "No se pudieron cargar tus datos." }),
+          h("button", { type: "button", class: "btn", text: "Reintentar", onClick: () => load() }),
+        ),
+      );
     }
-    if (!meError) {
-      userSlot.replaceChildren(h("div", { class: "skeleton", "aria-busy": "true" }));
-      return;
-    }
-    userSlot.replaceChildren(
-      h(
-        "div",
-        { class: "card center" },
-        h("p", { text: meError === "offline" ? "Sin conexión. No se pudieron cargar tus datos." : "No se pudieron cargar tus datos." }),
-        h("button", { type: "button", class: "btn", text: "Reintentar", onClick: loadMe }),
-      ),
-    );
+    avisosSlot.replaceChildren(avisosCard(avisosSummary(alerts, Date.now())));
   }
 
-  async function loadMe() {
+  async function load() {
+    if (loading) return;
+    loading = true;
     meError = null;
-    renderUser();
-    try {
-      const res = await getMe();
-      if (!alive) return;
-      me = res.user;
-    } catch (e) {
-      if (!alive) return;
-      meError = e instanceof ApiError && e.status === 0 ? "offline" : "api";
+    render();
+    // /me y /alerts son independientes: que uno falle no tumba al otro.
+    const [meRes, alertsRes] = await Promise.allSettled([getMe(), getAlerts()]);
+    if (!alive) return;
+    if (meRes.status === "fulfilled" && meRes.value && meRes.value.user) {
+      me = meRes.value.user;
+    } else if (!me) {
+      meError = meRes.status === "rejected" && meRes.reason instanceof ApiError && meRes.reason.status === 0 ? "offline" : "api";
     }
-    renderUser();
+    if (alertsRes.status === "fulfilled") alerts = alertsRes.value;
+    loading = false;
+    render();
   }
 
-  // «Mis avisos»: la pestaña de alertas montada dentro de este contenedor. Su botón de actualizar ocupa `actions`.
-  const stopAvisos = avisos.mount({ view: avisosSlot, actions: ctx.actions, setSubtitle: () => {} });
-  renderUser();
-  loadMe();
+  render();
+  load();
 
   return () => {
     alive = false;
-    stopAvisos();
     ctx.actions.replaceChildren();
     ctx.setSubtitle("");
   };

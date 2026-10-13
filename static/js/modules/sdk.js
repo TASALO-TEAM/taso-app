@@ -1,5 +1,6 @@
 // Único punto de contacto con window.Telegram.WebApp. El resto de módulos importa de aquí.
 // Fuera de Telegram (navegador normal) nada lanza: simplemente no hay identidad.
+import { getSettings, resolveScheme } from "./settings.js";
 import { isVersionAtLeast } from "./version.js";
 
 const webApp = () => (window.Telegram && window.Telegram.WebApp) || null;
@@ -40,10 +41,12 @@ function cssColor(name) {
 /** Tema claro/oscuro según Telegram (o el sistema si no hay Telegram) + colores de cabecera y fondo. */
 export function applyTheme() {
   const tg = webApp();
-  const scheme =
+  const system =
     (tg && tg.colorScheme) ||
     (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-  document.documentElement.dataset.theme = scheme === "light" ? "light" : "dark";
+  const settings = getSettings(); // el usuario puede forzar claro/oscuro y la convención sube/baja (Ajustes)
+  document.documentElement.dataset.theme = resolveScheme(settings.theme, system);
+  document.documentElement.toggleAttribute("data-invert", settings.invert);
 
   if (!tg) return;
   const bg = cssColor("--bg");

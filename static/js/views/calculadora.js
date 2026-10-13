@@ -11,6 +11,7 @@ import * as fmt from "../modules/format.js";
 import {
   bannerFor, DEFAULT_SOURCE, flagFor, nameFor, normalizeSource, SOURCES, sourceById, visibleRates,
 } from "../modules/rates.js";
+import { getSettings, hiddenSet } from "../modules/settings.js";
 import { shareText } from "../modules/sdk.js";
 import { load, save } from "../modules/storage.js";
 
@@ -112,7 +113,7 @@ export function mount(ctx) {
   /** Lo que depende de la fuente y de lo guardado: tabla, códigos y par realmente usable. */
   function derive() {
     const sd = state.data ? state.data.sources[state.source] || null : null;
-    const table = buildTable(visibleRates(sd, state.source, null), state.source);
+    const table = buildTable(visibleRates(sd, state.source, hiddenSet(getSettings())), state.source);
     const codes = codesOf(table, state.source);
     const { from, to } = resolvePair(state.from, state.to, codes);
     return { sd, table, codes, from, to };

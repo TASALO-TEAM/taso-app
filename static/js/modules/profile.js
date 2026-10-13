@@ -1,6 +1,8 @@
 // Perfil (plan Perfil, P2): formato puro de los datos del usuario que entra (sin DOM).
 // Todo sale del `user` que devuelve GET /api/me, que el servidor arma SOLO con el initData validado.
 
+import { imageStatus, priceStatus, spotlightStatus, yearStatus } from "./alerts.js";
+
 const LANGUAGES = Object.freeze({
   es: "Español", en: "English", pt: "Português", fr: "Français", it: "Italiano", de: "Deutsch", ru: "Русский", uk: "Українська",
 });
@@ -54,4 +56,28 @@ export function profileChips(user) {
   if (u.is_premium === true) chips.push({ key: "premium", text: "Premium", tone: "accent" });
   if (u.is_admin === true) chips.push({ key: "admin", text: "Admin", tone: "accent" });
   return chips;
+}
+
+/** Resumen de la tarjeta «Mis avisos»: cuántos de los 4 tipos están activos. `data` = respuesta de GET /api/alerts (o null). */
+export function avisosSummary(data, now) {
+  if (!data || typeof data !== "object") return { text: "Ver mis avisos", tone: "off" };
+  const safe = (fn) => {
+    try {
+      return fn() || {};
+    } catch (_) {
+      return {};
+    }
+  };
+  const statuses = [
+    safe(() => priceStatus(data.price)),
+    safe(() => imageStatus(data.image)),
+    safe(() => yearStatus(data.year, now)),
+    safe(() => spotlightStatus(data.spotlight, now)),
+  ];
+  const on = statuses.filter((st) => st.tone === "on").length;
+  if (on === 0) {
+    // Si alguna sección no cargó, no se puede afirmar que no haya avisos.
+    return statuses.some((st) => st.tone === "warn") ? { text: "No disponible", tone: "warn" } : { text: "Sin avisos activos", tone: "off" };
+  }
+  return { text: on === 1 ? "1 de 4 activo" : `${on} de 4 activos`, tone: "on" };
 }

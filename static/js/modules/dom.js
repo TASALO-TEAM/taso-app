@@ -47,4 +47,6 @@ export const ICONS = {
   trash: ["M4 7h16", "M10 11v6M14 11v6", "M6 7l1 13h10l1-13", "M9 7V4h6v3"],
   chevron: ["M9 6l6 6-6 6"],
   search: ["M4 11a7 7 0 1 0 14 0 7 7 0 1 0-14 0", "M20 20l-4.5-4.5"],
+  back: ["M15 6l-6 6 6 6"],
+  settings: ["M4 7h9", "M17 7h3", "M4 17h3", "M11 17h9", "M15 5v4", "M9 15v4"],
 };

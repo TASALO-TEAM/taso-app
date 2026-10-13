@@ -325,5 +325,29 @@
 }
 .pf-tag-plain { border: 1px solid var(--border); color: var(--text2); }
 .pf-tag-accent { border: 1px solid var(--border-accent); background: var(--accent-soft); color: var(--accent); }
-.pf-h { margin: 1.25rem 0 0.75rem; padding: 0 0.25rem; font-size: 1rem; font-weight: 700; }
 .pf-avisos { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+
+a.icon-btn { text-decoration: none; }
+a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Ajustes (plan Perfil, P3) ---------- */
+.sub-back { margin-bottom: 0.25rem; }
+.aj-card { display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.aj-row { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.aj-label { display: flex; flex-direction: column; gap: 0.125rem; }
+.aj-label > span:first-child { font-weight: 600; }
+.aj-preview { display: flex; gap: 1rem; margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.aj-up { color: var(--up); }
+.aj-down { color: var(--down); }
+.aj-toggle { width: 100%; }
+.aj-panel { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.aj-panel[hidden] { display: none; }
+.aj-coins { display: flex; flex-direction: column; }
+.aj-coin {
+  display: flex; align-items: center; gap: 0.625rem; min-height: var(--tap); padding: 0 0.25rem;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.aj-coin:last-child { border-bottom: 0; }
+.aj-coin-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aj-check { flex: none; width: 1.25rem; height: 1.25rem; accent-color: var(--accent); }
+.aj-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
