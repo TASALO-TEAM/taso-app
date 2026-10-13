@@ -58,6 +58,7 @@ const VIEWS = {
   perfil: () => import("./views/perfil.js"),
   avisos: () => import("./views/avisos.js"),
   ajustes: () => import("./views/ajustes.js"),
+  estadisticas: () => import("./views/estadisticas.js"),
   admin: () => import("./views/admin.js"),
 };
 

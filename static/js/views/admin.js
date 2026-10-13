@@ -8,10 +8,10 @@ import {
 import { h, icon, ICONS } from "../modules/dom.js";
 import { backToPerfil } from "./subnav.js";
 
-const section = (title, ...children) => h("section", { class: "card ad-card" }, h("h2", { class: "card-title", text: title }), ...children);
-const unavailable = () => h("p", { class: "sub", text: "No disponible ahora mismo." });
+export const section = (title, ...children) => h("section", { class: "card ad-card" }, h("h2", { class: "card-title", text: title }), ...children);
+export const unavailable = () => h("p", { class: "sub", text: "No disponible ahora mismo." });
 
-function bars(rows, unit) {
+export function bars(rows, unit) {
   if (rows.length === 0 || rows.every((r) => r.value === 0)) return h("p", { class: "sub", text: "Sin datos en este periodo." });
   return h(
     "ul",
@@ -28,7 +28,7 @@ function bars(rows, unit) {
   );
 }
 
-function kpi(label, value) {
+export function kpi(label, value) {
   return h("div", { class: "card ad-kpi" }, h("span", { class: "ad-kpi-value", text: value }), h("span", { class: "sub", text: label }));
 }
 

@@ -1,4 +1,4 @@
-// Pestaña Perfil (plan Perfil): tarjeta del usuario + tarjeta «Mis avisos» (resumen que lleva a las categorías).
+// Pestaña Perfil (plan Perfil): tarjeta del usuario + «Mis avisos» + «Mis estadísticas» (+ panel admin si es admin).
 // Arriba a la derecha: recargar y el engranaje de Ajustes. La identidad sale SOLO del initData validado en el servidor (GET /api/me).
 // Sin innerHTML ni estilos en línea (CSP).
 import { overviewPill } from "../modules/admin.js";
@@ -43,6 +43,16 @@ function avisosCard(summary) {
   );
 }
 
+/** Tarjeta para todos: lleva a «Mis estadísticas». Sin píldora ni petición propia: Perfil no se encarece. */
+function statsCard() {
+  return h(
+    "button",
+    { type: "button", class: "card acard", "aria-label": "Mis estadísticas", dataset: { go: "estadisticas" }, onClick: () => { location.hash = "#/estadisticas"; } },
+    h("span", { class: "acard-main" }, h("span", { class: "card-title", text: "Mis estadísticas" }), h("span", { class: "sub", text: "Tus comandos y consultas" })),
+    icon(...ICONS.chevron),
+  );
+}
+
 /** Tarjeta solo para admins: lleva al panel de estado y estadísticas. La píldora resume la salud (o invita a abrirlo). */
 function adminCard(pill) {
   return h(
@@ -65,8 +75,9 @@ export function mount(ctx) {
 
   const userSlot = h("section", { class: "slot", "aria-label": "Tu perfil" });
   const avisosSlot = h("div", { class: "slot" });
+  const statsSlot = h("div", { class: "slot" });
   const adminSlot = h("div", { class: "slot" });
-  ctx.view.replaceChildren(userSlot, avisosSlot, adminSlot);
+  ctx.view.replaceChildren(userSlot, avisosSlot, statsSlot, adminSlot);
   ctx.setSubtitle("Tu cuenta y tus avisos");
 
   const refreshBtn = h("button", { type: "button", class: "icon-btn", "aria-label": "Actualizar perfil", onClick: () => load() }, icon(...ICONS.refresh));
@@ -89,6 +100,7 @@ export function mount(ctx) {
       );
     }
     avisosSlot.replaceChildren(avisosCard(avisosSummary(alerts, Date.now())));
+    statsSlot.replaceChildren(statsCard());
     adminSlot.replaceChildren(...(me && me.is_admin === true ? [adminCard(overviewPill(overview))] : []));
   }
 
