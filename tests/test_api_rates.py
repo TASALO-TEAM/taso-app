@@ -11,7 +11,6 @@ LATEST = {
     "ok": True,
     "data": {
         "eltoque": {"USD": {"rate": 520, "change": "down", "prev_rate": 521}, "EUR": {"rate": 585, "change": "up", "prev_rate": 582.5}},
-        "cadeca": {"USD": {"buy": 118, "sell": 120, "change": "neutral"}},
         "bcc": {},
         "binance": {},
         "qvapay": {"CUP": {"rate": 515, "buy": 510, "sell": 520, "change": "up"}},
@@ -98,7 +97,7 @@ def test_rates_normaliza_y_ordena(ctx):
     assert body["ok"] is True and body["stale"] is False
     assert [x["code"] for x in body["sources"]["eltoque"]["rates"]] == ["EUR", "USD"]
     assert body["sources"]["eltoque"]["fetched_at"] == "2026-10-10T15:30:00+00:00"
-    assert body["sources"]["cadeca"]["rates"][0]["rate"] == 120.0
+    assert body["sources"]["qvapay"]["rates"][0]["rate"] == 515.0
     assert body["image"] == {"available": True}
     assert "binance" not in body["sources"]
     assert r.headers["Cache-Control"] == "no-store"

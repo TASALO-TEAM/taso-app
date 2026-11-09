@@ -49,15 +49,15 @@ def h(ctx):  # noqa: F811
 
 # ---------- Normalización ----------
 
-def test_summary_solo_4_fuentes_ordena_y_descarta_lo_invalido(h):
+def test_summary_solo_3_fuentes_ordena_y_descarta_lo_invalido(h):
     body = h.get("/api/history/summary").get_json()
     assert body["ok"] is True and body["stale"] is False and body["days"] == 30
     sources = body["sources"]
-    assert set(sources) == {"eltoque", "qvapay", "bcc", "cadeca"}
+    assert set(sources) == {"eltoque", "qvapay", "bcc"}
     assert sources["eltoque"]["USD"] == [{"date": "2026-10-08", "rate": 515.5}, {"date": "2026-10-09", "rate": 520.0}]
     assert "CUP" not in sources["eltoque"] and "EUR" not in sources["eltoque"]
     assert sources["qvapay"]["CUP"] == [{"date": "2026-10-09", "rate": 480.0}]
-    assert sources["bcc"] == {} and sources["cadeca"] == {}
+    assert sources["bcc"] == {}
 
 
 def test_daily_valida_fechas_precios_y_duplicados(h):

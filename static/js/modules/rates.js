@@ -5,7 +5,6 @@ export const SOURCES = [
   { id: "eltoque", title: "El Toque", hasBuySell: false },
   { id: "qvapay", title: "QvaPay", hasBuySell: true },
   { id: "bcc", title: "BCC", hasBuySell: false },
-  { id: "cadeca", title: "CADECA", hasBuySell: true },
 ];
 export const DEFAULT_SOURCE = "eltoque";
 

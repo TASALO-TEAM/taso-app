@@ -11,7 +11,7 @@
 
 **taso-app** es una Telegram Web App que consume la API de [taso-api](https://github.com/TASALO-TEAM/taso-api) para mostrar:
 
-- Tasas actuales de ElToque, CADECA, BCC y Binance
+- Tasas actuales de ElToque, BCC y Binance
 - Histórico de evolución con gráficas (7, 14, 30 días)
 - Tasas por provincia cubana
 - Configuración de tema, auto-refresh y diseño (vertical/horizontal)
@@ -36,7 +36,7 @@
 - **3 tamaños de tarjeta**: Compact, Standard, Wide
 - **Orden de monedas** coincide con el bot:
   - **ElToque:** EUR, USD, MLC, BTC, TRX, USDT
-  - **CADECA/BCC:** EUR, USD, MLC, CAD, MXN, GBP, CHF, RUB, AUD, JPY
+  - **BCC:** EUR, USD, MLC, CAD, MXN, GBP, CHF, RUB, AUD, JPY
 
 **Visual ejemplo:**
 

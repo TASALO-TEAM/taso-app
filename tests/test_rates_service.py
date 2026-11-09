@@ -75,7 +75,7 @@ def test_orden_preferido_y_desconocidas_al_final_por_codigo():
 
 def test_cup_se_ignora_salvo_en_qvapay():
     obj = {"CUP": {"rate": 1}, "USD": {"rate": 520}}
-    assert [r["code"] for r in svc.parse_source("cadeca", obj)] == ["USD"]
+    assert [r["code"] for r in svc.parse_source("bcc", obj)] == ["USD"]
     assert [r["code"] for r in svc.parse_source("qvapay", obj)] == ["CUP", "USD"]
 
 
@@ -100,13 +100,12 @@ def latest(**over):
         "ok": True,
         "data": {
             "eltoque": {"USD": {"rate": 520, "change": "down", "prev_rate": 521}, "EUR": {"rate": 585, "change": "up", "prev_rate": 582.5}, "CUP": {"rate": 1}},
-            "cadeca": {"USD": {"buy": 118, "sell": 120, "change": "neutral"}},
             "bcc": {},
             "binance": {"BTC": {"rate": 1}},
             "qvapay": {"CUP": {"rate": 515, "buy": 510, "sell": 520, "change": "up"}},
         },
         "updated_at": "2026-10-10T15:40:00",
-        "sources_updated_at": {"eltoque": "2026-10-10T15:30:00+00:00", "cadeca": "2026-10-09T08:00:00+00:00"},
+        "sources_updated_at": {"eltoque": "2026-10-10T15:30:00+00:00", "qvapay": "2026-10-09T08:00:00+00:00"},
     }
     payload.update(over)
     return payload
@@ -114,16 +113,16 @@ def latest(**over):
 
 def test_normalize_latest_estructura_y_orden():
     out = svc.normalize_latest(latest())
-    assert list(out["sources"]) == ["eltoque", "qvapay", "bcc", "cadeca"]  # binance no se expone
+    assert list(out["sources"]) == ["eltoque", "qvapay", "bcc"]  # binance no se expone
     assert [r["code"] for r in out["sources"]["eltoque"]["rates"]] == ["EUR", "USD"]
-    assert out["sources"]["cadeca"]["rates"][0]["buy"] == 118.0
+    assert out["sources"]["qvapay"]["rates"][0]["buy"] == 510.0
     assert out["sources"]["bcc"]["rates"] == []
 
 
 def test_cada_fuente_lleva_su_hora_real_y_si_falta_la_general():
     out = svc.normalize_latest(latest())
     assert out["sources"]["eltoque"]["fetched_at"] == "2026-10-10T15:30:00+00:00"
-    assert out["sources"]["cadeca"]["fetched_at"] == "2026-10-09T08:00:00+00:00"  # vieja de verdad
+    assert out["sources"]["qvapay"]["fetched_at"] == "2026-10-09T08:00:00+00:00"  # vieja de verdad
     assert out["sources"]["bcc"]["fetched_at"] == "2026-10-10T15:40:00+00:00"    # cae a updated_at
     assert out["updated_at"] == "2026-10-10T15:40:00+00:00"
 

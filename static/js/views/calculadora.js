@@ -275,7 +275,7 @@ export function mount(ctx) {
     card.amountInput.setAttribute("aria-label", `Monto en ${d.from}`);
     card.clearBtn.hidden = state.amountText === "";
 
-    const usable = d.codes.length >= 2; // con solo el pivote no hay nada que convertir (p. ej. CADECA sin datos)
+    const usable = d.codes.length >= 2; // con solo el pivote no hay nada que convertir (p. ej. una fuente sin datos)
     const result = value === null || !usable ? null : convert(value, d.from, d.to, d.table);
     card.result.textContent = result === null ? "—" : fmtAmount(result);
     const unitValue = usable ? convert(1, d.from, d.to, d.table) : null;

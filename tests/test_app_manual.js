@@ -12,10 +12,6 @@ const mockApiResponse = {
       EUR: { rate: 380.75, change: 'down', prev_rate: 382.10 },
       MLC: { rate: 355.00, change: 'neutral', prev_rate: 355.00 }
     },
-    cadeca: {
-      USD: { rate: 250.00, change: 'up', prev_rate: 248.50 },
-      EUR: { rate: 270.25, change: 'up', prev_rate: 268.00 }
-    },
     bcc: {
       USD: { rate: 245.00, change: 'neutral', prev_rate: 245.00 }
     },
@@ -105,7 +101,6 @@ function testApiResponseStructure() {
 
   const checks = [
     { name: 'Has eltoque', check: !!data.eltoque },
-    { name: 'Has cadeca', check: !!data.cadeca },
     { name: 'Has bcc', check: !!data.bcc },
     { name: 'Has binance', check: !!data.binance },
     { name: 'USD rate is number', check: typeof data.eltoque.USD.rate === 'number' },

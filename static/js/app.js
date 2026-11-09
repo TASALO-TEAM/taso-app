@@ -81,7 +81,6 @@ const CURRENCY_INFO = {
 // Source display info
 const SOURCE_INFO = {
   eltoque: { emoji: '📱', name: 'ElToque', class: 'eltoque' },
-  cadeca: { emoji: '🏪', name: 'CADECA', class: 'cadeca' },
   bcc: { emoji: '🏛️', name: 'BCC', class: 'bcc' },
   binance: { emoji: '🪙', name: 'Binance', class: 'binance' }
 };
@@ -89,7 +88,6 @@ const SOURCE_INFO = {
 // Priority order for currency sorting (matches bot legacy order)
 const CURRENCY_PRIORITY = {
   eltoque: ['EUR', 'USD', 'MLC', 'BTC', 'TRX', 'USDT'],
-  cadeca: ['EUR', 'USD', 'MLC', 'CAD', 'MXN', 'GBP', 'CHF', 'RUB', 'AUD', 'JPY'],
   bcc: ['EUR', 'USD', 'MLC', 'CAD', 'MXN', 'GBP', 'CHF', 'RUB', 'AUD', 'JPY']
 };
 
@@ -123,7 +121,7 @@ async function fetchLatest() {
 
 /**
  * Fetch history data from taso-api
- * @param {string} source - Source (eltoque, cadeca, bcc, binance)
+ * @param {string} source - Source (eltoque, bcc, binance)
  * @param {string} currency - Currency code (USD, EUR, MLC)
  * @param {number} days - Number of days (7, 14, 30)
  * @returns {Promise<Object>} API response data
@@ -142,7 +140,7 @@ async function fetchHistory(source, currency, days) {
 
 /**
  * Fetch provinces rates from taso-api
- * @param {string} source - Source (eltoque, cadeca, bcc)
+ * @param {string} source - Source (eltoque, bcc)
  * @returns {Promise<Array>} Array of province rates
  */
 async function fetchProvincias(source) {
@@ -279,7 +277,7 @@ function renderTicker(binanceData, currencies) {
 
 /**
  * Render rates as 3-column grid cards grouped by source
- * Shows 3 sections (ElToque, BCC, CADECA), each with grid of 3 columns
+ * Shows 2 sections (ElToque, BCC), each with grid of 3 columns
  * @param {Object} data - Latest rates data
  * @param {string} layoutMode - 'horizontal' or 'vertical'
  */
@@ -316,14 +314,13 @@ function renderHorizontalCards(data, layoutMode) {
   const cardSize = settings.cardSize || 'standard';
   const showFlags = settings.showFlags !== false;
 
-  // Source order: ElToque → BCC → CADECA (matches legacy bot order)
+  // Source order: ElToque → BCC (matches legacy bot order)
   const sources = [
     { key: 'eltoque', emoji: '📱', name: 'MERCADO INFORMAL (El Toque)' },
-    { key: 'bcc', emoji: '🏛', name: 'OFFICIAL RATE (BCC)' },
-    { key: 'cadeca', emoji: '🏢', name: 'CADECA (Exchange Houses)' }
+    { key: 'bcc', emoji: '🏛', name: 'OFFICIAL RATE (BCC)' }
   ];
 
-  console.log('[TASALO DEBUG] Rendering 3 grid sections (one per source)');
+  console.log('[TASALO DEBUG] Rendering 2 grid sections (one per source)');
 
   sources.forEach(source => {
     const sourceData = data[source.key] || {};
@@ -474,7 +471,7 @@ function buildRateRow(currency, rateData) {
 
 /**
  * Build source section HTML with sorted currencies
- * @param {string} sourceKey - Source key (eltoque, cadeca, bcc, binance)
+ * @param {string} sourceKey - Source key (eltoque, bcc, binance)
  * @param {Object} rates - Rates object for this source
  * @returns {string} HTML for source section
  */
@@ -512,7 +509,7 @@ function buildSourceSection(sourceKey, rates) {
 
 /**
  * Render rates data to DOM (vertical mode)
- * Order: ElToque → BCC → CADECA (matches bot and horizontal mode)
+ * Order: ElToque → BCC (matches bot and horizontal mode)
  * Binance NOT shown (already in ticker tape at top)
  * @param {Object} data - API response data
  */
@@ -520,11 +517,11 @@ function renderRates(data) {
   const container = document.getElementById('rates-container');
   if (!container) return;
 
-  const { eltoque, cadeca, bcc } = data;
+  const { eltoque, bcc } = data;
 
   let html = '';
 
-  // Render each source section in order: ElToque → BCC → CADECA
+  // Render each source section in order: ElToque → BCC
   // Binance NOT included (already shown in ticker tape)
   if (eltoque && Object.keys(eltoque).length > 0) {
     html += buildSourceSection('eltoque', eltoque);
@@ -532,10 +529,6 @@ function renderRates(data) {
 
   if (bcc && Object.keys(bcc).length > 0) {
     html += buildSourceSection('bcc', bcc);
-  }
-
-  if (cadeca && Object.keys(cadeca).length > 0) {
-    html += buildSourceSection('cadeca', cadeca);
   }
 
   container.innerHTML = html;

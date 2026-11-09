@@ -14,7 +14,7 @@ from typing import Any, Optional
 from src.services import taso_client
 from src.services.cache import Cached, TTLCache, UpstreamError
 
-SOURCES = ("eltoque", "qvapay", "bcc", "cadeca")
+SOURCES = ("eltoque", "qvapay", "bcc")
 
 PREFERRED_ORDER = [
     "EUR", "USD", "MLC", "BTC", "TRX", "USDT",
@@ -22,7 +22,7 @@ PREFERRED_ORDER = [
     "MXN", "BRL", "COP",
 ]
 QVAPAY_ORDER = ["CUP", "MLC", "TROPIPAY", "ETECSA", "ZELLE", "CLASICA", "BOLSATM", "BANDECPREPAGO", "SBERBANK"]
-# En CADECA/BCC/El Toque "CUP" es la moneda base y no aporta nada; en QvaPay es un método de pago.
+# En BCC/El Toque "CUP" es la moneda base y no aporta nada; en QvaPay es un método de pago.
 IGNORED = {"CUP"}
 
 RATES_TTL = 30.0              # la API refresca cada 15 min; 30 s evita martillarla
