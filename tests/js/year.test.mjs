@@ -93,9 +93,8 @@ test("resolveQuote: sin frase nueva se conserva la guardada; sin nada, null", ()
 
 // ---------- Fuentes y nombres ----------
 
-test("las 4 fuentes en el orden de Android y con compra/venta donde toca", () => {
-  assert.deepEqual(SOURCES.map((s) => s.id), ["eltoque", "qvapay", "bcc", "cadeca"]);
-  assert.equal(sourceById("cadeca").hasBuySell, true);
+test("las 3 fuentes en el orden de Android y con compra/venta donde toca", () => {
+  assert.deepEqual(SOURCES.map((s) => s.id), ["eltoque", "qvapay", "bcc"]);
   assert.equal(sourceById("qvapay").hasBuySell, true);
   assert.equal(sourceById("eltoque").hasBuySell, false);
   assert.equal(sourceById("binance"), null);
