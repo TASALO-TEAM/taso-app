@@ -7,7 +7,7 @@ import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
 import { lastDays, SUMMARY_DAYS } from "../modules/history-math.js";
 import {
-  bannerFor, DEFAULT_SOURCE, flagFor, nameFor, normalizeSource, SOURCES, sourceById, visibleRates,
+  bannerFor, DEFAULT_SOURCE, flagFor, groupRates, nameFor, normalizeSource, SOURCES, sourceById, visibleRates,
 } from "../modules/rates.js";
 import { hideBack, showBack } from "../modules/sdk.js";
 import { getSettings, hiddenSet } from "../modules/settings.js";
@@ -44,6 +44,7 @@ export function mount(ctx) {
     apiError: false,
     offlineError: false,
     refreshing: false,
+    moreOpen: false,
     now: Date.now(),
   };
   let alive = true;
@@ -159,7 +160,7 @@ export function mount(ctx) {
         class: "rcard",
         role: "button",
         tabindex: "0",
-        "aria-label": `${r.code}, ${nameFor(state.source, r.code)}, ${fmt.rate(r.rate)}. Ver historial`,
+        "aria-label": `${r.code}, ${nameFor(state.source, r.code, r.name)}, ${fmt.rate(r.rate)}. Ver historial`,
         onClick: () => openDetail(r),
         onKeydown: (e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -169,7 +170,7 @@ export function mount(ctx) {
         },
       },
       h("div", { class: "rc-head" }, flag ? h("span", { class: "rc-flag", "aria-hidden": "true", text: flag }) : null, h("span", { class: "rc-code", text: r.code })),
-      h("div", { class: "rc-name", text: nameFor(state.source, r.code) }),
+      h("div", { class: "rc-name", text: nameFor(state.source, r.code, r.name) }),
       h("div", { class: "rc-rate mono", text: fmt.rate(r.rate) }),
       state.source === "qvapay" ? h("div", { class: "rc-sub", text: "por 1 USD" }) : null,
       showBuySell ? h("div", { class: "rc-sub mono", text: `Compra ${buy} · Venta ${sell}` }) : null,
@@ -224,7 +225,27 @@ export function mount(ctx) {
       content.replaceChildren(h("p", { class: "empty", text: "Sin datos para esta fuente" }));
       return;
     }
-    content.replaceChildren(h("div", { class: "grid" }, rates.map(rateCard)));
+    const grouped = groupRates(rates);
+    if (!grouped) {
+      content.replaceChildren(h("div", { class: "grid" }, rates.map(rateCard)));
+      return;
+    }
+    // Secciones de mercado + «Mostrar más» (<details> nativo: teclado y lector de pantalla sin JS propio).
+    const nodes = grouped.sections.map((s) =>
+      h("section", { class: "rgroup", "aria-label": s.title }, h("h2", { class: "label", text: s.title }), h("div", { class: "grid" }, s.rates.map(rateCard))),
+    );
+    if (grouped.reference.length > 0) {
+      nodes.push(
+        h(
+          "details",
+          { class: "rmore", open: state.moreOpen ? "" : null, onToggle: (e) => { state.moreOpen = e.currentTarget.open; } },
+          h("summary", { text: `Mostrar más (${grouped.reference.length})` }),
+          h("p", { class: "sub", text: "Valores de referencia: sin ofertas reales en el mercado." }),
+          h("div", { class: "grid" }, grouped.reference.map(rateCard)),
+        ),
+      );
+    }
+    content.replaceChildren(...nodes);
   }
 
   function renderImageButton() {
