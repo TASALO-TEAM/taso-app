@@ -183,3 +183,33 @@ def test_get_image_rechaza_lo_que_no_es_imagen(monkeypatch):
         svc.get_image()
     monkeypatch.setattr(svc.taso_client, "get_file", lambda path: (b"\x89PNG", "image/png"))
     assert svc.get_image() == (b"\x89PNG", "image/png")
+
+
+# ---------- ElToque agrupado (name/group/tier/offers/order de taso-api) ----------
+
+def test_parse_rate_pasa_los_campos_de_grupo():
+    r = svc.parse_rate("ZELLE", {"rate": 915, "name": " Zelle ", "group": "main", "tier": "reference",
+                                 "offers": 0, "order": 3})
+    assert (r["name"], r["group"], r["tier"], r["offers"], r["order"]) == ("Zelle", "main", "reference", 0.0, 3.0)
+
+
+def test_parse_rate_ignora_grupo_invalido_y_sin_campos_no_agrega_nada():
+    assert "group" not in svc.parse_rate("USD", {"rate": 1, "group": "raro", "tier": "market"})
+    assert "tier" not in svc.parse_rate("USD", {"rate": 1, "group": "main", "tier": "raro"})
+    assert "group" not in svc.parse_rate("USD", {"rate": 1})
+
+
+def test_parse_source_ordena_por_grupo_y_order():
+    obj = {
+        "BTC": {"rate": 1, "group": "crypto", "tier": "market", "order": 1},
+        "CAD": {"rate": 1, "group": "other", "tier": "market", "order": 1},
+        "ZELLE": {"rate": 1, "group": "main", "tier": "reference", "order": 3},
+        "USD": {"rate": 1, "group": "main", "tier": "market", "order": 2},
+        "EUR": {"rate": 1, "group": "main", "tier": "market", "order": 1},
+    }
+    assert [r["code"] for r in svc.parse_source("eltoque", obj)] == ["EUR", "USD", "ZELLE", "BTC", "CAD"]
+
+
+def test_orden_de_respaldo_zelle_tras_usd_y_cla_tras_mlc():
+    obj = {k: {"rate": 1} for k in ["CLA", "MLC", "ZELLE", "USD", "EUR"]}
+    assert [r["code"] for r in svc.parse_source("eltoque", obj)] == ["EUR", "USD", "ZELLE", "MLC", "CLA"]
