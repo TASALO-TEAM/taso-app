@@ -1,6 +1,6 @@
 // Pantalla Mercado (el /p del bot): búsqueda por símbolo, top 5 de monedas más consultadas y tarjeta con los datos.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). El formato y las reglas puras viven en modules/market.js.
-import { ApiError, getMarket, getMarketChart, getMarketTop, postPanorama } from "../modules/api.js";
+import { ApiError, getMarket, getMarketChart, getMarketNews, getMarketTop, postPanorama } from "../modules/api.js";
 import { priceChart, seriesSparkline } from "../modules/charts.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
@@ -25,11 +25,14 @@ import {
   usd,
 } from "../modules/market.js";
 import { load, save } from "../modules/storage.js";
+import { newsCarousel } from "../modules/news-carousel.js";
+import { cleanNews } from "../modules/news.js";
 
 const LAST_KEY = "tasalo:market:last";
 const CACHE_KEY = "tasalo:market:cache";
 const RANGE_KEY = "tasalo:market:range";
 const CHART_TTL_MS = 2 * 60 * 1000; // el servidor ya cachea la serie unos minutos; no se pide más a menudo
+const NEWS_TTL_MS = 10 * 60 * 1000; // el servidor cachea cada fuente 10 min: no se pide antes
 const SPARK_RANGE = "1d"; // la tira de monedas siempre muestra las últimas 24 h
 const READ_HINT = "Toca o desliza sobre la gráfica para ver el precio.";
 const DEFAULT_SYMBOL = "BTC";
@@ -62,6 +65,7 @@ export function mount(ctx) {
     pan: new Map(), // símbolo -> {status: loading|ready|error, ...}; sobrevive a los refrescos y al cambio de moneda
     range: normalizeRange(load(RANGE_KEY, DEFAULT_RANGE)),
     charts: new Map(), // "SIMBOLO|rango" -> {status: loading|ready|none|error, series, at}; la tira usa siempre 1d
+    news: { status: "loading", items: [], at: 0 }, // titulares generales (S10 F5): loading | ready | error; `at` = ultima respuesta
   };
   let alive = true;
   let fetchToken = 0;
@@ -122,7 +126,8 @@ export function mount(ctx) {
   const rangeChg = h("div", { class: "mk-rchg" });
   const chartBox = h("div", { class: "mk-chart" });
   const content = h("div", { class: "slot" });
-  ctx.view.replaceChildren(bannerSlot, form, errorSlot, tickerSlot, content);
+  const newsSlot = h("div", { class: "mk-stack" }); // fuera de `content`: repintar la moneda no reinicia el carrusel
+  ctx.view.replaceChildren(bannerSlot, form, errorSlot, tickerSlot, content, newsSlot);
   ctx.actions.replaceChildren();
 
   // ---------- Datos ----------
@@ -179,6 +184,53 @@ export function mount(ctx) {
     renderRanges();
     renderChart();
     loadChart(state.symbol, range);
+  }
+
+  // ---------- Noticias (S10 F5): generales, no dependen de la moneda ----------
+  // La tarjeta se crea una vez y solo se rehace si cambian los titulares: repintar no devuelve el carrusel a la primera noticia.
+  let newsCard = null;
+  let newsSig = "";
+  let newsBusy = false;
+
+  async function loadNews() {
+    if (newsBusy) return;
+    newsBusy = true;
+    try {
+      const res = await getMarketNews();
+      state.news = { status: "ready", items: cleanNews(res && res.items), at: Date.now() };
+    } catch (_) {
+      // Con titulares ya en pantalla se dejan tal cual (no caducan en minutos); sin ellos sale el aviso con "Reintentar".
+      state.news = state.news.items.length ? { ...state.news, at: Date.now() } : { status: "error", items: [], at: Date.now() };
+    }
+    newsBusy = false;
+    if (alive) renderNews();
+  }
+
+  function renderNews() {
+    const { status, items } = state.news;
+    if (status === "ready" && items.length) {
+      const sig = items.map((it) => it.url).join("|");
+      if (newsCard && sig === newsSig) return;
+      newsSig = sig;
+      newsCard = newsCarousel(items, state.now);
+      newsSlot.replaceChildren(newsCard);
+      return;
+    }
+    newsCard = null;
+    newsSig = "";
+    if (status !== "error") {
+      newsSlot.replaceChildren(); // cargando o sin noticias: no se muestra nada
+      return;
+    }
+    newsSlot.replaceChildren(
+      h(
+        "section",
+        { class: "card mk-card", "aria-label": "Noticias del mercado" },
+        h("div", { class: "mk-head" }, h("h2", { class: "card-title", text: "Noticias" })),
+        h("p", { class: "mk-err", role: "alert", text: "No se pudieron cargar las noticias." }),
+        h("button", { type: "button", class: "btn btn-ghost", text: "Reintentar", onClick: loadNews }),
+      ),
+    );
   }
 
   async function fetchCoin(symbol, { silent = false } = {}) {
@@ -354,6 +406,7 @@ export function mount(ctx) {
       ? marketBanner({ stale: state.stale, fetchedAt: m.fetched_at, now: state.now, offline: state.offline || navigator.onLine === false })
       : null;
     bannerSlot.replaceChildren(...(banner ? [h("div", { class: "notice", role: "status", text: banner.text })] : []));
+    if (newsCard) newsCard.refreshMeta(state.now); // solo las horas ("hace 2 h"): no toca el desplazamiento
   }
 
   function row(r) {
@@ -482,7 +535,9 @@ export function mount(ctx) {
 
   // ---------- Vida de la pantalla ----------
   const refreshIfDue = () => {
-    if (document.visibilityState !== "visible" || state.status !== "ready") return;
+    if (document.visibilityState !== "visible") return;
+    if (Date.now() - state.news.at > NEWS_TTL_MS) loadNews(); // con su propio TTL, aunque la moneda no haya cargado
+    if (state.status !== "ready") return;
     if (Date.now() - lastFetch > REFRESH_MS) {
       fetchCoin(state.symbol, { silent: true });
       loadChart(state.symbol, state.range, { force: true });
@@ -515,6 +570,7 @@ export function mount(ctx) {
   render();
   fetchCoin(state.symbol);
   loadCharts(state.symbol);
+  loadNews();
   // El top 5 llega aparte: si falla, quedan las de semilla y la pantalla funciona igual. Con la lista final se piden sus minigráficas.
   getMarketTop()
     .then((res) => {

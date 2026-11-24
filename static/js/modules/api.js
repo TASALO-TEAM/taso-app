@@ -79,6 +79,7 @@ export const getMarket = (symbol) => apiFetch(`/market/${encodeURIComponent(symb
 // Serie de precios para la gráfica y las minigráficas: range = 1d | 7d | 1m | 1y | max (el servidor valida ambos).
 export const getMarketChart = (symbol, range) =>
   apiFetch(`/market/${encodeURIComponent(symbol)}/chart?range=${encodeURIComponent(range)}`);
+export const getMarketNews = () => apiFetch("/market/news");
 // Panorama IA: Groq puede tardar hasta ~25 s en el servidor; el servidor lee los datos y limita a 5 por hora y usuario.
 export const postPanorama = (symbol) => apiFetch(`/market/${encodeURIComponent(symbol)}/panorama`, { method: "POST", timeoutMs: 40000 });
 export const getEltoqueImage = () => apiBlob("/image/eltoque");
