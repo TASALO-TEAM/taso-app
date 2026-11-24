@@ -36,3 +36,6 @@ htmlcov/
 # Copias de seguridad del .env y base de datos local (S10)
 .env.bak*
 data/
+
+# Capturas de referencia de diseño (solo locales, no se suben)
+caprurastemp/

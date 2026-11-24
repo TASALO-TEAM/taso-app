@@ -300,6 +300,23 @@ def binance_candles(pair: str, since: datetime, interval: str = "5m", limit: int
     return out
 
 
+def binance_series(symbol: str, interval: str, limit: int) -> list[tuple[int, float]]:
+    """Cierres de velas ``[(ms, precio)]`` del primer par USDT/USDC de Binance que responda; ``[]`` si no hay par."""
+    for quote in QUOTE_ASSETS:
+        data = _binance_get("/api/v3/klines", {"symbol": symbol.upper() + quote, "interval": interval, "limit": limit})
+        out: list[tuple[int, float]] = []
+        for row in data if isinstance(data, list) else []:
+            try:
+                price = to_price(row[4])
+                if price is not None:
+                    out.append((int(row[0]), price))
+            except (IndexError, TypeError, ValueError):
+                continue
+        if out:
+            return out
+    return []
+
+
 # ---------------------------------------------------------------- CoinGecko (plan Demo)
 
 _cg_id_cache: dict[str, Optional[str]] = {}

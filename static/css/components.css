@@ -341,8 +341,10 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .aj-down { color: var(--down); }
 /* Mercado con convención propia (Ajustes → Mercado). Sin atributo = hereda la de Tasas. Sin ciclos: se parte de --red/--green. */
 :root[data-market-up="red"] .mk-stack,
+:root[data-market-up="red"] .mk-ticker,
 :root[data-market-up="red"] .aj-mk { --up: var(--red); --down: var(--green); }
 :root[data-market-up="green"] .mk-stack,
+:root[data-market-up="green"] .mk-ticker,
 :root[data-market-up="green"] .aj-mk { --up: var(--green); --down: var(--red); }
 .aj-toggle { width: 100%; }
 .aj-panel { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
@@ -407,3 +409,78 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .nv-text { overflow-wrap: anywhere; }
 .nv-text > :first-child { margin-top: 0.25rem; }
 .nv-text > :last-child { margin-bottom: 0; }
+
+/* ---------- Mercado (S10 F4): tira de monedas, grafica de precio y datos en rejilla ---------- */
+@property --mk-fade-start { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --mk-fade-end { syntax: "<length>"; inherits: false; initial-value: 0px; }
+
+/* Tira horizontal: desplazamiento nativo con snap; sin barra; el scroll que llega al borde no arrastra la pagina. */
+.mk-ticker {
+  --mk-fade: 2rem;
+  display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.3125rem 0.125rem;
+  scroll-snap-type: x proximity; scroll-padding-inline: var(--mk-fade);
+  overscroll-behavior-x: contain; scrollbar-width: none; touch-action: manipulation;
+}
+.mk-ticker::-webkit-scrollbar { display: none; }
+/* Difuminado en cada borde con mas monedas detras (se anima con el propio scroll; sin soporte, no hay difuminado). */
+@supports (animation-timeline: scroll()) {
+  .mk-ticker {
+    --mk-dir: right; --mk-start-pos: 0; --mk-end-pos: 100%;
+    mask:
+      linear-gradient(black, black) no-clip subtract,
+      linear-gradient(to var(--mk-dir), black, transparent) var(--mk-start-pos) 0 / var(--mk-fade-start) 100% no-repeat no-clip,
+      linear-gradient(to var(--mk-dir), transparent, black) var(--mk-end-pos) 0 / var(--mk-fade-end) 100% no-repeat no-clip;
+    animation: mk-fade-in-start linear both, mk-fade-out-end linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: 0 var(--mk-fade), calc(100% - var(--mk-fade)) 100%;
+  }
+  .mk-ticker:dir(rtl) { --mk-dir: left; --mk-start-pos: 100%; --mk-end-pos: 0; }
+}
+@keyframes mk-fade-in-start { to { --mk-fade-start: var(--mk-fade); } }
+@keyframes mk-fade-out-end { from { --mk-fade-end: var(--mk-fade); } }
+
+.mk-coin {
+  position: relative; flex: none; scroll-snap-align: start;
+  display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 0.5rem; row-gap: 0.125rem;
+  min-width: 5.75rem; min-height: var(--tap); padding: 0.5rem 0.75rem 0.625rem;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--card); color: var(--text);
+  font: inherit; text-align: left; cursor: pointer; touch-action: manipulation;
+}
+.mk-coin-sym { grid-column: 1 / -1; font-size: 0.9375rem; font-weight: 700; }
+.mk-coin-chg { font-size: 0.75rem; white-space: nowrap; }
+.mk-coin .spark { width: 3rem; height: 1.25rem; }
+.mk-coin[aria-pressed="true"] { border-color: var(--border-accent); background: var(--accent-soft); }
+/* La moneda activa no se distingue solo por el color: lleva ademas un subrayado (como en las pestanas). */
+.mk-coin[aria-pressed="true"]::after {
+  content: ""; position: absolute; inset: auto 0.75rem 0.25rem; border-block-end: 3px solid var(--accent); border-radius: 2px;
+}
+.mk-coin:focus-visible, .mk-ranges .seg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mk-ranges .seg-btn:focus-visible { outline-offset: -2px; }
+
+/* Precio + variacion del rango, botones de rango y grafica */
+.mk-pricerow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.75rem; }
+.mk-rchg { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.125rem 0.5rem; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.mk-rchg:empty { display: none; }
+.mk-ranges { overflow-x: auto; scrollbar-width: none; }
+.mk-ranges .seg-btn { flex: 1 0 auto; min-height: var(--tap); padding: 0 0.75rem; white-space: nowrap; touch-action: manipulation; }
+.mk-chart { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; padding: 0.5rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.mk-chart-skel { height: 11.875rem; border: 0; }
+.mk-read { margin: 0; min-height: 1.25rem; font-size: 0.8125rem; text-align: center; overflow-wrap: anywhere; }
+.pc { --trend: var(--neutral); }
+.pc-up { --trend: var(--up); }
+.pc-down { --trend: var(--down); }
+.pc-grid { stroke: var(--border); stroke-width: 1; }
+.pc-lab { fill: var(--text2); font-family: var(--font-mono); font-size: 11px; font-variant-numeric: tabular-nums; }
+.pc-area { fill: var(--trend); opacity: 0.12; }
+.pc-line { fill: none; stroke: var(--trend); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.pc-base { stroke: var(--text2); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; }
+.pc-cursor { stroke: var(--text2); stroke-width: 1; opacity: 0; }
+.pc-cursor.on { opacity: 1; }
+.pc-dot { fill: var(--trend); stroke: var(--surface); stroke-width: 2; }
+
+/* Datos de la moneda en rejilla de 2 columnas (etiqueta arriba, valor abajo) */
+.mk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.mk-grid .mk-row { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
+.mk-grid .mk-val { text-align: left; }
+/* En pantallas anchas la vista es una columna centrada (como MSN): el SVG escala con su ancho y estirado a 1000 px las etiquetas de los ejes se desbordan. */
+.view:has(> .mk-search) { width: 100%; max-width: 40rem; margin-inline: auto; }

@@ -256,3 +256,49 @@ def test_api_se_cachea_un_minuto_y_sirve_lo_ultimo_si_cae(ctx, src):  # noqa: F8
 def test_api_top_devuelve_cinco(ctx, src):  # noqa: F811
     body = ctx.get("/api/market/top").get_json()
     assert body == {"ok": True, "symbols": ["BTC", "ETH", "SOL", "BNB", "HIVE"]}
+
+
+# ------------------------------------------------------------------ gráfica de precio
+
+
+def test_get_chart_devuelve_pares_ms_precio(monkeypatch):
+    seen = []
+    monkeypatch.setattr(crypto, "binance_series", lambda sym, interval, limit: seen.append((sym, interval, limit)) or [(1, 2.0), (3, 4.0)])
+    assert market.get_chart("SOL", "7d") == [[1, 2.0], [3, 4.0]]
+    assert seen == [("SOL", "1h", 168)]
+
+
+def test_binance_series_prueba_usdc_y_descarta_velas_invalidas(monkeypatch):
+    rows = {"SOLUSDC": [[1000, "1", "2", "0.5", "1.5", "9"], [2000, "1", "2", "0.5", "0", "9"], [3000]]}
+    monkeypatch.setattr(crypto, "_binance_get", lambda path, params=None: rows.get(params["symbol"]))
+    assert crypto.binance_series("sol", "1h", 10) == [(1000, 1.5)]
+    assert crypto.binance_series("nope", "1h", 10) == []
+
+
+def test_api_chart_ok_y_se_cachea(ctx, src, monkeypatch):  # noqa: F811
+    calls = []
+    monkeypatch.setattr(crypto, "binance_series", lambda sym, interval, limit: calls.append(sym) or [(1, 2.0)])
+    body = ctx.get("/api/market/sol/chart?range=1m").get_json()
+    assert body == {"ok": True, "stale": False, "range": "1m", "points": [[1, 2.0]]}
+    ctx.get("/api/market/sol/chart?range=1m")
+    assert calls == ["SOL"]
+
+
+def test_api_chart_rango_por_defecto_y_validacion(ctx, src, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(crypto, "binance_series", lambda sym, interval, limit: [(1, 2.0)])
+    assert ctx.get("/api/market/sol/chart").get_json()["range"] == "1d"
+    assert ctx.get("/api/market/sol/chart?range=5y").status_code == 400
+    assert ctx.get("/api/market/BT%20C/chart").status_code == 400
+    assert ctx.client.get("/api/market/sol/chart").status_code == 401
+
+
+def test_api_chart_sin_par_es_404_y_sirve_lo_ultimo_si_cae(ctx, src, monkeypatch):  # noqa: F811
+    monkeypatch.setattr(crypto, "binance_series", lambda sym, interval, limit: [])
+    r = ctx.get("/api/market/NOPE/chart")
+    assert r.status_code == 404 and r.get_json()["error"]["code"] == "no_chart"
+    monkeypatch.setattr(crypto, "binance_series", lambda sym, interval, limit: [(1, 2.0)])
+    ctx.get("/api/market/SOL/chart")
+    ctx.clock.t += 301  # pasa el TTL de 5 min de la gráfica de 24 h
+    monkeypatch.setattr(crypto, "binance_series", lambda sym, interval, limit: [])
+    body = ctx.get("/api/market/SOL/chart").get_json()
+    assert body["stale"] is True and body["points"] == [[1, 2.0]]

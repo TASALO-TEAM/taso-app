@@ -1,7 +1,8 @@
 // Mercado (/p del bot, S10): formato y reglas puras de la pantalla. Sin DOM ni red (se prueba con node --test).
 // Formato es-CU como el resto de la app: coma decimal y espacio fino (NBSP) como separador de miles en importes.
-import { cubaDateText, toMs } from "./cuba-time.js";
+import { cubaDateKey, cubaDateText, cubaParts, toMs } from "./cuba-time.js";
 import { isStale, relative, roundHalfUp } from "./format.js";
+import { shortDate } from "./history-math.js";
 
 export const SEED_TOP = ["BTC", "ETH", "SOL", "BNB", "HIVE"];
 export const TOP_N = 5;
@@ -173,4 +174,101 @@ export function panoramaError({ status } = {}) {
   if (status === 429) return "Llegaste al límite de análisis de IA de esta hora. Inténtalo más tarde.";
   if (status === 404 || status === 400) return "No encontré esa moneda.";
   return "La IA no está disponible ahora. Inténtalo en un momento.";
+}
+
+// ---------- Gráfica de precio (S10 F4): rangos, variación del rango y geometría del SVG ----------
+// Una serie es [[ms, precio], ...]. Aquí solo hay matemática y texto; el dibujo vive en charts.js.
+export const RANGES = [
+  { id: "1d", label: "24 h" },
+  { id: "7d", label: "1 S" },
+  { id: "1m", label: "1 mes" },
+  { id: "1y", label: "1 año" },
+  { id: "max", label: "Máx." },
+];
+export const DEFAULT_RANGE = "1d";
+
+/** Rango válido o el predeterminado (nunca se confía en lo que haya guardado o venga de fuera). */
+export function normalizeRange(id) {
+  return RANGES.some((r) => r.id === id) ? id : DEFAULT_RANGE;
+}
+
+/** Serie del servidor → solo pares [ms, precio > 0] válidos, ordenados por tiempo. */
+export function cleanSeries(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p) => Array.isArray(p) && isNum(p[0]) && isPos(p[1]))
+    .map((p) => [p[0], p[1]])
+    .sort((a, b) => a[0] - b[0]);
+}
+
+/** Variación del primer al último punto: {abs, percent, kind, text}; null con menos de 2 puntos. */
+export function rangeChange(raw) {
+  const list = cleanSeries(raw);
+  if (list.length < 2) return null;
+  const abs = list[list.length - 1][1] - list[0][1];
+  const percent = (abs / list[0][1]) * 100;
+  const kind = kindOf(percent);
+  const text = kind === "neutral" ? pct(percent) : `${abs < 0 ? "-" : "+"}${plain(Math.abs(abs))} (${pct(percent)})`;
+  return { abs, percent, kind, text };
+}
+
+/**
+ * Geometría en unidades del viewBox. X por tiempo real; Y de mínimo a máximo. Devuelve null con menos de 2 puntos.
+ * {coords, line, area, yTicks: [{y, value}], xTicks: [{x, time}], base: {y, value}} (base = precio al inicio del rango).
+ */
+export function seriesGeometry(raw, { width, height, padLeft = 0, padRight = 0, padTop = 0, padBottom = 0 }) {
+  const list = cleanSeries(raw);
+  if (list.length < 2) return null;
+  const innerW = width - padLeft - padRight;
+  const innerH = height - padTop - padBottom;
+  const t0 = list[0][0];
+  const span = list[list.length - 1][0] - t0;
+  const values = list.map((p) => p[1]);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const round2 = (v) => Math.round(v * 100) / 100;
+  const xOf = (t) => round2(padLeft + (span === 0 ? 0 : (t - t0) / span) * innerW);
+  const yOf = (v) => round2(max === min ? padTop + innerH / 2 : padTop + (1 - (v - min) / (max - min)) * innerH);
+  const coords = list.map(([t, v]) => ({ x: xOf(t), y: yOf(v), time: t, value: v }));
+  const line = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x} ${c.y}`).join(" ");
+  const first = coords[0];
+  const last = coords[coords.length - 1];
+  const floor = height - padBottom;
+  const steps = max === min ? [0] : [0, 1, 2, 3];
+  return {
+    coords,
+    line,
+    area: `${line} L${last.x} ${floor} L${first.x} ${floor} Z`,
+    yTicks: steps.map((i) => {
+      const value = min + ((max - min) * i) / 3;
+      return { y: yOf(value), value };
+    }),
+    xTicks: [0.12, 0.5, 0.88].map((f) => {
+      const time = t0 + span * f;
+      return { x: xOf(time), time };
+    }),
+    base: { y: first.y, value: list[0][1] },
+  };
+}
+
+/** Etiqueta del eje de precios: entero con NBSP desde 1000 (61 282); por debajo, igual que el precio. */
+export function axisPrice(value) {
+  if (!isPos(value)) return DASH;
+  return value >= 1000 ? groupThousands(String(Math.round(value))) : plain(value);
+}
+
+/** Etiqueta del eje de tiempo en hora de Cuba: «14:30» en 24 h, «08 oct» hasta 1 año y solo el año en Máx. */
+export function axisTime(ms, rangeId) {
+  if (!isNum(ms)) return "";
+  const p = cubaParts(ms);
+  if (rangeId === "1d") return `${p.hour}:${String(p.minute).padStart(2, "0")}`;
+  return rangeId === "max" ? String(p.year) : shortDate(cubaDateKey(ms));
+}
+
+/** Lectura al tocar la gráfica: «23/11/2026 14:30 · $61 282,44» (con hora en 24 h y 1 S; solo fecha en el resto). */
+export function readoutText(ms, value, rangeId) {
+  if (!isNum(ms) || !isPos(value)) return "";
+  const date = cubaDateText(ms);
+  const when = rangeId === "1d" || rangeId === "7d" ? `${date} ${axisTime(ms, "1d")}` : date;
+  return `${when} \u00b7 ${usd(value)}`;
 }

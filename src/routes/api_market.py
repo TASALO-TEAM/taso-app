@@ -1,6 +1,6 @@
 """API de Mercado (``/api/market``, S10): el ``/p`` del bot dentro de la miniapp. Todo con ``initData``."""
 
-from flask import Blueprint, current_app, g, jsonify
+from flask import Blueprint, current_app, g, jsonify, request
 
 from src.auth.guard import require_user
 from src.services import ai as ai_service
@@ -11,6 +11,7 @@ bp = Blueprint("api_market", __name__, url_prefix="/api/market")
 
 MARKET_TTL = 60  # CMC refresca cada minuto
 MARKET_MAX_STALE = 15 * 60
+CHART_MAX_STALE = 24 * 3600  # una gráfica vieja es mejor que ninguna
 PANORAMA_TTL = 15 * 60  # el comentario de IA se comparte entre usuarios 15 min por moneda
 
 
@@ -37,6 +38,29 @@ def _market_cached(cache: TTLCache, sym: str) -> Cached:
 def top():
     """Las 5 monedas más consultadas por los usuarios (con semilla BTC, ETH, SOL, BNB, HIVE mientras no haya uso)."""
     return jsonify({"ok": True, "symbols": market_service.top_symbols()})
+
+
+@bp.route("/<symbol>/chart")
+@require_user
+def chart(symbol: str):
+    """Serie de precios de una moneda (``?range=1d|7d|1m|1y|max``, por defecto 1d): gráfica y sparklines."""
+    sym = market_service.normalize_symbol(symbol)
+    range_id = request.args.get("range", "1d")
+    if sym is None or range_id not in market_service.CHART_RANGES:
+        return _err(400, "bad_request", "Moneda o rango no válidos")
+
+    def load():
+        points = market_service.get_chart(sym, range_id)
+        if not points:
+            raise UpstreamError("sin gráfica")
+        return points
+
+    ttl = market_service.CHART_RANGES[range_id][2]
+    try:
+        result = current_app.config["TASALO_CACHE"].fetch(("chart", sym, range_id), ttl, CHART_MAX_STALE, load)
+    except UpstreamError:
+        return _err(404, "no_chart", f"No hay gráfica de {sym}")
+    return jsonify({"ok": True, "stale": result.stale, "range": range_id, "points": result.value})
 
 
 @bp.route("/<symbol>")

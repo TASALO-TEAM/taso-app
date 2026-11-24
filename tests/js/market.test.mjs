@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  RANGES, axisPrice, axisTime, cleanSeries, normalizeRange, rangeChange, seriesGeometry,
+} from "../../static/js/modules/market.js";
+
+import {
   changes, cleanTop, compact, detailRows, extraRows, kindOf, marketBanner, normalizeSymbol, panoramaError, panoramaParagraphs, PANORAMA_DISCLAIMER, pct, plain, SEED_TOP, sourceNote, usd, usdCompact,
 } from "../../static/js/modules/market.js";
 
@@ -101,6 +105,69 @@ test("marketBanner: nunca afirma frescura sin hora de lectura", () => {
   assert.equal(marketBanner({ stale: false, fetchedAt: null, now }).kind, "stale");
   assert.match(marketBanner({ stale: true, fetchedAt: null, now }).text, /lo último/);
   assert.equal(marketBanner({ offline: true, now }).kind, "offline");
+});
+
+test("normalizeRange: solo rangos conocidos; lo demás cae al de 24 h", () => {
+  assert.deepEqual(RANGES.map((r) => r.id), ["1d", "7d", "1m", "1y", "max"]);
+  assert.equal(normalizeRange("1y"), "1y");
+  for (const v of ["5y", "", null, undefined, 7]) assert.equal(normalizeRange(v), "1d");
+});
+
+test("cleanSeries: descarta pares inválidos y ordena por tiempo", () => {
+  assert.deepEqual(cleanSeries([[3, 30], [1, 10], [2, 0], [4, "x"], null, [NaN, 5], [5]]), [[1, 10], [3, 30]]);
+  assert.deepEqual(cleanSeries(null), []);
+});
+
+test("rangeChange: variación del primer al último punto, con signo y coma", () => {
+  const up = rangeChange([[1, 100], [2, 150]]);
+  assert.equal(up.kind, "up");
+  assert.equal(up.percent, 50);
+  assert.equal(up.text, `+50,00 (+50,00${NB}%)`);
+  const down = rangeChange([[1, 200], [2, 150]]);
+  assert.equal(down.kind, "down");
+  assert.equal(down.text, `-50,00 (-25,00${NB}%)`);
+  const flat = rangeChange([[1, 100], [2, 100]]);
+  assert.equal(flat.kind, "neutral");
+  assert.equal(flat.text, `0,00${NB}%`);
+  assert.equal(rangeChange([[1, 100]]), null);
+  assert.equal(rangeChange(null), null);
+});
+
+const BOX = { width: 100, height: 50, padLeft: 0, padRight: 0, padTop: 5, padBottom: 5 };
+
+test("seriesGeometry: X por tiempo real, Y de mínimo (abajo) a máximo (arriba) y base al inicio", () => {
+  const g = seriesGeometry([[0, 10], [10, 30], [40, 20]], BOX);
+  assert.deepEqual(g.coords.map((c) => [c.x, c.y]), [[0, 45], [25, 5], [100, 25]]);
+  assert.equal(g.line, "M0 45 L25 5 L100 25");
+  assert.ok(g.area.endsWith("L100 45 L0 45 Z"));
+  assert.deepEqual(g.base, { y: 45, value: 10 });
+  assert.equal(g.yTicks.length, 4);
+  assert.deepEqual([g.yTicks[0].value, g.yTicks[3].value], [10, 30]);
+  assert.equal(g.xTicks.length, 3);
+});
+
+test("seriesGeometry: serie plana al centro con una sola marca; menos de 2 puntos → null", () => {
+  const g = seriesGeometry([[0, 5], [1, 5]], BOX);
+  assert.deepEqual(g.coords.map((c) => c.y), [25, 25]);
+  assert.equal(g.yTicks.length, 1);
+  assert.equal(seriesGeometry([[0, 5]], BOX), null);
+  assert.equal(seriesGeometry(null, BOX), null);
+});
+
+test("axisPrice: enteros con NBSP desde 1000 y el formato del precio por debajo", () => {
+  assert.equal(axisPrice(61282.44), `61${NB}282`);
+  assert.equal(axisPrice(999.5), "999,50");
+  assert.equal(axisPrice(0.15), "0,1500");
+  assert.equal(axisPrice(0), "\u2014");
+});
+
+test("axisTime: hora de Cuba en 24 h, fecha corta de 1 S a 1 año y año en Máx.", () => {
+  const ms = Date.parse("2026-11-23T19:30:00Z"); // Cuba en noviembre: UTC−5
+  assert.equal(axisTime(ms, "1d"), "14:30");
+  assert.equal(axisTime(ms, "7d"), "23 nov");
+  assert.equal(axisTime(ms, "1y"), "23 nov");
+  assert.equal(axisTime(ms, "max"), "2026");
+  assert.equal(axisTime(null, "1d"), "");
 });
 
 test("panoramaParagraphs: separa por línea en blanco, limpia espacios y no interpreta HTML", () => {

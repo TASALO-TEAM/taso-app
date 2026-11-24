@@ -1,18 +1,26 @@
 // Pantalla Mercado (el /p del bot): búsqueda por símbolo, top 5 de monedas más consultadas y tarjeta con los datos.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). El formato y las reglas puras viven en modules/market.js.
-import { ApiError, getMarket, getMarketTop, postPanorama } from "../modules/api.js";
+import { ApiError, getMarket, getMarketChart, getMarketTop, postPanorama } from "../modules/api.js";
+import { priceChart, seriesSparkline } from "../modules/charts.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
 import {
+  DEFAULT_RANGE,
   PANORAMA_DISCLAIMER,
+  RANGES,
   changes,
+  cleanSeries,
   cleanTop,
   detailRows,
   extraRows,
   marketBanner,
+  normalizeRange,
   normalizeSymbol,
   panoramaError,
   panoramaParagraphs,
+  pct,
+  rangeChange,
+  readoutText,
   sourceNote,
   usd,
 } from "../modules/market.js";
@@ -20,6 +28,10 @@ import { load, save } from "../modules/storage.js";
 
 const LAST_KEY = "tasalo:market:last";
 const CACHE_KEY = "tasalo:market:cache";
+const RANGE_KEY = "tasalo:market:range";
+const CHART_TTL_MS = 2 * 60 * 1000; // el servidor ya cachea la serie unos minutos; no se pide más a menudo
+const SPARK_RANGE = "1d"; // la tira de monedas siempre muestra las últimas 24 h
+const READ_HINT = "Toca o desliza sobre la gráfica para ver el precio.";
 const DEFAULT_SYMBOL = "BTC";
 const REFRESH_MS = 60 * 1000; // CoinMarketCap refresca cada minuto; el servidor ya cachea 60 s
 const TICK_MS = 30 * 1000;
@@ -48,10 +60,13 @@ export function mount(ctx) {
     inputError: "",
     now: Date.now(),
     pan: new Map(), // símbolo -> {status: loading|ready|error, ...}; sobrevive a los refrescos y al cambio de moneda
+    range: normalizeRange(load(RANGE_KEY, DEFAULT_RANGE)),
+    charts: new Map(), // "SIMBOLO|rango" -> {status: loading|ready|none|error, series, at}; la tira usa siempre 1d
   };
   let alive = true;
   let fetchToken = 0;
   let lastFetch = 0;
+  let tickerFocus = null;
 
   // ---------- Esqueleto fijo (los huecos se rellenan al renderizar; el campo de texto no se recrea) ----------
   const bannerSlot = h("div", { class: "slot" });
@@ -97,9 +112,17 @@ export function mount(ctx) {
     input,
     submitBtn,
   );
-  const chipsSlot = h("div", { class: "chips", role: "group", "aria-label": "Monedas más consultadas" });
+  // Tira horizontal de monedas (desplazable con snap) y piezas de la gráfica: se crean una vez y la tarjeta las recoloca.
+  const tickerSlot = h("div", { class: "mk-ticker", role: "group", "aria-label": "Monedas más consultadas" });
+  const rangeBar = h(
+    "div",
+    { class: "seg mk-ranges", role: "group", "aria-label": "Rango de la gráfica" },
+    RANGES.map((r) => h("button", { type: "button", class: "seg-btn", text: r.label, dataset: { range: r.id }, onClick: () => setRange(r.id) })),
+  );
+  const rangeChg = h("div", { class: "mk-rchg" });
+  const chartBox = h("div", { class: "mk-chart" });
   const content = h("div", { class: "slot" });
-  ctx.view.replaceChildren(bannerSlot, form, errorSlot, chipsSlot, content);
+  ctx.view.replaceChildren(bannerSlot, form, errorSlot, tickerSlot, content);
   ctx.actions.replaceChildren();
 
   // ---------- Datos ----------
@@ -109,6 +132,53 @@ export function mount(ctx) {
     input.value = symbol;
     save(LAST_KEY, symbol);
     fetchCoin(symbol);
+    loadCharts(symbol);
+  }
+
+  // ---------- Gráficas (S10 F4) ----------
+  const chartKey = (symbol, range) => `${symbol}|${range}`;
+  const chartOf = (symbol, range) => state.charts.get(chartKey(symbol, range)) || null;
+
+  async function loadChart(symbol, range, { force = false } = {}) {
+    const key = chartKey(symbol, range);
+    const cur = state.charts.get(key);
+    if (cur && cur.status === "loading") return;
+    if (!force && cur && cur.status !== "error" && Date.now() - cur.at < CHART_TTL_MS) return;
+    state.charts.set(key, { status: "loading", series: cur ? cur.series : [], at: cur ? cur.at : 0 });
+    renderChartsFor(symbol, range);
+    let next;
+    try {
+      const res = await getMarketChart(symbol, range);
+      const series = cleanSeries(res && res.points);
+      next = { status: series.length >= 2 ? "ready" : "none", series, at: Date.now() };
+    } catch (e) {
+      const gone = e instanceof ApiError && (e.status === 404 || e.status === 400);
+      next = { status: gone ? "none" : "error", series: cur ? cur.series : [], at: Date.now() };
+    }
+    if (!alive) return;
+    state.charts.set(key, next);
+    renderChartsFor(symbol, range);
+  }
+
+  // La gráfica grande y la tira se repintan solo cuando cambia lo que muestran (el cursor táctil no se reinicia por otra moneda).
+  function renderChartsFor(symbol, range) {
+    if (symbol === state.symbol && range === state.range) renderChart();
+    if (range === SPARK_RANGE) renderTicker();
+  }
+
+  function loadCharts(symbol) {
+    loadChart(symbol, state.range);
+    if (state.range !== SPARK_RANGE) loadChart(symbol, SPARK_RANGE);
+  }
+
+  function setRange(id) {
+    const range = normalizeRange(id);
+    if (range === state.range) return;
+    state.range = range;
+    save(RANGE_KEY, range);
+    renderRanges();
+    renderChart();
+    loadChart(state.symbol, range);
   }
 
   async function fetchCoin(symbol, { silent = false } = {}) {
@@ -191,18 +261,90 @@ export function mount(ctx) {
     errorSlot.hidden = !state.inputError;
   }
 
-  function renderChips() {
-    chipsSlot.replaceChildren(
-      ...state.top.map((symbol) =>
-        h("button", {
-          type: "button",
-          class: "chip",
-          "aria-pressed": symbol === state.symbol ? "true" : "false",
-          text: symbol,
-          onClick: () => select(symbol),
-        }),
-      ),
+  function coinTile(symbol) {
+    const entry = chartOf(symbol, SPARK_RANGE);
+    const series = entry ? entry.series : [];
+    const change = rangeChange(series);
+    return h(
+      "button",
+      { type: "button", class: "mk-coin", "aria-pressed": symbol === state.symbol ? "true" : "false", onClick: () => select(symbol) },
+      h("span", { class: "mk-coin-sym", text: symbol }),
+      change
+        ? h(
+            "span",
+            { class: `mk-coin-chg mono chg-${change.kind}` },
+            h("span", { "aria-hidden": "true", text: `${ARROW[change.kind]} ` }),
+            pct(change.percent),
+            h("span", { class: "sr-only", text: ` (${WORD[change.kind]})` }),
+          )
+        : null,
+      seriesSparkline(series),
     );
+  }
+
+  function renderTicker() {
+    // Una moneda buscada que no está en el top se antepone para que la selección siempre sea visible.
+    const symbols = state.top.includes(state.symbol) ? state.top : [state.symbol, ...state.top];
+    tickerSlot.replaceChildren(...symbols.map(coinTile));
+    if (tickerFocus === state.symbol) return; // solo se centra al cambiar de moneda: no pelea con el desplazamiento del usuario
+    tickerFocus = state.symbol;
+    const on = tickerSlot.querySelector('[aria-pressed="true"]');
+    if (on && typeof on.scrollIntoView === "function") {
+      try {
+        on.scrollIntoView({ block: "nearest", inline: "nearest", container: "nearest" }); // container: solo mueve la tira, no la página
+      } catch (_) {
+        /* navegador sin esa opción: se queda donde está */
+      }
+    }
+  }
+
+  function renderRanges() {
+    for (const btn of rangeBar.children) btn.setAttribute("aria-pressed", btn.dataset.range === state.range ? "true" : "false");
+  }
+
+  function renderChart() {
+    const entry = chartOf(state.symbol, state.range);
+    const series = entry ? entry.series : [];
+    const change = rangeChange(series);
+    const label = RANGES.find((r) => r.id === state.range).label;
+    rangeChg.replaceChildren(
+      ...(change
+        ? [
+            h(
+              "span",
+              { class: `mono chg-${change.kind}` },
+              h("span", { "aria-hidden": "true", text: `${ARROW[change.kind]} ` }),
+              change.text,
+              h("span", { class: "sr-only", text: ` (${WORD[change.kind]})` }),
+            ),
+            h("span", { class: "mk-label", text: label }),
+          ]
+        : []),
+    );
+    if (series.length >= 2) {
+      const read = h("p", { class: "mk-read ch-read", text: READ_HINT });
+      const svg = priceChart(series, {
+        label: `Gráfica de ${state.symbol}, ${label}`,
+        rangeId: state.range,
+        onReadout: (r) => {
+          read.textContent = r ? readoutText(r.time, r.value, state.range) : READ_HINT;
+        },
+      });
+      chartBox.setAttribute("aria-busy", entry && entry.status === "loading" ? "true" : "false");
+      chartBox.replaceChildren(svg, read);
+    } else if (!entry || entry.status === "loading") {
+      chartBox.setAttribute("aria-busy", "true");
+      chartBox.replaceChildren(h("div", { class: "skeleton mk-chart-skel", "aria-hidden": "true" }));
+    } else if (entry.status === "error") {
+      chartBox.setAttribute("aria-busy", "false");
+      chartBox.replaceChildren(
+        h("p", { class: "mk-err", role: "alert", text: "No se pudo cargar la gráfica." }),
+        h("button", { type: "button", class: "btn btn-ghost", text: "Reintentar", onClick: () => loadChart(state.symbol, state.range, { force: true }) }),
+      );
+    } else {
+      chartBox.setAttribute("aria-busy", "false");
+      chartBox.replaceChildren(h("p", { class: "mk-ai-hint", text: `No hay gráfica de ${state.symbol}.` }));
+    }
   }
 
   function renderChrome() {
@@ -253,6 +395,8 @@ export function mount(ctx) {
     const extra = extraRows(m);
     const note = sourceNote(m);
     const hasRank = Number.isInteger(m.rank) && m.rank > 0;
+    renderRanges();
+    renderChart();
     return h(
       "div",
       { class: "mk-stack" },
@@ -265,7 +409,9 @@ export function mount(ctx) {
           h("div", { class: "mk-id" }, h("span", { class: "mk-symbol", text: m.symbol }), m.name ? h("span", { class: "mk-name", text: m.name }) : null),
           hasRank ? h("span", { class: "mk-rank", text: `#${m.rank}`, title: "Posición por capitalización" }) : null,
         ),
-        h("div", { class: "mk-price mono", text: usd(m.price) }),
+        h("div", { class: "mk-pricerow" }, h("div", { class: "mk-price mono", text: usd(m.price) }), rangeChg),
+        rangeBar,
+        chartBox,
         chg.length
           ? h(
               "ul",
@@ -286,7 +432,7 @@ export function mount(ctx) {
               ),
             )
           : null,
-        rows.length ? h("dl", { class: "mk-rows" }, rows.map(row)) : null,
+        rows.length ? h("dl", { class: "mk-rows mk-grid" }, rows.map(row)) : null,
       ),
       panoramaCard(m),
       extra.length
@@ -329,7 +475,7 @@ export function mount(ctx) {
 
   function render() {
     renderChrome();
-    renderChips();
+    renderTicker();
     renderInputError();
     renderContent();
   }
@@ -337,7 +483,11 @@ export function mount(ctx) {
   // ---------- Vida de la pantalla ----------
   const refreshIfDue = () => {
     if (document.visibilityState !== "visible" || state.status !== "ready") return;
-    if (Date.now() - lastFetch > REFRESH_MS) fetchCoin(state.symbol, { silent: true });
+    if (Date.now() - lastFetch > REFRESH_MS) {
+      fetchCoin(state.symbol, { silent: true });
+      loadChart(state.symbol, state.range, { force: true });
+      for (const symbol of state.top) loadChart(symbol, SPARK_RANGE); // con su propio TTL: solo pide las que ya caducaron
+    }
   };
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
@@ -364,14 +514,18 @@ export function mount(ctx) {
 
   render();
   fetchCoin(state.symbol);
-  // El top 5 llega aparte: si falla, quedan las de semilla y la pantalla funciona igual.
+  loadCharts(state.symbol);
+  // El top 5 llega aparte: si falla, quedan las de semilla y la pantalla funciona igual. Con la lista final se piden sus minigráficas.
   getMarketTop()
     .then((res) => {
-      if (!alive) return;
-      state.top = cleanTop(res && res.symbols);
-      renderChips();
+      if (alive) state.top = cleanTop(res && res.symbols);
     })
-    .catch(() => {});
+    .catch(() => {})
+    .finally(() => {
+      if (!alive) return;
+      renderTicker();
+      for (const symbol of state.top) loadChart(symbol, SPARK_RANGE);
+    });
 
   return () => {
     alive = false;

@@ -167,6 +167,25 @@ def get_market(symbol: str) -> Optional[dict]:
     return None
 
 
+# ---------------------------------------------------------------- Gráfica de precio
+
+# id -> (intervalo de vela de Binance, nº de velas, segundos de caché). shortcut: solo Binance (sin API key), así que
+# una moneda sin par USDT/USDC no tiene gráfica; añadir respaldo de CoinGecko si faltan monedas populares.
+CHART_RANGES = {
+    "1d": ("15m", 96, 300),
+    "7d": ("1h", 168, 900),
+    "1m": ("4h", 180, 1800),
+    "1y": ("1d", 365, 3600),
+    "max": ("1w", 1000, 3600),
+}
+
+
+def get_chart(symbol: str, range_id: str) -> list[list[float]]:
+    """Serie ``[[ms, precio], ...]`` del rango (clave de ``CHART_RANGES``); vacía si Binance no tiene la moneda."""
+    interval, limit, _ = CHART_RANGES[range_id]
+    return [[t, p] for t, p in crypto.binance_series(symbol, interval, limit)]
+
+
 # ---------------------------------------------------------------- Uso de monedas → top 5
 
 

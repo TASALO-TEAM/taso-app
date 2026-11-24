@@ -1,6 +1,7 @@
 // Gráficos SVG propios (sin librerías ni estilos en línea por la CSP): sparkline de tarjeta y línea con cursor.
 // Toda la matemática (posiciones, escalas) vive en history-math.js; aquí solo se dibuja.
 import { chartGeometry, nearestIndex, trendOf } from "./history-math.js";
+import { axisPrice, axisTime, rangeChange, seriesGeometry } from "./market.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -68,6 +69,98 @@ export function lineChart(points, { label, onReadout = () => {} }) {
     const box = svg.getBoundingClientRect();
     if (!box.width) return;
     const i = nearestIndex(g.coords, ((ev.clientX - box.left) / box.width) * CHART.width);
+    if (i >= 0) select(i);
+  }
+
+  svg.addEventListener("pointerdown", at);
+  svg.addEventListener("pointermove", at);
+  svg.addEventListener("pointerleave", reset);
+  svg.addEventListener("pointercancel", reset);
+  svg.addEventListener("pointerup", (ev) => {
+    if (ev.pointerType !== "mouse") reset();
+  });
+  return svg;
+}
+
+// ---------- Mercado (S10 F4): minigráfica de la tira de monedas y gráfica de precio con ejes ----------
+// La matemática (X por tiempo, Y de mínimo a máximo, marcas de ejes) vive en market.js; aquí solo se dibuja.
+const TICK_SPARK = { width: 60, height: 22, padLeft: 1, padRight: 1, padTop: 2, padBottom: 2 };
+const PRICE = { width: 340, height: 190, padLeft: 46, padRight: 8, padTop: 10, padBottom: 22 };
+
+const trendKind = (series) => {
+  const change = rangeChange(series);
+  return change ? change.kind : "neutral";
+};
+
+/** Minigráfica de una moneda (decorativa: la variación ya está escrita en su botón). null con menos de 2 puntos. */
+export function seriesSparkline(series) {
+  const g = seriesGeometry(series, TICK_SPARK);
+  if (!g) return null;
+  const svg = s("svg", {
+    viewBox: `0 0 ${TICK_SPARK.width} ${TICK_SPARK.height}`,
+    class: `spark spark-${trendKind(series)}`,
+    preserveAspectRatio: "none",
+    "aria-hidden": "true",
+    focusable: "false",
+  });
+  svg.append(s("path", { class: "spark-line", d: g.line }));
+  return svg;
+}
+
+/**
+ * Gráfica de precio con cuadrícula, etiquetas de eje, línea base (precio al inicio del rango) y cursor táctil.
+ * `onReadout({time, value})` se llama al mover el cursor y con null al soltarlo; el texto se muestra fuera del SVG.
+ * Color por tendencia con la variable --trend (la fija la clase pc-up / pc-down / pc-neutral). Devuelve el <svg>.
+ */
+export function priceChart(series, { label, rangeId, onReadout = () => {} }) {
+  const g = seriesGeometry(series, PRICE);
+  const svg = s("svg", { viewBox: `0 0 ${PRICE.width} ${PRICE.height}`, class: `chart pc pc-${trendKind(series)}`, role: "img", "aria-label": label });
+  if (!g) return svg;
+  const left = PRICE.padLeft;
+  const right = PRICE.width - PRICE.padRight;
+  const floor = PRICE.height - PRICE.padBottom;
+  const label2 = (x, y, anchor, value) => {
+    const el = s("text", { class: "pc-lab", x, y, "text-anchor": anchor });
+    el.textContent = value;
+    return el;
+  };
+
+  for (const t of g.yTicks) svg.append(s("line", { class: "pc-grid", x1: left, x2: right, y1: t.y, y2: t.y }), label2(left - 6, t.y + 3.5, "end", axisPrice(t.value)));
+  for (const t of g.xTicks) svg.append(s("line", { class: "pc-grid", x1: t.x, x2: t.x, y1: PRICE.padTop, y2: floor }), label2(t.x, PRICE.height - 6, "middle", axisTime(t.time, rangeId)));
+  svg.append(
+    s("path", { class: "pc-area", d: g.area }),
+    s("path", { class: "pc-line", d: g.line }),
+    s("line", { class: "pc-base", x1: left, x2: right, y1: g.base.y, y2: g.base.y }),
+  );
+
+  const last = g.coords[g.coords.length - 1];
+  const cursor = s("line", { class: "pc-cursor", x1: last.x, x2: last.x, y1: PRICE.padTop, y2: floor });
+  const dot = s("circle", { class: "pc-dot", cx: last.x, cy: last.y, r: 4.5 });
+  svg.append(cursor, dot);
+
+  function select(i) {
+    const c = g.coords[i];
+    cursor.setAttribute("x1", c.x);
+    cursor.setAttribute("x2", c.x);
+    dot.setAttribute("cx", c.x);
+    dot.setAttribute("cy", c.y);
+    cursor.classList.add("on");
+    onReadout({ time: c.time, value: c.value });
+  }
+
+  function reset() {
+    cursor.classList.remove("on");
+    cursor.setAttribute("x1", last.x);
+    cursor.setAttribute("x2", last.x);
+    dot.setAttribute("cx", last.x);
+    dot.setAttribute("cy", last.y);
+    onReadout(null);
+  }
+
+  function at(ev) {
+    const box = svg.getBoundingClientRect();
+    if (!box.width) return;
+    const i = nearestIndex(g.coords, ((ev.clientX - box.left) / box.width) * PRICE.width);
     if (i >= 0) select(i);
   }
 
