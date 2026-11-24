@@ -4,11 +4,25 @@ from __future__ import annotations
 
 import pytest
 
-from src.services import news
+from src.services import ai, news
 from src.services.cache import TTLCache, UpstreamError
 from tests.test_api_rates import ctx  # noqa: F401  (fixture compartida)
 
+_REAL_TRANSLATE = news._translate_titles
+
 BEIN = news.Feed("bein", "BeInCrypto", "es", "https://es.beincrypto.com/feed/", 2)
+@pytest.fixture(autouse=True)
+def _sin_groq(monkeypatch):
+    """Ningun test toca Groq ni arrastra traducciones de otro: ``_translate_titles`` falla salvo que el test lo cambie."""
+    news._translated.clear()
+    monkeypatch.setattr(news, "_retry_after", 0.0)
+
+    def sin_groq(titles):
+        raise ai.AiUnavailable("sin Groq en tests")
+
+    monkeypatch.setattr(news, "_translate_titles", sin_groq)
+
+
 YAHOO = news.Feed("yahoo", None, "en", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=BTC-USD", 2)
 
 
@@ -153,3 +167,63 @@ def test_api_news_sin_fuentes_es_502(ctx, monkeypatch):  # noqa: F811
     _bodies(monkeypatch, {f.url: UpstreamError("caida") for f in news.FEEDS})
     r = ctx.get("/api/market/news")
     assert r.status_code == 502 and r.get_json()["error"]["code"] == "upstream_unavailable"
+
+
+# ---------------------------------------------------------------- Traducción de titulares (en → es)
+
+EN = {"title": "hello", "url": "https://a.example/2", "lang": "en"}
+ES = {"title": "hola", "url": "https://a.example/1", "lang": "es"}
+
+
+def test_translate_solo_toca_lo_que_no_esta_en_espanol_y_recuerda_el_resultado(monkeypatch):
+    calls = []
+
+    def fake(titles):
+        calls.append(titles)
+        return [f"ES {t}" for t in titles]
+
+    monkeypatch.setattr(news, "_translate_titles", fake)
+    out = news.translate([ES, EN])
+    assert [i["title"] for i in out] == ["hola", "ES hello"] and out[1]["lang"] == "es"
+    news.translate([ES, EN])
+    assert calls == [["hello"]]  # una sola llamada: el segundo pedido sale de la memoria
+
+
+def test_translate_si_groq_falla_deja_el_original_y_no_reintenta_en_5_min(monkeypatch):
+    calls = []
+
+    def boom(titles):
+        calls.append(titles)
+        raise ai.AiUnavailable("caido")
+
+    monkeypatch.setattr(news, "_translate_titles", boom)
+    out = news.translate([EN])
+    assert out[0]["title"] == "hello" and out[0]["lang"] == "en"
+    news.translate([EN])
+    assert len(calls) == 1
+
+
+def test_translate_titles_valida_la_respuesta_de_groq(monkeypatch):
+    sent = []
+
+    def fake_groq(payload):
+        sent.append(payload)
+        return {"choices": [{"message": {"content": reply[0]}}]}
+
+    reply = ['Claro: ["uno", "<b>dos</b>"]']
+    monkeypatch.setattr(ai, "_call_groq", fake_groq)
+    assert _REAL_TRANSLATE(["one", "two"]) == ["uno", "dos"]
+    assert sent[0]["reasoning_effort"] == "low" and sent[0]["model"] == ai.MODEL
+    for malo in ('["solo uno"]', "no es json", '["a", ""]', '{"a": 1}'):
+        reply[0] = malo
+        with pytest.raises(ValueError):
+            _REAL_TRANSLATE(["one", "two"])
+
+
+def test_get_news_traduce_los_titulares_en_ingles(monkeypatch):
+    _all_feeds(monkeypatch)
+    monkeypatch.setattr(news, "_translate_titles", lambda titles: [f"ES {t}" for t in titles])
+    items, _ = news.get_news(TTLCache())
+    por_titulo = {i["title"]: i for i in items}
+    assert "ES noticia coindesk" in por_titulo and "ES noticia watcherguru" in por_titulo
+    assert "noticia beincrypto" in por_titulo and all(i["lang"] == "es" for i in items)

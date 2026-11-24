@@ -3,14 +3,17 @@
 Se leen en el servidor, se normalizan con lista blanca y límites, y al navegador solo viajan titular, enlace https,
 fuente, hora y, si la fuente es de confianza, una imagen. Nada de HTML del origen llega al cliente.
 
-Por qué estas fuentes: CoinMarketCap (``content/latest``) da 403 con el plan Basic y NewsData.io (el /news del bot)
+Fuentes: las mismas que taso-gcg publica en @bitbreadnews; los titulares en inglés se traducen con Groq (`translate`).
+Por qué no otras: CoinMarketCap (``content/latest``) da 403 con el plan Basic y NewsData.io (el /news del bot)
 tiene 200 créditos al día que son del bot. Ver ``docs/HANDOFF_AGENTE.md`` (sesión 20b).
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import re
+import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import timezone
@@ -21,6 +24,7 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
+from src.services import ai
 from src.services.cache import Cached, TTLCache, UpstreamError
 
 logger = logging.getLogger("taso-miniapp.news")
@@ -45,11 +49,14 @@ class Feed:
     take: int          # máximo de noticias de esta fuente en el carrusel, para que ninguna lo copie
 
 
+# Las mismas fuentes que taso-gcg publica en @bitbreadnews (tabla feeds, chat "Bit Bread News Español"). Las "en" se
+# traducen al español (solo el titular) en ``translate``; si Groq falla se muestran en inglés con ``lang="en"``.
 FEEDS = (
-    Feed("beincrypto", "BeInCrypto", "es", "https://es.beincrypto.com/feed/", 3),
+    Feed("beincrypto", "BeInCrypto", "es", "https://es.beincrypto.com/feed/", 2),
     Feed("criptonoticias", "CriptoNoticias", "es", "https://www.criptonoticias.com/feed/", 2),
-    Feed("yahoo-btc", None, "en", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=BTC-USD&region=US&lang=en-US", 2),
-    Feed("yahoo-mercados", None, "en", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US", 2),
+    Feed("cryptobriefing", "Crypto Briefing", "es", "https://es.cryptobriefing.com/feed", 2),
+    Feed("coindesk", "CoinDesk", "en", "https://www.coindesk.com/arc/outboundfeeds/rss/", 2),
+    Feed("watcherguru", "Watcher.Guru", "en", "https://watcher.guru/news/author/watcherguru/feed", 2),
 )
 
 _TAG = re.compile(r"<[^>]*>")
@@ -119,8 +126,9 @@ def parse(body: bytes, feed: Feed) -> list[dict]:
 
 def _download(url: str) -> bytes:
     try:
-        with httpx.stream("GET", url, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT}) as resp:
-            if resp.status_code != 200:
+        # Crypto Briefing y CoinDesk contestan con 301/308: se siguen los redirects y solo se acepta si el destino final es https.
+        with httpx.stream("GET", url, timeout=TIMEOUT, headers={"User-Agent": USER_AGENT}, follow_redirects=True) as resp:
+            if resp.status_code != 200 or resp.url.scheme != "https":
                 raise UpstreamError(f"RSS respondió {resp.status_code}")
             body = b""
             for chunk in resp.iter_bytes():
@@ -147,4 +155,59 @@ def get_news(cache: TTLCache) -> tuple[list[dict], bool]:
     if not results:
         raise UpstreamError("sin noticias")
     items = sorted((i for r in results for i in r.value), key=lambda i: i["published"], reverse=True)
-    return items[:TOTAL], any(r.stale for r in results)
+    return translate(items[:TOTAL]), any(r.stale for r in results)
+
+
+# ---------------------------------------------------------------- Traducción de titulares
+
+TR_RETRY = 300.0  # tras un fallo de Groq no se reintenta en 5 min: así una caída no suma 25 s a cada petición
+TR_KEEP = 300     # titulares traducidos recordados (url → título); es una caché sencilla en memoria del proceso
+TR_SYSTEM = (
+    "Traduces titulares de noticias de criptomonedas y mercados al español latino, con tono periodístico natural. "
+    "No traduzcas los términos que el gremio usa en inglés (Bitcoin, ETF, staking, DeFi, stablecoin, wallet...) ni "
+    "nombres propios o tickers. Responde SOLO con un arreglo JSON de strings, del mismo largo y orden que la entrada, "
+    "sin texto ni markdown adicional."
+)
+_translated: dict[str, str] = {}
+_retry_after = 0.0
+
+
+def _translate_titles(titles: list[str]) -> list[str]:
+    """Una llamada a Groq para todos los titulares. Lanza ``AiUnavailable`` o ``ValueError`` si no sale algo válido."""
+    data = ai._call_groq(
+        {
+            "model": ai.MODEL,
+            "messages": [
+                {"role": "system", "content": TR_SYSTEM},
+                {"role": "user", "content": json.dumps(titles, ensure_ascii=False)},
+            ],
+            "temperature": 0.2,
+            "max_completion_tokens": 1024,
+            "reasoning_effort": ai.REASONING_EFFORT,
+        }
+    )
+    try:
+        content = str(data["choices"][0]["message"]["content"])
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError("respuesta de Groq sin contenido") from exc
+    found = re.search(r"\[.*\]", content, re.DOTALL)
+    out = json.loads(found.group(0)) if found else None
+    if not (isinstance(out, list) and len(out) == len(titles) and all(isinstance(t, str) and t.strip() for t in out)):
+        raise ValueError("traducción con forma inesperada")
+    return [_clean(t, TITLE_MAX) for t in out]
+
+
+def translate(items: list[dict]) -> list[dict]:
+    """Titulares que no son en español → español (marcando ``lang="es"``). Si Groq falla se dejan tal cual, en inglés."""
+    global _retry_after
+    todo = [i for i in items if i["lang"] != "es" and i["url"] not in _translated]
+    if todo and time.monotonic() >= _retry_after:
+        try:
+            for item, title in zip(todo, _translate_titles([i["title"] for i in todo])):
+                if len(_translated) >= TR_KEEP:
+                    _translated.pop(next(iter(_translated)))
+                _translated[item["url"]] = title
+        except (UpstreamError, ValueError) as exc:  # AiUnavailable es UpstreamError; JSON roto es ValueError
+            _retry_after = time.monotonic() + TR_RETRY
+            logger.warning("noticias: no se pudo traducir (%s)", exc)
+    return [{**i, "title": _translated[i["url"]], "lang": "es"} if i["url"] in _translated else i for i in items]
