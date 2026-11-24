@@ -39,6 +39,8 @@ def create_app():
     app.config["TASALO_LIMITER"] = RateLimiter(settings.api_rate_limit_per_minute, 60.0)
     app.config["TASALO_AI_LIMITER"] = RateLimiter(settings.ai_rate_limit_per_hour, 3600.0)
     app.config["TASALO_ALERT_LIMITER"] = RateLimiter(settings.alert_create_rate_limit_per_minute, 60.0)
+    app.config["TASALO_ANON_LIMITER"] = RateLimiter(settings.anon_rate_limit_per_minute, 60.0)
+    app.config["TASALO_LOGIN_LIMITER"] = RateLimiter(settings.login_rate_limit_per_minute, 60.0)
 
     # Acepta las rutas con y sin prefijo (/miniapp), sea cual sea el modo de Caddy
     app.wsgi_app = PrefixStripMiddleware(app.wsgi_app, settings.base_path)
@@ -53,17 +55,18 @@ def create_app():
         return {"asset": asset, "app_version": app_version}
 
     # Rutas nuevas: shell + API del BFF (CSP estricta)
-    from src.routes import pages, api_public, api_alerts, api_market, api_admin
+    from src.routes import pages, api_public, api_alerts, api_market, api_admin, auth_web
     app.register_blueprint(pages.bp)
     app.register_blueprint(api_public.bp)
     app.register_blueprint(api_alerts.bp)
     app.register_blueprint(api_market.bp)
     app.register_blueprint(api_admin.bp)
+    app.register_blueprint(auth_web.bp)
 
     @app.after_request
     def _security_headers(response):
         return apply_security_headers(
-            response, request.blueprint, request.path.startswith("/api/")
+            response, request.blueprint, request.path.startswith(("/api/", "/auth/"))
         )
 
     # Logging (consola + archivo rotado con archivado por fecha)

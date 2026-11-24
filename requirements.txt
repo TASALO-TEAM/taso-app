@@ -22,3 +22,5 @@ typing-extensions==4.15.0
 typing-inspection==0.4.2
 uvicorn==0.42.0
 werkzeug==3.1.7
+pyjwt==2.15.1
+cryptography==50.0.2

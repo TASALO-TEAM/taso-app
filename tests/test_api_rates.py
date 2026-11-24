@@ -78,14 +78,15 @@ def ctx(monkeypatch):
 # ---------- Autenticación ----------
 
 @pytest.mark.parametrize("path", ["/api/rates", "/api/year", "/api/image/eltoque"])
-def test_sin_initdata_es_401(ctx, path):
-    assert ctx.client.get(path).status_code == 401
+def test_sin_initdata_es_publico(ctx, path):
+    assert ctx.client.get(path).status_code == 200
 
 
-def test_con_initdata_manipulado_es_401_y_no_llama_al_origen(ctx):
-    r = ctx.get("/api/rates", init=signed().replace("Ernesto", "Otro"))
-    assert r.status_code == 401
-    assert ctx.calls["json"] == 0
+def test_con_initdata_manipulado_se_trata_como_visitante(ctx):
+    """Las tasas son de lectura pública: un initData roto no da identidad (/api/me sigue en 401) pero tampoco bloquea."""
+    bad = signed().replace("Ernesto", "Otro")
+    assert ctx.get("/api/rates", init=bad).status_code == 200
+    assert ctx.get("/api/me", init=bad).status_code == 401
 
 
 # ---------- /api/rates ----------

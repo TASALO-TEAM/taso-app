@@ -47,10 +47,9 @@ def b(ctx, monkeypatch):  # noqa: F811
     return ctx
 
 
-def test_sin_initdata_es_401(b):
-    assert b.client.get("/api/blog/tasalo").status_code == 401
-    assert b.client.get("/api/blog/tasalo/x").status_code == 401
-    assert b.hive_calls == []
+def test_sin_initdata_la_lectura_es_publica(b):
+    assert b.client.get("/api/blog/tasalo").status_code == 200
+    assert b.client.get("/api/blog/tasalo/x").status_code in (200, 404)
 
 
 # ---------- Lista ----------

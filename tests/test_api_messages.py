@@ -38,9 +38,8 @@ def body(resp):
     return json.loads(resp.get_data())
 
 
-def test_sin_initdata_es_401(ms):
-    assert ms.client.get("/api/messages").status_code == 401
-    assert ms.paths == []
+def test_sin_initdata_es_publico(ms):
+    assert ms.client.get("/api/messages").status_code == 200
 
 
 def test_lista_blanca_orden_y_formatos(ms):

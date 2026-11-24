@@ -34,6 +34,18 @@ class Settings(BaseSettings):
     # Analisis de IA (Panorama) por usuario y hora (0 = sin limite). Solo cuentan los que de verdad llaman a Groq.
     ai_rate_limit_per_hour: int = 5
     alert_create_rate_limit_per_minute: int = 10  # crear alertas de precio propias (cada una consulta las APIs de precios)
+    # Visitantes sin sesion (fuera de Telegram, clave = IP): solo lectura publica. 0 = sin limite.
+    anon_rate_limit_per_minute: int = 60
+    login_rate_limit_per_minute: int = 10  # intentos de iniciar sesion por IP
+
+    # --- Acceso web fuera de Telegram: login con Telegram (OIDC + PKCE, ver src/auth/websession.py) ---
+    # Client ID y Secret de @BotFather > Web Login (los mismos del bot: TELEGRAM_LOGIN_CLIENT_ID/SECRET). Solo en el .env del servidor.
+    telegram_login_client_id: str = ""
+    telegram_login_client_secret: str = ""
+    # Origen publico (https) con el que se arma el redirect_uri; nunca sale del Host de la peticion.
+    tasalo_public_url: str = "https://tasalo.duckdns.org"
+    # Ruta del callback registrada en BotFather. Con el Caddy actual sirve tambien "/miniapp/auth/telegram/callback".
+    telegram_login_callback_path: str = "/auth/telegram/callback"
 
     # Prefijo bajo el que se publica la app (p. ej. "/miniapp"); vacío si cuelga de la raíz.
     # La app acepta las rutas con y sin ese prefijo, así funciona con Caddy haciendo
@@ -96,6 +108,15 @@ class Settings(BaseSettings):
                 ids.add(int(part))
         return frozenset(ids)
 
+
+    @property
+    def telegram_login_ready(self) -> bool:
+        """El login web solo se enciende con Client ID numerico, Secret y un origen https (si no, la web no muestra el boton)."""
+        return (
+            self.telegram_login_client_id.strip().isdigit()
+            and bool(self.telegram_login_client_secret.strip())
+            and self.tasalo_public_url.strip().startswith("https://")
+        )
 
     @staticmethod
     def _split_keys(value: str) -> list[str]:

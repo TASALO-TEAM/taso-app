@@ -2,7 +2,8 @@
 
 from flask import Blueprint, Response, current_app, g, jsonify, request
 
-from src.auth.guard import require_user
+from src.auth import websession
+from src.auth.guard import SESSION_COOKIE, csrf_ok, optional_user, require_user
 from src.services import blog as blog_service
 from src.services import history as history_service
 from src.services import rates as rates_service
@@ -22,30 +23,46 @@ def _err(status: int, code: str, message: str):
 @bp.route("/me")
 @require_user
 def me():
-    """Identidad del usuario, tomada SOLO del initData validado."""
+    """Identidad del usuario, tomada SOLO del initData validado o de la sesión web (nunca de lo que mande el cliente).
+
+    ``via`` dice cómo entró: ``telegram`` (miniapp) o ``web`` (navegador, con «Entrar con Telegram»).
+    """
     cfg = current_app.config["TASALO_SETTINGS"]
+    profile = g.profile
     init = g.init_data
     return jsonify(
         {
             "ok": True,
+            "via": g.auth_via,
             "user": {
-                "id": init.user_id,
-                "first_name": init.first_name,
-                "last_name": init.last_name,
-                "username": init.username,
-                "photo_url": init.photo_url,
-                "is_premium": init.is_premium,
-                "language_code": init.language_code,
-                "allows_write_to_pm": init.allows_write_to_pm,
-                "is_admin": init.user_id in cfg.admin_ids,
+                "id": g.user_id,
+                "first_name": profile["first_name"],
+                "last_name": profile["last_name"],
+                "username": profile["username"],
+                "photo_url": profile["photo_url"],
+                "is_premium": profile["is_premium"],
+                "language_code": profile["language_code"],
+                "allows_write_to_pm": profile["allows_write_to_pm"],
+                "is_admin": g.user_id in cfg.admin_ids,
             },
-            "start_param": init.start_param,
+            "start_param": init.start_param if init else None,
         }
     )
 
 
+@bp.route("/auth/logout", methods=["POST"])
+def logout():
+    """Cierra la sesión web: la borra del servidor y quita la cookie. Exige la cabecera anti-CSRF."""
+    if not csrf_ok():
+        return _err(403, "csrf", "Petición no válida")
+    websession.delete_session(request.cookies.get(SESSION_COOKIE))
+    resp = jsonify({"ok": True})
+    resp.delete_cookie(SESSION_COOKIE, path="/")
+    return resp
+
+
 @bp.route("/messages")
-@require_user
+@optional_user
 def messages():
     """Novedades del equipo TASALO (mensajes de taso-api). Solo texto, con lista blanca y caché."""
     try:
@@ -68,7 +85,7 @@ def my_stats():
 
 
 @bp.route("/rates")
-@require_user
+@optional_user
 def rates():
     """Tasas de las 4 fuentes, ya ordenadas y normalizadas.
 
@@ -93,7 +110,7 @@ def rates():
 
 
 @bp.route("/blog/<account>")
-@require_user
+@optional_user
 def blog_list(account: str):
     """Últimos posts de una cuenta de Hive permitida (sin cuerpo: el lector lo pide aparte). ``spotlight`` marca el diario."""
     if account not in blog_service.ACCOUNTS:
@@ -115,7 +132,7 @@ def blog_list(account: str):
 
 
 @bp.route("/blog/<account>/<permlink>")
-@require_user
+@optional_user
 def blog_post(account: str, permlink: str):
     """Un post (con su cuerpo en Markdown) de los últimos que ya tiene el servidor de esa cuenta."""
     if account not in blog_service.ACCOUNTS or not blog_service.PERMLINK_RE.match(permlink):
@@ -132,7 +149,7 @@ def blog_post(account: str, permlink: str):
 
 
 @bp.route("/year")
-@require_user
+@optional_user
 def year():
     """Progreso del año y frase del día (el cliente tiene cálculo local de respaldo)."""
     cache = current_app.config["TASALO_CACHE"]
@@ -144,7 +161,7 @@ def year():
 
 
 @bp.route("/image/eltoque")
-@require_user
+@optional_user
 def eltoque_image():
     """Última imagen de El Toque (la API la sirve como PNG)."""
     try:
@@ -157,7 +174,7 @@ def eltoque_image():
 
 
 @bp.route("/history/summary")
-@require_user
+@optional_user
 def history_summary():
     """Últimos 30 días de todas las tarjetas (fondo de las tarjetas de Tasas)."""
     cache = current_app.config["TASALO_CACHE"]
@@ -169,7 +186,7 @@ def history_summary():
 
 
 @bp.route("/history/daily")
-@require_user
+@optional_user
 def history_daily():
     """Serie diaria de una moneda de una fuente (detalle histórico)."""
     source = request.args.get("source", "")

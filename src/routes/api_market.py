@@ -1,8 +1,8 @@
-"""API de Mercado (``/api/market``, S10): el ``/p`` del bot dentro de la miniapp. Todo con ``initData``."""
+"""API de Mercado (``/api/market``, S10): el ``/p`` del bot dentro de la miniapp. Lectura pública; el Panorama IA exige sesión."""
 
 from flask import Blueprint, current_app, g, jsonify, request
 
-from src.auth.guard import require_user
+from src.auth.guard import optional_user, require_user
 from src.services import ai as ai_service
 from src.services import market as market_service
 from src.services import news as news_service
@@ -35,14 +35,14 @@ def _market_cached(cache: TTLCache, sym: str) -> Cached:
 
 
 @bp.route("/top")
-@require_user
+@optional_user
 def top():
     """Las 5 monedas más consultadas por los usuarios (con semilla BTC, ETH, SOL, BNB, HIVE mientras no haya uso)."""
     return jsonify({"ok": True, "symbols": market_service.top_symbols()})
 
 
 @bp.route("/news")
-@require_user
+@optional_user
 def news():
     """Titulares para el carrusel de Mercado (RSS públicos sin clave; ver ``services/news.py``). General, no por moneda."""
     try:
@@ -53,7 +53,7 @@ def news():
 
 
 @bp.route("/<symbol>/chart")
-@require_user
+@optional_user
 def chart(symbol: str):
     """Serie de precios de una moneda (``?range=1d|7d|1m|1y|max``, por defecto 1d): gráfica y sparklines."""
     sym = market_service.normalize_symbol(symbol)
@@ -76,7 +76,7 @@ def chart(symbol: str):
 
 
 @bp.route("/<symbol>")
-@require_user
+@optional_user
 def coin(symbol: str):
     """Datos de una moneda: precio, high/low 24h, ETH/BTC, variaciones, rank, cap, volumen y bloque de CoinGecko."""
     sym = market_service.normalize_symbol(symbol)
@@ -88,7 +88,8 @@ def coin(symbol: str):
         return _err(502, "upstream_unavailable", "No se pudieron cargar los datos de mercado")
     if result.value.get("not_found"):
         return _err(404, "not_found", f"No encontré la moneda {sym}")
-    market_service.record_query(g.user_id, sym)
+    if g.user_id is not None:  # los visitantes sin sesión no mueven el top 5
+        market_service.record_query(g.user_id, sym)
     return jsonify({"ok": True, "stale": result.stale, "market": result.value})
 
 

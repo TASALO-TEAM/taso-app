@@ -97,9 +97,8 @@ def test_daily_dias_por_defecto_180(h):
 # ---------- Autenticación, caché y fallos ----------
 
 @pytest.mark.parametrize("path", ["/api/history/summary", "/api/history/daily?source=eltoque&currency=USD"])
-def test_historial_sin_initdata_es_401(h, path):
-    assert h.client.get(path).status_code == 401
-    assert h.calls["json"] == 0
+def test_historial_sin_initdata_es_publico(h, path):
+    assert h.client.get(path).status_code == 200
 
 
 def test_summary_se_cachea_y_sirve_lo_ultimo_si_el_origen_cae(h):

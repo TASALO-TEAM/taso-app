@@ -153,9 +153,9 @@ def test_get_news_tope_total(monkeypatch):
     assert [i["published"] for i in items] == sorted((i["published"] for i in items), reverse=True)
 
 
-def test_api_news_exige_initdata_y_devuelve_titulares(ctx, monkeypatch):  # noqa: F811
+def test_api_news_es_publica_y_devuelve_titulares(ctx, monkeypatch):  # noqa: F811
     _all_feeds(monkeypatch)
-    assert ctx.client.get("/api/market/news").status_code == 401
+    assert ctx.client.get("/api/market/news").status_code == 200
     r = ctx.get("/api/market/news")
     body = r.get_json()
     assert r.status_code == 200 and body["ok"] is True and body["stale"] is False

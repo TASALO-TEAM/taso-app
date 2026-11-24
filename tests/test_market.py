@@ -208,9 +208,9 @@ def test_record_query_limpia_filas_muy_viejas(src):
 # ------------------------------------------------------------------ API
 
 
-def test_api_exige_initdata(ctx, src):  # noqa: F811
-    assert ctx.client.get("/api/market/SOL").status_code == 401
-    assert ctx.client.get("/api/market/top").status_code == 401
+def test_api_es_de_lectura_publica(ctx, src):  # noqa: F811
+    assert ctx.client.get("/api/market/SOL").status_code == 200
+    assert ctx.client.get("/api/market/top").status_code == 200
 
 
 def test_api_moneda_ok_y_anota_la_consulta(ctx, src):  # noqa: F811
@@ -289,7 +289,7 @@ def test_api_chart_rango_por_defecto_y_validacion(ctx, src, monkeypatch):  # noq
     assert ctx.get("/api/market/sol/chart").get_json()["range"] == "1d"
     assert ctx.get("/api/market/sol/chart?range=5y").status_code == 400
     assert ctx.get("/api/market/BT%20C/chart").status_code == 400
-    assert ctx.client.get("/api/market/sol/chart").status_code == 401
+    assert ctx.client.get("/api/market/sol/chart").status_code == 200
 
 
 def test_api_chart_sin_par_es_404_y_sirve_lo_ultimo_si_cae(ctx, src, monkeypatch):  # noqa: F811
