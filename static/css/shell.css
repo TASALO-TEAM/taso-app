@@ -35,6 +35,8 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 }
 
 /* ---------- Layout ---------- */
+:root { --page-max: 40rem; }
+
 .app {
   min-height: 100vh;
   min-height: 100dvh;
@@ -49,6 +51,10 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Columna centrada: en móvil ocupa todo el ancho; en pantallas anchas crece por tramos (ver «Pantallas anchas»). */
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
 }
 
 .hd {
@@ -105,6 +111,9 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
   right: calc(0.75rem + var(--safe-right));
   bottom: calc(0.875rem + var(--safe-bottom));
   min-height: 4rem;
+  /* Con left y right fijados, el tope de ancho + márgenes automáticos la centran en pantallas anchas. */
+  max-width: 34rem;
+  margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -182,4 +191,28 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .spinner { animation-duration: 2.4s; }
   * { scroll-behavior: auto !important; transition: none !important; }
+}
+
+
+/* ---------- Pantallas anchas (tablet y escritorio) ----------
+   El móvil / miniapp no cambia: por debajo de 48rem todo es igual que antes. Después la columna crece por tramos
+   (--page-max) y se centra; hover solo en dispositivos con puntero. */
+@media (min-width: 48rem) {
+  :root { --page-max: 52rem; }
+  .hd { padding-inline: 1.5rem; }
+  .hd-title { font-size: 1.75rem; }
+  .view { padding-inline: 1.5rem; gap: 1rem; }
+  .nv { font-size: 0.75rem; }
+}
+
+@media (min-width: 80rem) {
+  :root { --page-max: 60rem; }
+}
+
+/* Mercado: una sola columna más estrecha (como MSN); la gráfica escala con su ancho y estirada del todo las etiquetas
+   de los ejes se desbordan. */
+.shell:has(> .view > .mk-search) { --page-max: 44rem; }
+
+@media (hover: hover) {
+  .nv:hover:not([aria-current="page"]) { background: var(--accent-soft); color: var(--text); }
 }

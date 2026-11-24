@@ -96,14 +96,22 @@
 /* ---------- Historial (S2): sparkline en tarjetas y detalle ---------- */
 .rcard[role="button"] { cursor: pointer; }
 .rcard[role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.rc-spark { margin-top: 0.25rem; }
-.spark { display: block; width: 100%; height: 1.75rem; }
+.rc-spark { margin-top: 0.375rem; }
+.spark { --trend: var(--neutral); display: block; width: 100%; height: 1.75rem; }
+.spark-up { --trend: var(--up); }
+.spark-down { --trend: var(--down); }
 .spark-line {
-  fill: none; stroke: var(--neutral); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+  fill: none; stroke: var(--trend); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
-.spark-up .spark-line { stroke: var(--up); }
-.spark-down .spark-line { stroke: var(--down); }
+/* Sparkline de tarjeta: más alto, con área en degradado y punto final (como la gráfica del detalle). El área lleva su
+   `fill` en el atributo (url del degradado), por eso aquí no se le pone fill. */
+.rc-spark .spark { height: 2.75rem; overflow: visible; }
+.spark-stop-top { stop-color: var(--trend); stop-opacity: 0.3; }
+.spark-stop-bot { stop-color: var(--trend); stop-opacity: 0; }
+.spark-dot {
+  fill: none; stroke: var(--trend); stroke-width: 6; stroke-linecap: round; vector-effect: non-scaling-stroke;
+}
 
 .ov-body.top { align-items: stretch; justify-content: flex-start; text-align: left; }
 
@@ -482,8 +490,7 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .mk-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
 .mk-grid .mk-row { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
 .mk-grid .mk-val { text-align: left; }
-/* En pantallas anchas la vista es una columna centrada (como MSN): el SVG escala con su ancho y estirado a 1000 px las etiquetas de los ejes se desbordan. */
-.view:has(> .mk-search) { width: 100%; max-width: 40rem; margin-inline: auto; }
+/* (El ancho de la vista de Mercado se fija en la sección «Pantallas anchas», al final de este archivo.) */
 
 /* Tasas agrupadas por catálogo de la API (El Toque): secciones + «Mostrar más» de referencia */
 .rgroup { display: flex; flex-direction: column; gap: 0.5rem; margin-block-end: 1rem; }
@@ -542,3 +549,36 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 }
 .mk-news-mark[aria-current="true"]::before { height: 6px; margin-top: -3px; background: var(--accent); }
 .mk-news-mark:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+
+
+/* ---------- Pantallas anchas (tablet y escritorio) ---------- */
+/* Tasas: la rejilla deja de ser «siempre 2 columnas» y reparte tantas tarjetas como quepan (mínimo 11rem cada una). */
+@media (min-width: 34rem) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+}
+
+@media (min-width: 48rem) {
+  .grid { gap: 1rem; }
+  .rcard { padding: 1rem 1.125rem; }
+  .rc-rate { font-size: 1.75rem; }
+  .skeleton { height: 8rem; }
+}
+
+/* Detalle e imagen a pantalla completa: contenido en una columna centrada, no estirado a todo el ancho. */
+.ov-head, .ov-body { width: 100%; max-width: 40rem; margin-inline: auto; }
+
+/* Datos de la moneda en 3 columnas cuando hay sitio; la etiqueta no se parte en dos líneas. */
+@media (min-width: 40rem) {
+  .mk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mk-news-slide { aspect-ratio: 21 / 9; min-height: 14rem; }
+}
+.mk-grid .mk-label { white-space: nowrap; }
+
+/* Hover solo con ratón / trackpad (en táctil queda «pegado» tras tocar). */
+@media (hover: hover) {
+  .rcard[role="button"] { transition: border-color 0.15s, transform 0.15s; }
+  .rcard[role="button"]:hover, .mk-coin:hover { border-color: var(--border-accent); }
+  .rcard[role="button"]:hover { transform: translateY(-1px); }
+  .chip:hover, .seg-btn:hover:not([aria-pressed="true"]) { color: var(--text); }
+  .mk-news-btn:hover:not(:disabled) { background: rgb(14 22 33 / 0.85); }
+}

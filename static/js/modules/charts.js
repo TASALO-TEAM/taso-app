@@ -11,9 +11,15 @@ function s(tag, attrs = {}) {
   return el;
 }
 
-const SPARK = { width: 100, height: 28, padX: 2, padTop: 3, padBottom: 3 };
+const SPARK = { width: 100, height: 28, padX: 4, padTop: 5, padBottom: 2 };
+let sparkSeq = 0; // id único del degradado de cada sparkline (varios SVG conviven en la misma página)
 
-/** Sparkline decorativo (aria-hidden: la variación ya está escrita en la tarjeta). null si no hay al menos 2 puntos. */
+/**
+ * Sparkline decorativo de la tarjeta (aria-hidden: la variación ya está escrita en ella). Mismo lenguaje visual que la
+ * gráfica del detalle y la de Mercado: línea, área con degradado hacia transparente y punto en el último valor.
+ * El punto es un tramo de largo cero con borde redondo y `vector-effect: non-scaling-stroke`, así sigue siendo un
+ * círculo aunque el SVG se estire (preserveAspectRatio="none"). null si no hay al menos 2 puntos.
+ */
 export function sparkline(points) {
   const g = chartGeometry(points, SPARK);
   if (!g || g.single) return null;
@@ -24,7 +30,19 @@ export function sparkline(points) {
     "aria-hidden": "true",
     focusable: "false",
   });
-  svg.append(s("path", { class: "spark-line", d: g.line }));
+  sparkSeq += 1;
+  const gradId = `spark-g${sparkSeq}`;
+  const grad = s("linearGradient", { id: gradId, x1: 0, y1: 0, x2: 0, y2: 1 });
+  grad.append(s("stop", { class: "spark-stop-top", offset: "0" }), s("stop", { class: "spark-stop-bot", offset: "1" }));
+  const defs = s("defs");
+  defs.append(grad);
+  const last = g.coords[g.coords.length - 1];
+  svg.append(
+    defs,
+    s("path", { class: "spark-area", d: g.area, fill: `url(#${gradId})` }),
+    s("path", { class: "spark-line", d: g.line }),
+    s("path", { class: "spark-dot", d: `M${last.x} ${last.y}h0.01` }),
+  );
   return svg;
 }
 
