@@ -5,7 +5,6 @@ export const SOURCES = [
   { id: "eltoque", title: "El Toque", hasBuySell: false },
   { id: "qvapay", title: "QvaPay", hasBuySell: true },
   { id: "bcc", title: "BCC", hasBuySell: false },
-  { id: "cadeca", title: "CADECA", hasBuySell: true },
 ];
 export const DEFAULT_SOURCE = "eltoque";
 
@@ -25,6 +24,8 @@ const QVAPAY_NAMES = {
 const FLAGS = {
   EUR: "🇪🇺", USD: "🇺🇸", MLC: "💳", BTC: "₿", TRX: "⚡", USDT: "💵", CAD: "🇨🇦", GBP: "🇬🇧",
   CHF: "🇨🇭", RUB: "🇷🇺", AUD: "🇦🇺", JPY: "🇯🇵", MXN: "🇲🇽", BRL: "🇧🇷", COP: "🇨🇴",
+  ZELLE: "⚡", CLA: "💳", BNB: "🔶", LTC: "Ł", USDT_ERC20: "💵",
+  JMD: "🇯🇲", RUR: "🇷🇺", SVC: "🇸🇻", UYP: "🇺🇾",
 };
 const QVAPAY_FLAGS = {
   CUP: "🏦", MLC: "💳", TROPIPAY: "💸", ETECSA: "📱", ZELLE: "⚡", CLASICA: "💳",
@@ -46,10 +47,31 @@ export function normalizeSource(id) {
   return sourceById(id) ? id : DEFAULT_SOURCE;
 }
 
-/** Nombre legible de una moneda o método de pago; si no se conoce, el propio código. */
-export function nameFor(sourceId, code) {
-  if (sourceId === "qvapay") return QVAPAY_NAMES[code] || NAMES[code] || code;
-  return NAMES[code] || code;
+/** Nombre legible: el local si existe; si no, el que manda la API (apiName); si no, el código. */
+export function nameFor(sourceId, code, apiName) {
+  const local = sourceId === "qvapay" ? QVAPAY_NAMES[code] || NAMES[code] : NAMES[code];
+  return local || (typeof apiName === "string" && apiName.trim() ? apiName.trim() : code);
+}
+
+export const GROUP_TITLES = [
+  { id: "main", title: "Principales" },
+  { id: "crypto", title: "Cripto" },
+  { id: "other", title: "Otras monedas" },
+];
+
+/**
+ * Agrupa las tasas según el catálogo de la API: secciones con tasas de mercado y,
+ * aparte, las de referencia (valor fijo, sin ofertas) para el «Mostrar más».
+ * Devuelve null si ninguna trae `group` (QvaPay, BCC o API vieja): la pantalla queda como antes.
+ */
+export function groupRates(rates) {
+  if (!Array.isArray(rates) || !rates.some((r) => r && r.group)) return null;
+  const market = rates.filter((r) => r.tier !== "reference");
+  const reference = rates.filter((r) => r.tier === "reference");
+  const sections = GROUP_TITLES
+    .map(({ id, title }) => ({ id, title, rates: market.filter((r) => (r.group || "other") === id) }))
+    .filter((s) => s.rates.length > 0);
+  return { sections, reference };
 }
 
 /** Monedas ocultas con formato «FUENTE:MONEDA» (como Android, p. ej. «ELTOQUE:BTC»). */

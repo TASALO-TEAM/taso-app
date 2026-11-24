@@ -14,15 +14,19 @@ from typing import Any, Optional
 from src.services import taso_client
 from src.services.cache import Cached, TTLCache, UpstreamError
 
-SOURCES = ("eltoque", "qvapay", "bcc", "cadeca")
+SOURCES = ("eltoque", "qvapay", "bcc")
+
+GROUPS = ("main", "crypto", "other")   # catálogo de la API (principales, cripto, otras)
+TIERS = ("market", "reference")        # reference = valor fijo sin ofertas reales
+GROUP_RANK = {g: i for i, g in enumerate(GROUPS)}
 
 PREFERRED_ORDER = [
-    "EUR", "USD", "MLC", "BTC", "TRX", "USDT",
+    "EUR", "USD", "ZELLE", "MLC", "CLA", "BTC", "TRX", "USDT",
     "CAD", "GBP", "CHF", "RUB", "AUD", "JPY",
     "MXN", "BRL", "COP",
 ]
 QVAPAY_ORDER = ["CUP", "MLC", "TROPIPAY", "ETECSA", "ZELLE", "CLASICA", "BOLSATM", "BANDECPREPAGO", "SBERBANK"]
-# En CADECA/BCC/El Toque "CUP" es la moneda base y no aporta nada; en QvaPay es un método de pago.
+# En BCC/El Toque "CUP" es la moneda base y no aporta nada; en QvaPay es un método de pago.
 IGNORED = {"CUP"}
 
 RATES_TTL = 30.0              # la API refresca cada 15 min; 30 s evita martillarla
@@ -91,7 +95,7 @@ def parse_rate(code: str, obj: Any) -> Optional[dict]:
         rate = sell if sell is not None else buy
     if rate is None:
         return None
-    return {
+    parsed = {
         "code": code,
         "rate": rate,
         "buy": buy,
@@ -99,6 +103,23 @@ def parse_rate(code: str, obj: Any) -> Optional[dict]:
         "change": parse_change(obj.get("change")),
         "prev_rate": parse_number(obj.get("prev_rate")),
     }
+    # Campos opcionales de El Toque (catálogo de la API): solo si vienen y son válidos.
+    name = obj.get("name")
+    if isinstance(name, str) and name.strip():
+        parsed["name"] = name.strip()
+    group = obj.get("group")
+    if group in GROUPS:
+        parsed["group"] = group
+    tier = obj.get("tier")
+    if tier in TIERS:
+        parsed["tier"] = tier
+    offers = parse_number(obj.get("offers"))
+    if offers is not None:
+        parsed["offers"] = int(offers)
+    order = parse_number(obj.get("order"))
+    if order is not None:
+        parsed["order"] = int(order)
+    return parsed
 
 
 def _order_index(source: str, code: str) -> int:
@@ -117,8 +138,17 @@ def parse_source(source: str, obj: Any) -> list[dict]:
         rate = parse_rate(code, value)
         if rate is not None:
             rates.append(rate)
-    rates.sort(key=lambda r: (_order_index(source, r["code"]), r["code"]))
+    rates.sort(key=_sort_key(source))
     return rates
+
+
+def _sort_key(source: str):
+    """Con catálogo de la API (group/order) manda el catálogo; sin él, el orden de respaldo."""
+    def key(r: dict):
+        if "group" in r:
+            return (GROUP_RANK[r["group"]], r.get("order", 999), r["code"])
+        return (len(GROUPS), _order_index(source, r["code"]), r["code"])
+    return key
 
 
 def normalize_latest(payload: Any) -> dict:

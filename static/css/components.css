@@ -484,3 +484,11 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
 .mk-grid .mk-val { text-align: left; }
 /* En pantallas anchas la vista es una columna centrada (como MSN): el SVG escala con su ancho y estirado a 1000 px las etiquetas de los ejes se desbordan. */
 .view:has(> .mk-search) { width: 100%; max-width: 40rem; margin-inline: auto; }
+
+/* Tasas agrupadas por catálogo de la API (El Toque): secciones + «Mostrar más» de referencia */
+.rgroup { display: flex; flex-direction: column; gap: 0.5rem; margin-block-end: 1rem; }
+.rgroup > .label { margin: 0; }
+.rmore { margin-block-end: 1rem; }
+.rmore > summary { cursor: pointer; min-height: 2.75rem; display: flex; align-items: center; font-weight: 600; color: var(--accent); }
+.rmore > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.rmore > .sub { margin: 0 0 0.5rem; }

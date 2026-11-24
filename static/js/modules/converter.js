@@ -1,7 +1,7 @@
 // Calculadora de tasas (sin DOM): tabla con pivote, conversión, formato del monto y recibo para copiar.
 // Puerto de Converter.kt, Receipt.kt y Format.amount/parseAmount de Android.
 //
-// En El Toque, BCC y CADECA cada tasa es cuántos CUP vale una unidad de la moneda (1 USD = 520 CUP), así que
+// En El Toque y BCC cada tasa es cuántos CUP vale una unidad de la moneda (1 USD = 520 CUP), así que
 // cualquier par sale de una sola fórmula con el CUP de pivote: monto × tasa(origen) / tasa(destino).
 // En QvaPay cada valor es cuánto de un método de pago se obtiene por 1 USD; el pivote es el USD y la tabla guarda
 // el valor en USD de una unidad de cada método (1 / tasa), así que la misma fórmula sirve.

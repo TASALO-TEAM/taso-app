@@ -75,7 +75,7 @@ def test_orden_preferido_y_desconocidas_al_final_por_codigo():
 
 def test_cup_se_ignora_salvo_en_qvapay():
     obj = {"CUP": {"rate": 1}, "USD": {"rate": 520}}
-    assert [r["code"] for r in svc.parse_source("cadeca", obj)] == ["USD"]
+    assert [r["code"] for r in svc.parse_source("bcc", obj)] == ["USD"]
     assert [r["code"] for r in svc.parse_source("qvapay", obj)] == ["CUP", "USD"]
 
 
@@ -100,13 +100,12 @@ def latest(**over):
         "ok": True,
         "data": {
             "eltoque": {"USD": {"rate": 520, "change": "down", "prev_rate": 521}, "EUR": {"rate": 585, "change": "up", "prev_rate": 582.5}, "CUP": {"rate": 1}},
-            "cadeca": {"USD": {"buy": 118, "sell": 120, "change": "neutral"}},
             "bcc": {},
             "binance": {"BTC": {"rate": 1}},
             "qvapay": {"CUP": {"rate": 515, "buy": 510, "sell": 520, "change": "up"}},
         },
         "updated_at": "2026-10-10T15:40:00",
-        "sources_updated_at": {"eltoque": "2026-10-10T15:30:00+00:00", "cadeca": "2026-10-09T08:00:00+00:00"},
+        "sources_updated_at": {"eltoque": "2026-10-10T15:30:00+00:00", "qvapay": "2026-10-09T08:00:00+00:00"},
     }
     payload.update(over)
     return payload
@@ -114,16 +113,16 @@ def latest(**over):
 
 def test_normalize_latest_estructura_y_orden():
     out = svc.normalize_latest(latest())
-    assert list(out["sources"]) == ["eltoque", "qvapay", "bcc", "cadeca"]  # binance no se expone
+    assert list(out["sources"]) == ["eltoque", "qvapay", "bcc"]  # binance no se expone
     assert [r["code"] for r in out["sources"]["eltoque"]["rates"]] == ["EUR", "USD"]
-    assert out["sources"]["cadeca"]["rates"][0]["buy"] == 118.0
+    assert out["sources"]["qvapay"]["rates"][0]["buy"] == 510.0
     assert out["sources"]["bcc"]["rates"] == []
 
 
 def test_cada_fuente_lleva_su_hora_real_y_si_falta_la_general():
     out = svc.normalize_latest(latest())
     assert out["sources"]["eltoque"]["fetched_at"] == "2026-10-10T15:30:00+00:00"
-    assert out["sources"]["cadeca"]["fetched_at"] == "2026-10-09T08:00:00+00:00"  # vieja de verdad
+    assert out["sources"]["qvapay"]["fetched_at"] == "2026-10-09T08:00:00+00:00"  # vieja de verdad
     assert out["sources"]["bcc"]["fetched_at"] == "2026-10-10T15:40:00+00:00"    # cae a updated_at
     assert out["updated_at"] == "2026-10-10T15:40:00+00:00"
 
@@ -184,3 +183,33 @@ def test_get_image_rechaza_lo_que_no_es_imagen(monkeypatch):
         svc.get_image()
     monkeypatch.setattr(svc.taso_client, "get_file", lambda path: (b"\x89PNG", "image/png"))
     assert svc.get_image() == (b"\x89PNG", "image/png")
+
+
+# ---------- ElToque agrupado (name/group/tier/offers/order de taso-api) ----------
+
+def test_parse_rate_pasa_los_campos_de_grupo():
+    r = svc.parse_rate("ZELLE", {"rate": 915, "name": " Zelle ", "group": "main", "tier": "reference",
+                                 "offers": 0, "order": 3})
+    assert (r["name"], r["group"], r["tier"], r["offers"], r["order"]) == ("Zelle", "main", "reference", 0.0, 3.0)
+
+
+def test_parse_rate_ignora_grupo_invalido_y_sin_campos_no_agrega_nada():
+    assert "group" not in svc.parse_rate("USD", {"rate": 1, "group": "raro", "tier": "market"})
+    assert "tier" not in svc.parse_rate("USD", {"rate": 1, "group": "main", "tier": "raro"})
+    assert "group" not in svc.parse_rate("USD", {"rate": 1})
+
+
+def test_parse_source_ordena_por_grupo_y_order():
+    obj = {
+        "BTC": {"rate": 1, "group": "crypto", "tier": "market", "order": 1},
+        "CAD": {"rate": 1, "group": "other", "tier": "market", "order": 1},
+        "ZELLE": {"rate": 1, "group": "main", "tier": "reference", "order": 3},
+        "USD": {"rate": 1, "group": "main", "tier": "market", "order": 2},
+        "EUR": {"rate": 1, "group": "main", "tier": "market", "order": 1},
+    }
+    assert [r["code"] for r in svc.parse_source("eltoque", obj)] == ["EUR", "USD", "ZELLE", "BTC", "CAD"]
+
+
+def test_orden_de_respaldo_zelle_tras_usd_y_cla_tras_mlc():
+    obj = {k: {"rate": 1} for k in ["CLA", "MLC", "ZELLE", "USD", "EUR"]}
+    assert [r["code"] for r in svc.parse_source("eltoque", obj)] == ["EUR", "USD", "ZELLE", "MLC", "CLA"]
