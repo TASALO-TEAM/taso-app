@@ -5,6 +5,7 @@ from flask import Blueprint, current_app, g, jsonify, request
 from src.auth.guard import require_user
 from src.services import ai as ai_service
 from src.services import market as market_service
+from src.services import news as news_service
 from src.services.cache import Cached, TTLCache, UpstreamError
 
 bp = Blueprint("api_market", __name__, url_prefix="/api/market")
@@ -38,6 +39,17 @@ def _market_cached(cache: TTLCache, sym: str) -> Cached:
 def top():
     """Las 5 monedas más consultadas por los usuarios (con semilla BTC, ETH, SOL, BNB, HIVE mientras no haya uso)."""
     return jsonify({"ok": True, "symbols": market_service.top_symbols()})
+
+
+@bp.route("/news")
+@require_user
+def news():
+    """Titulares para el carrusel de Mercado (RSS públicos sin clave; ver ``services/news.py``). General, no por moneda."""
+    try:
+        items, stale = news_service.get_news(current_app.config["TASALO_CACHE"])
+    except UpstreamError:
+        return _err(502, "upstream_unavailable", "No se pudieron cargar las noticias")
+    return jsonify({"ok": True, "stale": stale, "items": items})
 
 
 @bp.route("/<symbol>/chart")
