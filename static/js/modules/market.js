@@ -171,6 +171,7 @@ export function panoramaParagraphs(text) {
 /** Mensaje para el usuario según el fallo. Texto propio: no se muestra lo que diga el servidor. */
 export function panoramaError({ status } = {}) {
   if (status === 0) return "Sin conexión. Inténtalo cuando tengas internet.";
+  if (status === 401) return "Inicia sesión con Telegram para usar el Panorama IA.";
   if (status === 429) return "Llegaste al límite de análisis de IA de esta hora. Inténtalo más tarde.";
   if (status === 404 || status === 400) return "No encontré esa moneda.";
   return "La IA no está disponible ahora. Inténtalo en un momento.";

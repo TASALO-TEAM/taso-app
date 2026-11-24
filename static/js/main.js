@@ -1,6 +1,7 @@
 // Arranque de la miniapp: identidad, estados globales y navegación por pestañas.
 import * as sdk from "./modules/sdk.js";
 import { getMe, ApiError } from "./modules/api.js";
+import { needsLogin, setSession } from "./modules/session.js";
 import { syncFromCloud } from "./modules/settings.js";
 import { resolveRoute } from "./modules/tabs.js";
 
@@ -60,6 +61,7 @@ const VIEWS = {
   ajustes: () => import("./views/ajustes.js"),
   estadisticas: () => import("./views/estadisticas.js"),
   admin: () => import("./views/admin.js"),
+  login: () => import("./views/login.js"), // en lugar de las privadas cuando no hay sesión
 };
 
 let unmountCurrent = null;
@@ -81,7 +83,7 @@ async function route() {
     unmountCurrent();
     unmountCurrent = null;
   }
-  const loader = VIEWS[cur.name];
+  const loader = VIEWS[needsLogin(cur.name) ? "login" : cur.name];
   if (!loader) {
     $("view-actions").replaceChildren();
     renderPlaceholder(cur.title);
@@ -108,21 +110,24 @@ function showError(message) {
 }
 
 async function load() {
-  if (!sdk.hasIdentity()) {
-    showScreen("state-unidentified");
-    return;
-  }
   showScreen("state-loading");
   try {
-    await getMe();
-    applyStartParam();
-    showScreen("shell");
-    route();
+    setSession(await getMe());
   } catch (e) {
-    if (e instanceof ApiError && e.status === 401) showScreen("state-unidentified");
-    else if (e instanceof ApiError && e.status === 0) showError("No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.");
-    else showError("Algo falló al cargar. Inténtalo de nuevo en un momento.");
+    const status = e instanceof ApiError ? e.status : -1;
+    if (status === 401 && !sdk.hasIdentity()) {
+      setSession(null); // visitante en el navegador: lo público se ve sin entrar; lo privado pide «Entrar con Telegram»
+    } else if (status === 401) {
+      showScreen("state-unidentified"); // dentro de Telegram pero con el initData rechazado
+      return;
+    } else {
+      showError(status === 0 ? "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo." : "Algo falló al cargar. Inténtalo de nuevo en un momento.");
+      return;
+    }
   }
+  applyStartParam();
+  showScreen("shell");
+  route();
 }
 
 function updateOnline() {

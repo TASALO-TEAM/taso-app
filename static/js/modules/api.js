@@ -1,5 +1,6 @@
-// Cliente del BFF (/api/*). Siempre manda el initData en Authorization; el servidor decide quién eres.
-import { initData } from "./sdk.js";
+// Cliente del BFF (/api/*). Dentro de Telegram manda el initData en Authorization; fuera, la cookie de sesión viaja sola
+// (mismo origen) junto con la cabecera anti-CSRF. En los dos casos el servidor decide quién eres.
+import { hasIdentity, initData } from "./sdk.js";
 
 function meta(name) {
   const el = document.querySelector(`meta[name="${name}"]`);
@@ -7,6 +8,12 @@ function meta(name) {
 }
 
 export const BASE = meta("tasalo-base");
+/** Usuario del bot (sin @), para el enlace «Abrir en Telegram». */
+export const BOT = meta("tasalo-bot").replace(/[^A-Za-z0-9_]/g, "");
+/** ¿El servidor tiene configurado «Entrar con Telegram»? (si no, la web no ofrece el botón). */
+export const LOGIN_ENABLED = meta("tasalo-login") === "1";
+/** Enlace de inicio de sesión: navegación normal (el servidor redirige a Telegram y vuelve con la cookie). */
+export const LOGIN_URL = `${BASE}/auth/telegram/inicio`;
 
 export class ApiError extends Error {
   constructor(status, code, message) {
@@ -21,7 +28,8 @@ async function request(path, { method = "GET", body, timeoutMs = 10000 } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const headers = { Authorization: `tma ${initData()}` };
+    const headers = { "X-Tasalo-Csrf": "1" };
+    if (hasIdentity()) headers.Authorization = `tma ${initData()}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
     return await fetch(`${BASE}/api${path}`, {
       method,
@@ -71,6 +79,7 @@ export async function apiBlob(path, options = { timeoutMs: 20000 }) {
 }
 
 export const getMe = () => apiFetch("/me");
+export const logout = () => apiFetch("/auth/logout", { method: "POST" });
 export const getRates = () => apiFetch("/rates");
 export const getYear = () => apiFetch("/year");
 // Mercado (S10): el servidor valida el símbolo; aquí solo se codifica para la ruta.

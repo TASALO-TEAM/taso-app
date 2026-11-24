@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <meta name="tasalo-base" content="{{ base_path }}">
   <meta name="tasalo-bot" content="{{ bot_username }}">
+  <meta name="tasalo-login" content="{{ '1' if login_enabled else '0' }}">
   <meta name="tasalo-version" content="{{ app_version }}">
   <title>TASALO</title>
   <link rel="stylesheet" href="{{ asset('css/tokens.css') }}">
@@ -26,8 +27,8 @@
 
     <section class="state" id="state-unidentified" hidden>
       <svg class="state-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
-      <h1 class="state-title">Ábrela desde @{{ bot_username }}</h1>
-      <p class="state-text">Esta app solo funciona dentro de Telegram.</p>
+      <h1 class="state-title">Abre TASALO de nuevo desde @{{ bot_username }}</h1>
+      <p class="state-text">Telegram no pudo confirmar tu sesión. Cierra esta ventana y ábrela otra vez desde el bot.</p>
       <a class="btn" id="open-bot" href="https://t.me/{{ bot_username }}" rel="noopener noreferrer">Abrir el bot</a>
     </section>
 

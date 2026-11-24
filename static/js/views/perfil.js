@@ -2,9 +2,33 @@
 // Arriba a la derecha: recargar y el engranaje de Ajustes. La identidad sale SOLO del initData validado en el servidor (GET /api/me).
 // Sin innerHTML ni estilos en línea (CSP).
 import { overviewPill } from "../modules/admin.js";
-import { ApiError, getAdminOverview, getAlerts, getMe } from "../modules/api.js";
+import { ApiError, getAdminOverview, getAlerts, getMe, logout } from "../modules/api.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import { avisosSummary, displayName, handleOf, initialOf, profileChips, safePhotoUrl } from "../modules/profile.js";
+import { session } from "../modules/session.js";
+
+/** Solo para quien entró por la web: borra la sesión en el servidor y recarga como visitante. */
+function logoutButton() {
+  const btn = h("button", {
+    type: "button",
+    class: "btn btn-ghost block",
+    dataset: { go: "logout" },
+    text: "Cerrar sesión",
+    onClick: async () => {
+      btn.disabled = true;
+      try {
+        await logout();
+      } catch (_) {
+        btn.disabled = false;
+        btn.textContent = "No se pudo cerrar. Reintenta";
+        return;
+      }
+      location.hash = "#/tasas";
+      location.reload();
+    },
+  });
+  return btn;
+}
 
 /** Avatar: la inicial siempre está debajo; la foto (si hay y carga) la tapa. Si la foto falla, se quita y queda la inicial. */
 function avatar(user) {
@@ -77,7 +101,7 @@ export function mount(ctx) {
   const avisosSlot = h("div", { class: "slot" });
   const statsSlot = h("div", { class: "slot" });
   const adminSlot = h("div", { class: "slot" });
-  ctx.view.replaceChildren(userSlot, avisosSlot, statsSlot, adminSlot);
+  ctx.view.replaceChildren(userSlot, avisosSlot, statsSlot, adminSlot, ...(session().via === "web" ? [logoutButton()] : []));
   ctx.setSubtitle("Tu cuenta y tus avisos");
 
   const refreshBtn = h("button", { type: "button", class: "icon-btn", "aria-label": "Actualizar perfil", onClick: () => load() }, icon(...ICONS.refresh));

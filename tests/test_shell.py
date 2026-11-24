@@ -55,7 +55,8 @@ def test_shell_responde_con_los_estados_globales(client):
     html = r.get_data(as_text=True)
     for ident in ("state-loading", "state-unidentified", "state-error", "banner-offline", "shell", "retry"):
         assert f'id="{ident}"' in html
-    assert "Ábrela desde @tasalobot" in html
+    assert "Abre TASALO de nuevo desde @tasalobot" in html
+    assert '<meta name="tasalo-login" content="0">' in html, "sin credenciales el login web está apagado"
     for tab in ("tasas", "mercado", "calculadora", "blog", "perfil"):
         assert f'data-tab="{tab}"' in html
 

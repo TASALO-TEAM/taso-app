@@ -301,7 +301,7 @@ export function mount(ctx) {
     } catch (e) {
       if (!alive) return;
       const status = e instanceof ApiError ? e.status : 503;
-      state.pan.set(symbol, { status: "error", message: panoramaError({ status }), retry: status !== 429 });
+      state.pan.set(symbol, { status: "error", message: panoramaError({ status }), retry: status !== 429 && status !== 401 });
     }
     state.now = Date.now();
     render();
@@ -428,6 +428,12 @@ export function mount(ctx) {
       body = [...p.paragraphs.map((t) => h("p", { class: "mk-ai-p", text: t })), h("p", { class: "note", text: p.disclaimer })];
     } else if (p.status === "error") {
       body = [h("p", { class: "mk-err", role: "alert", text: p.message }), p.retry ? h("button", { type: "button", class: "btn btn-ghost", text: "Reintentar", onClick: go }) : null];
+    } else if (ctx.session && ctx.session.loggedIn === false) {
+      // El Panorama IA gasta cuota por usuario: pide identidad (en la web, entrar con Telegram desde Perfil).
+      body = [
+        h("p", { class: "mk-ai-hint", text: "El Panorama IA es para quienes han iniciado sesión." }),
+        h("a", { class: "btn", href: "#/perfil", text: "Iniciar sesión" }),
+      ];
     } else {
       body = [
         h("p", { class: "mk-ai-hint", text: `Un comentario en lenguaje sencillo sobre cómo se mueve ${m.symbol}.` }),
