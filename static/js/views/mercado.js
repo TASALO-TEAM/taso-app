@@ -426,7 +426,7 @@ export function mount(ctx) {
     const go = () => generatePanorama(m.symbol);
     let body;
     if (p.status === "loading") {
-      body = [h("p", { class: "mk-ai-wait", role: "status", text: `Generando el panorama de ${m.symbol}…` }), h("div", { class: "skeleton", "aria-hidden": "true" })];
+      body = [h("p", { class: "mk-ai-wait", role: "status", text: `Generando el análisis de ${m.symbol}…` }), h("div", { class: "skeleton", "aria-hidden": "true" })];
     } else if (p.status === "ready") {
       body = [...p.paragraphs.map((t) => h("p", { class: "mk-ai-p", text: t })), h("p", { class: "note", text: p.disclaimer })];
     } else if (p.status === "error") {
@@ -434,19 +434,19 @@ export function mount(ctx) {
     } else if (ctx.session && ctx.session.loggedIn === false) {
       // El Panorama IA gasta cuota por usuario: pide identidad (en la web, entrar con Telegram desde Perfil).
       body = [
-        h("p", { class: "mk-ai-hint", text: "El Panorama IA es para quienes han iniciado sesión." }),
+        h("p", { class: "mk-ai-hint", text: "TASALO IA es para quienes han iniciado sesión." }),
         h("a", { class: "btn", href: "#/perfil", text: "Iniciar sesión" }),
       ];
     } else {
       body = [
         h("p", { class: "mk-ai-hint", text: `Un comentario en lenguaje sencillo sobre cómo se mueve ${m.symbol}.` }),
-        h("button", { type: "button", class: "btn", text: "Generar Panorama IA", onClick: go }),
+        h("button", { type: "button", class: "btn", text: "Generar análisis TASALO IA", onClick: go }),
       ];
     }
     return h(
       "section",
-      { class: "card mk-card", "aria-label": "Panorama IA", "aria-busy": p.status === "loading" ? "true" : "false" },
-      h("div", { class: "mk-head" }, h("h2", { class: "card-title", text: "Panorama IA" }), h("span", { class: "mk-src", text: "Groq" })),
+      { class: "card mk-card", "aria-label": "Análisis TASALO IA", "aria-busy": p.status === "loading" ? "true" : "false" },
+      h("div", { class: "mk-head" }, h("h2", { class: "card-title", text: "Análisis TASALO IA" }), h("span", { class: "mk-src", text: "Groq" })),
       ...body,
     );
   }

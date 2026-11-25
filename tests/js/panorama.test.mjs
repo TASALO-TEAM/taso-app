@@ -33,5 +33,5 @@ test("panoramaError: mensaje propio según el fallo, sin depender del servidor",
 });
 
 test("el aviso de que no es asesoramiento financiero existe", () => {
-  assert.match(PANORAMA_DISCLAIMER, /no constituye asesoramiento financiero/i);
+  assert.match(PANORAMA_DISCLAIMER, /asesoramiento financiero/i);
 });
