@@ -210,3 +210,10 @@ def test_api_simbolo_invalido_inexistente_y_mercado_caido(ctx, src, groq):  # no
     src.cmc = UpstreamError("x")
     assert post(ctx, "/api/market/XYZ/panorama").status_code in (404, 502)
     assert groq.calls == []
+
+
+def test_identidad_tasalo_ia():
+    """El análisis se firma como TASALO IA, sin «Panorama» ni «experimental», y el descargo del modelo se descarta."""
+    for text in (ai.SYSTEM_PROMPT, ai.PRICE_SPOTLIGHT_PROMPT, ai.DISCLAIMER):
+        assert "TASALO IA" in text and "Panorama" not in text and "xperimental" not in text
+    assert ai.clean_text("Texto uno.\nAnálisis generado por TASALO IA. Es información.") == "Texto uno."
