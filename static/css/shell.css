@@ -211,7 +211,7 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
    movil < 600px:        4 columnas, margen 16px, separacion 16px
    tablet 600-1024px:    8 columnas, margen 24-32px, separacion 16-24px
    escritorio > 1024px:  12 columnas, margen 32px, separacion 24px, contenedor centrado
-   Tokens: --cols, --margin, --gutter y --span (columnas que ocupa una tarjeta de Tasas: 2 de 4, 4 de 8 o 2 de 8, 3 de 12).
+   Tokens: --cols, --margin, --gutter y --span (columnas que ocupa una tarjeta de Tasas: 2 de 4, 4 de 8, 2 de 8 o 2 de 12).
    Las vistas de lectura (calculadora, blog, ajustes, Mercado...) no se estiran: columna centrada de 44rem. Solo Tasas
    (la rejilla de tarjetas) usa todo el contenedor. Por debajo de 600px nada cambia respecto a la miniapp. */
 @media (min-width: 37.5rem) {
@@ -226,7 +226,7 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 }
 
 @media (min-width: 64.0625rem) {
-  :root { --cols: 12; --span: 3; }
+  :root { --cols: 12; --span: 2; }
   .shell:has(> .view .grid) { --page-max: 72rem; }
 }
 

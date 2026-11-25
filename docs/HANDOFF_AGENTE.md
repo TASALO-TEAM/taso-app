@@ -402,3 +402,11 @@ Plan: `tasalo/docs/plans/2026-11-23-taso-app-noticias-es-y-acceso-web.md` (aprob
 - Si Ernesto sigue viendo la web sin cargar: desde el servidor no se reproduce. Falta saber que ve exactamente (pantalla en blanco, "Cargando..." fijo, mensaje de error) y desde donde (Telegram movil, Telegram Web, navegador). Recordatorio: el reloj del PC de Ernesto va ~59 min adelantado (sesion 24).
 - Nota: una prueba con `curl` a `/miniapp/api/market/alerts` (ruta inexistente) cayo en `/api/market/<symbol>` y gasto 2 consultas (CMC y CoinGecko) buscando el simbolo ALERTS; inofensivo, pero no sondear rutas inventadas bajo `/api/market/`.
 - Sin cambios de codigo en esta sesion. Pendiente igual que la 26: Perfil (`avisosSummary`) aun cuenta solo las del bot, S9, F6, B4 con ojos; verificacion visual sigue sin hacerse.
+
+
+### Sesion 28 - 2026-11-24 (Ernesto: "las tarjetas son demasiado grandes, un poco grandes tambien en movil")
+- Punto de partida: main = rama = aad3ebd (0.42.0.2), ya desplegado. Captura de Ernesto a 1920 px (Brave con escala 125 % = 1536 px CSS): tarjetas de ~254 px CSS de ancho y ~197 de alto, 4 por fila.
+- **Cambios (solo CSS, `static/css/components.css` y `shell.css`)**: tarjeta de Tasas mas compacta. `.rcard` padding 0.875 -> 0.75rem y gap 0.25 -> 0.125rem; `.rc-rate` 1.625 -> 1.375rem (movil) y 1.75 -> 1.5rem (>=48rem); sparkline de tarjeta 2.75 -> 2rem y `.rc-spark` margen 0.375 -> 0.25rem; padding >=48rem 1rem 1.125rem -> 0.875rem 1rem. Escritorio (>=64.0625rem): `--span` 3 -> 2, o sea **6 tarjetas por fila** (~161 px CSS cada una con `--page-max` 72rem). Tablet (600-1024) no se toco.
+- Pendiente conocido: salto en 767->768 px (de 2 tarjetas de ~351 px a 4 de ~158 px); no se cambio porque 8 columnas no admiten 3 por fila. Opciones: 4 por fila desde ~52rem o 2 por fila hasta 64rem.
+- Evidencia: pytest 629 pasan, node --test 219 pasan. **Sin verificacion visual** (no hay navegador headless): Ernesto debe mirar Tasas a 390, 768 y 1280+ px y decir si quiere mas o menos.
+- Estado git: commiteado en la rama; **sin push ni despliegue** (solo estatico: bastaria `git pull` en el VPS, sin reinicio).
