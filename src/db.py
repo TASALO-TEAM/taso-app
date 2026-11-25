@@ -14,6 +14,7 @@ import contextlib
 import os
 import sqlite3
 import threading
+import time
 from datetime import datetime, timezone
 from typing import Iterator
 
@@ -106,6 +107,31 @@ def connect() -> Iterator[sqlite3.Connection]:
         yield conn
     finally:
         conn.close()
+
+
+def try_lease(name: str, holder: str, ttl_seconds: float, now: float | None = None) -> bool:
+    """Candado entre procesos/hilos con caducidad (para que solo UN checker de alertas corra a la vez).
+
+    True si ``holder`` lo tiene tras la llamada: lo toma si estaba libre o caducado y lo renueva si ya era suyo.
+    False si lo tiene otro y aún no caduca.
+    """
+    moment = time.time() if now is None else now
+    with connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            row = conn.execute("SELECT holder, expires_at FROM lease WHERE name=?", (name,)).fetchone()
+            free = row is None or row["holder"] == holder or row["expires_at"] <= moment
+            if free:
+                conn.execute(
+                    "INSERT INTO lease (name, holder, expires_at) VALUES (?,?,?) "
+                    "ON CONFLICT(name) DO UPDATE SET holder=excluded.holder, expires_at=excluded.expires_at",
+                    (name, holder, moment + ttl_seconds),
+                )
+            conn.execute("COMMIT")
+        except BaseException:
+            conn.execute("ROLLBACK")
+            raise
+    return free
 
 
 def init_db() -> None:

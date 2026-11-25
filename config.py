@@ -67,6 +67,9 @@ class Settings(BaseSettings):
     db_path: str = "data/taso-app.db"
     # Revision de alertas cada N segundos (300 = 5 min). 0 desactiva el hilo (tests, tareas puntuales).
     price_check_interval_seconds: int = 300
+    # URL publica de la miniapp: el boton «Abrir alertas» de los avisos la abre (la misma que usa el bot en /start).
+    # Vacia = el aviso sale sin boton.
+    miniapp_url: str = "https://tasalo.duckdns.org/miniapp"
 
     # Logging
     log_level: str = "INFO"

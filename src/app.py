@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import httpx
 from flask import Flask, jsonify, render_template, request, session, redirect, url_for
 from datetime import timedelta
@@ -174,6 +175,12 @@ def create_app():
 
 
 app = create_app()
+# Revision de alertas de precio en un hilo de fondo: solo en el servidor (nunca al importar desde pytest).
+# Sin TELEGRAM_BOT_TOKEN o con PRICE_CHECK_INTERVAL_SECONDS=0 no hace nada.
+if "pytest" not in sys.modules:
+    from src.services import market_alerts_checker
+
+    market_alerts_checker.start()
 # Convert WSGI app to ASGI for uvicorn compatibility
 app = WsgiToAsgi(app)
 
