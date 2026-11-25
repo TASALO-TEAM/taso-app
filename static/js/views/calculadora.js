@@ -14,6 +14,7 @@ import {
 import { getSettings, hiddenSet } from "../modules/settings.js";
 import { shareText } from "../modules/sdk.js";
 import { load, save } from "../modules/storage.js";
+import { serverNow } from "../modules/clock.js";
 
 const RATES_KEY = "tasalo:rates"; // misma caché que Tasas: abrir la calculadora no obliga a pedir de nuevo
 const CALC_KEY = "tasalo:calc";
@@ -43,7 +44,7 @@ export function mount(ctx) {
     apiError: false,
     offlineError: false,
     refreshing: false,
-    now: Date.now(),
+    now: serverNow(),
   };
   let alive = true;
   let lastFetch = state.savedAt;
@@ -84,13 +85,13 @@ export function mount(ctx) {
       state.data = data;
       state.apiError = false;
       state.offlineError = false;
-      state.now = Date.now();
+      state.now = serverNow();
       lastFetch = state.now;
       state.savedAt = state.now;
       save(RATES_KEY, { data, savedAt: state.savedAt });
     } catch (e) {
       if (!alive) return;
-      state.now = Date.now();
+      state.now = serverNow();
       state.offlineError = e instanceof ApiError && e.status === 0;
       state.apiError = !state.offlineError;
     }
@@ -376,7 +377,7 @@ export function mount(ctx) {
   // ---------- Vida de la pantalla ----------
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
-    state.now = Date.now();
+    state.now = serverNow();
     renderChrome();
     if (state.now - lastFetch > FOCUS_REFRESH_MS) refresh();
   };
@@ -387,7 +388,7 @@ export function mount(ctx) {
   const onOffline = () => renderChrome();
   const tick = setInterval(() => {
     if (document.visibilityState !== "visible") return;
-    state.now = Date.now();
+    state.now = serverNow();
     renderChrome();
     if (state.now - lastFetch > REFRESH_MS) refresh();
   }, TICK_MS);

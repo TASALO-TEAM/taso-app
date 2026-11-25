@@ -14,6 +14,7 @@ import { getSettings, hiddenSet } from "../modules/settings.js";
 import { load, save } from "../modules/storage.js";
 import { compute as computeYear, resolveQuote } from "../modules/year.js";
 import { openHistory } from "./historico.js";
+import { serverNow } from "../modules/clock.js";
 
 const SOURCE_KEY = "tasalo:source";
 const RATES_KEY = "tasalo:rates";
@@ -45,7 +46,7 @@ export function mount(ctx) {
     offlineError: false,
     refreshing: false,
     moreOpen: false,
-    now: Date.now(),
+    now: serverNow(),
   };
   let alive = true;
   let lastFetch = state.savedAt;
@@ -93,7 +94,7 @@ export function mount(ctx) {
       wantHistory ? getHistorySummary() : Promise.resolve(null),
     ]);
     if (!alive) return;
-    state.now = Date.now();
+    state.now = serverNow();
     state.refreshing = false;
     if (ratesResult.status === "fulfilled") {
       state.data = ratesResult.value;
@@ -364,7 +365,7 @@ export function mount(ctx) {
   // ---------- Vida de la pantalla ----------
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
-    state.now = Date.now();
+    state.now = serverNow();
     renderChrome();
     if (state.now - lastFetch > FOCUS_REFRESH_MS) refresh();
   };
@@ -375,7 +376,7 @@ export function mount(ctx) {
   const onOffline = () => renderChrome();
   const tick = setInterval(() => {
     if (document.visibilityState !== "visible") return;
-    state.now = Date.now();
+    state.now = serverNow();
     renderChrome();
     renderYear();
     if (state.now - lastFetch > REFRESH_MS) refresh();

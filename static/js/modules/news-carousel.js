@@ -4,6 +4,7 @@
 import { h, icon, ICONS } from "./dom.js";
 import { currentSlide, newsMeta, newsTone, slideLabel, slideStatus } from "./news.js";
 import { openLink } from "./sdk.js";
+import { serverNow } from "./clock.js";
 
 const SETTLE_MS = 140; // sin evento scrollend, la pista se da por quieta tras este rato sin scroll
 
@@ -11,7 +12,7 @@ const SETTLE_MS = 140; // sin evento scrollend, la pista se da por quieta tras e
  * items: salida de cleanNews (ya validada). Devuelve la tarjeta; `card.refreshMeta(now)` actualiza solo las horas relativas.
  * Con una sola noticia no hay flechas ni segmentos.
  */
-export function newsCarousel(items, now = Date.now()) {
+export function newsCarousel(items, now = serverNow()) {
   const n = items.length;
   const many = n > 1;
   let active = 0; // la que marcan los segmentos (se mueve en cuanto el usuario decide, no al terminar el desplazamiento)

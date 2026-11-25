@@ -8,6 +8,7 @@ import {
 import { h, icon, ICONS } from "../modules/dom.js";
 import { load, save } from "../modules/storage.js";
 import { openReader } from "./blog-reader.js";
+import { serverNow } from "../modules/clock.js";
 
 const ACCOUNT_KEY = "tasalo:blog:account";
 const dataKey = (account) => `tasalo:blog:${account}`;
@@ -34,7 +35,7 @@ export function mount(ctx) {
     return states.get(acc);
   };
   let alive = true;
-  let now = Date.now();
+  let now = serverNow();
   let closeReader = null;
 
   const chipButtons = ACCOUNTS.map((a) =>
@@ -69,7 +70,7 @@ export function mount(ctx) {
       st.apiError = !st.offlineError;
     }
     st.refreshing = false;
-    now = Date.now();
+    now = serverNow();
     if (acc === account) render();
   }
 
@@ -189,7 +190,7 @@ export function mount(ctx) {
   // ---------- Vida de la pantalla ----------
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
-    now = Date.now();
+    now = serverNow();
     render();
     if (now - stateOf(account).savedAt > FOCUS_REFRESH_MS) refresh();
   };
@@ -200,7 +201,7 @@ export function mount(ctx) {
   const onOffline = () => render();
   const tick = setInterval(() => {
     if (document.visibilityState !== "visible") return;
-    now = Date.now();
+    now = serverNow();
     if (now - stateOf(account).savedAt > REFRESH_MS) refresh();
     else render();
   }, 60 * 1000);

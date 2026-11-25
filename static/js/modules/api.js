@@ -1,5 +1,6 @@
 // Cliente del BFF (/api/*). Dentro de Telegram manda el initData en Authorization; fuera, la cookie de sesión viaja sola
 // (mismo origen) junto con la cabecera anti-CSRF. En los dos casos el servidor decide quién eres.
+import { learnSkew } from "./clock.js";
 import { hasIdentity, initData } from "./sdk.js";
 
 function meta(name) {
@@ -31,13 +32,15 @@ async function request(path, { method = "GET", body, timeoutMs = 10000 } = {}) {
     const headers = { "X-Tasalo-Csrf": "1" };
     if (hasIdentity()) headers.Authorization = `tma ${initData()}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    return await fetch(`${BASE}/api${path}`, {
+    const res = await fetch(`${BASE}/api${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
       cache: "no-store",
     });
+    learnSkew(res.headers.get("date")); // hora del servidor: el reloj del dispositivo puede ir mal
+    return res;
   } catch (e) {
     if (e && e.name === "AbortError") throw new ApiError(0, "timeout", "Tardó demasiado");
     throw new ApiError(0, "network", "Sin conexión");

@@ -6,6 +6,7 @@ import { ApiError, getAdminOverview, getAlerts, getMe, logout } from "../modules
 import { h, icon, ICONS } from "../modules/dom.js";
 import { avisosSummary, displayName, handleOf, initialOf, profileChips, safePhotoUrl } from "../modules/profile.js";
 import { session } from "../modules/session.js";
+import { serverNow } from "../modules/clock.js";
 
 /** Solo para quien entró por la web: borra la sesión en el servidor y recarga como visitante. */
 function logoutButton() {
@@ -123,7 +124,7 @@ export function mount(ctx) {
         ),
       );
     }
-    avisosSlot.replaceChildren(avisosCard(avisosSummary(alerts, Date.now())));
+    avisosSlot.replaceChildren(avisosCard(avisosSummary(alerts, serverNow())));
     statsSlot.replaceChildren(statsCard());
     adminSlot.replaceChildren(...(me && me.is_admin === true ? [adminCard(overviewPill(overview))] : []));
   }

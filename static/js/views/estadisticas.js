@@ -8,6 +8,7 @@ import {
 } from "../modules/userstats.js";
 import { bars, kpi, section, unavailable } from "./admin.js";
 import { backToPerfil } from "./subnav.js";
+import { serverNow } from "../modules/clock.js";
 
 function botCards(bot, win, now) {
   if (!bot || !bot.ok) return [section("En el bot", unavailable())];
@@ -75,7 +76,7 @@ export function mount(ctx) {
         kpi("Alertas activas", app ? fmtInt(app.alerts_active) : "—"),
       ),
       isEmpty(data) ? h("div", { class: "card center" }, h("p", { class: "sub", text: "Aún no hay actividad tuya en este periodo." })) : null,
-      ...botCards(data.bot, normalizeWindow(data.window), Date.now()),
+      ...botCards(data.bot, normalizeWindow(data.window), serverNow()),
       appCard(data.app),
     );
   }

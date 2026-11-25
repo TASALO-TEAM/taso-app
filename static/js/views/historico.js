@@ -12,6 +12,7 @@ import {
 import { nameFor, sourceById } from "../modules/rates.js";
 import { hideBack, showBack } from "../modules/sdk.js";
 import { load, save } from "../modules/storage.js";
+import { serverNow } from "../modules/clock.js";
 
 const RANGE_KEY = "tasalo:hist-range";
 const LIST_KEY = "tasalo:hist-list";
@@ -45,7 +46,7 @@ function deltaText(row) {
 export function openHistory({ source, code, rate, onClose }) {
   const src = sourceById(source);
   const opener = document.activeElement;
-  const today = () => cubaDateKey(Date.now());
+  const today = () => cubaDateKey(serverNow());
 
   const savedList = load(LIST_KEY, LIST_SIZES[0]);
   const state = {

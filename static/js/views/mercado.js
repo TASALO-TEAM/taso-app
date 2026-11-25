@@ -27,6 +27,7 @@ import {
 import { load, save } from "../modules/storage.js";
 import { newsCarousel } from "../modules/news-carousel.js";
 import { cleanNews } from "../modules/news.js";
+import { serverNow } from "../modules/clock.js";
 
 const LAST_KEY = "tasalo:market:last";
 const CACHE_KEY = "tasalo:market:cache";
@@ -61,7 +62,7 @@ export function mount(ctx) {
     status: "loading", // loading | ready | notfound | error
     offline: false,
     inputError: "",
-    now: Date.now(),
+    now: serverNow(),
     pan: new Map(), // símbolo -> {status: loading|ready|error, ...}; sobrevive a los refrescos y al cambio de moneda
     range: normalizeRange(load(RANGE_KEY, DEFAULT_RANGE)),
     charts: new Map(), // "SIMBOLO|rango" -> {status: loading|ready|none|error, series, at}; la tira usa siempre 1d
@@ -278,7 +279,7 @@ export function mount(ctx) {
         state.status = "error";
       }
     }
-    state.now = Date.now();
+    state.now = serverNow();
     render();
   }
 
@@ -303,7 +304,7 @@ export function mount(ctx) {
       const status = e instanceof ApiError ? e.status : 503;
       state.pan.set(symbol, { status: "error", message: panoramaError({ status }), retry: status !== 429 && status !== 401 });
     }
-    state.now = Date.now();
+    state.now = serverNow();
     render();
   }
 
@@ -553,7 +554,7 @@ export function mount(ctx) {
   };
   const onVisible = () => {
     if (document.visibilityState !== "visible") return;
-    state.now = Date.now();
+    state.now = serverNow();
     renderChrome();
     refreshIfDue();
   };
@@ -565,7 +566,7 @@ export function mount(ctx) {
   const onOffline = () => renderChrome();
   const tick = setInterval(() => {
     if (document.visibilityState !== "visible") return;
-    state.now = Date.now();
+    state.now = serverNow();
     renderChrome();
     refreshIfDue();
   }, TICK_MS);

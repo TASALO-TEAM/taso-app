@@ -11,6 +11,7 @@ import {
   priceLine, priceStatus, spotlightStatus, utcHourToCuba, yearStatus,
 } from "../modules/alerts.js";
 import { h, icon, ICONS } from "../modules/dom.js";
+import { serverNow } from "../modules/clock.js";
 import {
   canWriteToPm, confirmAction, haptic, hideBack, hideMain, requestWriteAccess, setClosingConfirmation, setMainBusy,
   showBack, showMain,
@@ -28,7 +29,7 @@ export function mount(ctx) {
   let data = null; // respuesta de GET /alerts: { price, image, year, spotlight }, cada una con su propio ok
   let loading = true;
   let loadError = null; // null | "offline" | "api"
-  let now = Date.now();
+  let now = serverNow();
   let panel = null; // panel abierto (solo uno a la vez)
   let deepLinkDone = false;
   let writeGranted = false;
@@ -55,7 +56,7 @@ export function mount(ctx) {
       loadError = e instanceof ApiError && e.status === 0 ? "offline" : "api";
     }
     loading = false;
-    now = Date.now();
+    now = serverNow();
     render();
     if (panel) panel.rerender();
     openDeepLink();

@@ -7,6 +7,7 @@ import {
 } from "../modules/admin.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import { backToPerfil } from "./subnav.js";
+import { serverNow } from "../modules/clock.js";
 
 export const section = (title, ...children) => h("section", { class: "card ad-card" }, h("h2", { class: "card-title", text: title }), ...children);
 export const unavailable = () => h("p", { class: "sub", text: "No disponible ahora mismo." });
@@ -117,7 +118,7 @@ export function mount(ctx) {
     body.replaceChildren(
       seg,
       error || data.stale ? h("div", { class: "notice", role: "status", text: "Datos guardados: no se pudo actualizar ahora." }) : null,
-      healthCard(data, Date.now()),
+      healthCard(data, serverNow()),
       h("div", { class: "ad-kpis" }, kpi("Usuarios", u ? fmtInt(u.total) : "—"), kpi("Activos 24 h", u ? fmtInt(u.active_24h) : "—"), kpi("Nuevos 7 d", u ? fmtInt(u.new_7d) : "—"), kpi("Errores API", api ? fmtPct(api.error_rate) : "—")),
       section(`Comandos del bot · ${WINDOW_LABELS[win]}`, cmds ? bars(cmds, "") : unavailable()),
       apiCard(data.api),
