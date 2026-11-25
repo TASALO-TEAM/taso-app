@@ -2,7 +2,20 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Barras finas y del color del tema (3:1 contra el fondo); la de la pagina y la del overlay se ven iguales. */
+  --scrollbar-thumb: var(--outline);
+  --scrollbar-track: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+@supports not (scrollbar-color: auto) {
+  html, .overlay { scrollbar-width: auto; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+}
 
 body {
   margin: 0;
@@ -35,7 +48,7 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 }
 
 /* ---------- Layout ---------- */
-:root { --page-max: 40rem; }
+:root { --cols: 4; --margin: 1rem; --gutter: 1rem; --span: 2; --page-max: 100%; }
 
 .app {
   min-height: 100vh;
@@ -62,17 +75,17 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: calc(var(--safe-top) + 0.75rem) 1rem 0.25rem;
+  padding: calc(var(--safe-top) + 0.75rem) var(--margin) 0.25rem;
 }
 
 .hd-title { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
 
 .view {
   flex: 1;
-  padding: 0.5rem 1rem calc(6rem + var(--safe-bottom));
+  padding: 0.5rem var(--margin) calc(6rem + var(--safe-bottom));
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--gutter);
 }
 
 .view:focus { outline: none; }
@@ -194,25 +207,30 @@ a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
 }
 
 
-/* ---------- Pantallas anchas (tablet y escritorio) ----------
-   El móvil / miniapp no cambia: por debajo de 48rem todo es igual que antes. Después la columna crece por tramos
-   (--page-max) y se centra; hover solo en dispositivos con puntero. */
-@media (min-width: 48rem) {
-  :root { --page-max: 52rem; }
-  .hd { padding-inline: 1.5rem; }
+/* ---------- Rejilla 12-8-4 (movil / tablet / escritorio) ----------
+   movil < 600px:        4 columnas, margen 16px, separacion 16px
+   tablet 600-1024px:    8 columnas, margen 24-32px, separacion 16-24px
+   escritorio > 1024px:  12 columnas, margen 32px, separacion 24px, contenedor centrado
+   Tokens: --cols, --margin, --gutter y --span (columnas que ocupa una tarjeta de Tasas: 2 de 4, 4 de 8 o 2 de 8, 3 de 12).
+   Las vistas de lectura (calculadora, blog, ajustes, Mercado...) no se estiran: columna centrada de 44rem. Solo Tasas
+   (la rejilla de tarjetas) usa todo el contenedor. Por debajo de 600px nada cambia respecto a la miniapp. */
+@media (min-width: 37.5rem) {
+  :root { --cols: 8; --margin: 1.5rem; --gutter: 1rem; --span: 4; --page-max: 44rem; }
+  .shell:has(> .view .grid) { --page-max: 100%; }
   .hd-title { font-size: 1.75rem; }
-  .view { padding-inline: 1.5rem; gap: 1rem; }
   .nv { font-size: 0.75rem; }
 }
 
-@media (min-width: 80rem) {
-  :root { --page-max: 60rem; }
+@media (min-width: 48rem) {
+  :root { --margin: 2rem; --gutter: 1.5rem; --span: 2; }
 }
 
-/* Mercado: una sola columna más estrecha (como MSN); la gráfica escala con su ancho y estirada del todo las etiquetas
-   de los ejes se desbordan. */
-.shell:has(> .view > .mk-search) { --page-max: 44rem; }
+@media (min-width: 64.0625rem) {
+  :root { --cols: 12; --span: 3; }
+  .shell:has(> .view .grid) { --page-max: 72rem; }
+}
 
+/* Hover solo con raton / trackpad. */
 @media (hover: hover) {
   .nv:hover:not([aria-current="page"]) { background: var(--accent-soft); color: var(--text); }
 }
