@@ -127,7 +127,8 @@ def build_message(row: Any) -> str:
         body = f"{symbol} {verb} tu objetivo de ${target}. Ahora está en ${got}."
     else:
         body = f"{symbol} llegó a ${got}, junto a tu objetivo de ${target}."
-    lines = [f"\U0001F514 <b>Alerta de precio</b>", f"{'\U0001F4C8' if above else '\U0001F4C9'} {body}"]
+    arrow = "\U0001F4C8" if above else "\U0001F4C9"  # sin barra invertida dentro del f-string: Python 3.11 del VPS no lo admite
+    lines = ["\U0001F514 <b>Alerta de precio</b>", f"{arrow} {body}"]
     start = row["price_at_creation"]
     if _valid_price(start) and _valid_price(row["triggered_price"]):
         pct = (row["triggered_price"] - start) / start * 100
