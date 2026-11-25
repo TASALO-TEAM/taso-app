@@ -1,13 +1,13 @@
 // Detalle histórico de una moneda (overlay): gráfico por rango, lista diaria y avisos de historial corto.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). La matemática vive en modules/history-math.js.
 import { ApiError, getHistoryDaily } from "../modules/api.js";
-import { lineChart } from "../modules/charts.js";
+import { fitWidth, lineChart, priceChart } from "../modules/charts.js";
 import { cubaDateKey } from "../modules/cuba-time.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
 import {
   addDays, between, CUSTOM_FETCH_DAYS, CUSTOM_RANGE, DEFAULT_RANGE, dayRows, daysBetween, isDateKey, lastDays,
-  LIST_SIZES, normalizeRange, RANGES, rangeById, shortDate, shortHistory, summarize,
+  LIST_SIZES, normalizeRange, pointsToSeries, RANGES, rangeById, shortDate, shortHistory, summarize,
 } from "../modules/history-math.js";
 import { nameFor, sourceById } from "../modules/rates.js";
 import { hideBack, showBack } from "../modules/sdk.js";
@@ -199,11 +199,22 @@ export function openHistory({ source, code, rate, onClose }) {
     restText = `Mín ${fmt.rate(stats.min.rate)} · Máx ${fmt.rate(stats.max.rate)}`;
     readout.textContent = restText;
     const label = `Gráfico de ${shortDate(stats.first.date)} a ${shortDate(stats.last.date)}. Mínimo ${fmt.rate(stats.min.rate)}, máximo ${fmt.rate(stats.max.rate)}.`;
+    const series = pointsToSeries(points);
+    // Con 2 o más días, la gráfica de Mercado (ejes, cuadrícula, línea base). Con un solo día no hay línea que dibujar: la de siempre.
+    const chart =
+      series.length >= 2
+        ? priceChart(series, {
+            label,
+            rangeId: state.range,
+            width: fitWidth(chartSlot, 18), // 18 = relleno (16) + borde (2) de .mk-chart
+            onReadout: (r) => setReadout(r ? { date: cubaDateKey(r.time), rate: r.value } : null),
+          })
+        : lineChart(points, { label, onReadout: setReadout });
     chartSlot.replaceChildren(
       h(
         "div",
-        { class: "card dh-chart" },
-        lineChart(points, { label, onReadout: setReadout }),
+        { class: "mk-chart dh-chart" }, // mismo marco y dibujo que la gráfica de Mercado
+        chart,
         h("div", { class: "dh-stats" }, readout, h("p", { class: `mono chg-${kind}`, text: `${signed(stats.change)}${pct}` })),
       ),
     );

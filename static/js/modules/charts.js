@@ -103,7 +103,29 @@ export function lineChart(points, { label, onReadout = () => {} }) {
 // ---------- Mercado (S10 F4): minigráfica de la tira de monedas y gráfica de precio con ejes ----------
 // La matemática (X por tiempo, Y de mínimo a máximo, marcas de ejes) vive en market.js; aquí solo se dibuja.
 const TICK_SPARK = { width: 60, height: 22, padLeft: 1, padRight: 1, padTop: 2, padBottom: 2 };
-const PRICE = { width: 340, height: 190, padLeft: 46, padRight: 8, padTop: 10, padBottom: 22 };
+const PRICE_BASE = { width: 340, height: 190, padLeft: 46, padRight: 8, padTop: 10, padBottom: 22 };
+const FIT_MIN = 300;
+const FIT_MAX = 640;
+
+/**
+ * Medidas de la gráfica para un ancho dado (unidades del viewBox = píxeles CSS). Con 340 es la de siempre; en pantallas
+ * anchas crece ancho y alto, así las etiquetas de los ejes se quedan de tamaño normal en vez de agrandarse con el SVG.
+ */
+export function priceDims(width = PRICE_BASE.width) {
+  const w = Number.isFinite(width) ? Math.round(Math.min(FIT_MAX, Math.max(FIT_MIN, width))) : PRICE_BASE.width;
+  return { ...PRICE_BASE, width: w, height: Math.round(PRICE_BASE.height + Math.max(0, w - PRICE_BASE.width) * 0.35) };
+}
+
+/**
+ * Ancho útil del SVG dentro de `el` (restando `inset`, el relleno horizontal de `el`). Si `el` aún no está en la página
+ * no se puede medir y se estima con la ventana; en móvil (≤ 480 px) devuelve el ancho de siempre.
+ */
+export function fitWidth(el, inset = 0) {
+  const measured = el && el.isConnected ? el.clientWidth - inset : 0;
+  if (measured > 0) return measured;
+  const win = typeof window === "undefined" ? 0 : window.innerWidth;
+  return win > 480 ? win - 96 : PRICE_BASE.width;
+}
 
 const trendKind = (series) => {
   const change = rangeChange(series);
@@ -129,8 +151,10 @@ export function seriesSparkline(series) {
  * Gráfica de precio con cuadrícula, etiquetas de eje, línea base (precio al inicio del rango) y cursor táctil.
  * `onReadout({time, value})` se llama al mover el cursor y con null al soltarlo; el texto se muestra fuera del SVG.
  * Color por tendencia con la variable --trend (la fija la clase pc-up / pc-down / pc-neutral). Devuelve el <svg>.
+ * `width` (opcional, ver fitWidth) ajusta las medidas al ancho real de la pantalla; sin él, 340 como siempre.
  */
-export function priceChart(series, { label, rangeId, onReadout = () => {} }) {
+export function priceChart(series, { label, rangeId, width, onReadout = () => {} }) {
+  const PRICE = priceDims(width);
   const g = seriesGeometry(series, PRICE);
   const svg = s("svg", { viewBox: `0 0 ${PRICE.width} ${PRICE.height}`, class: `chart pc pc-${trendKind(series)}`, role: "img", "aria-label": label });
   if (!g) return svg;

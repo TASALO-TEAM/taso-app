@@ -81,15 +81,21 @@
 .quote-text { font-style: italic; margin-top: 0.375rem; }
 
 /* ---------- Overlay (imagen de El Toque) ---------- */
+/* Un solo desplazamiento: el del propio overlay (su barra queda en el borde de la ventana). Antes el cuerpo del overlay
+   tenía su propio scroll dentro de una columna centrada, y además se movía la página de detrás: dos barras. */
 .overlay {
   position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
-  background: var(--bg); padding-top: var(--safe-top);
+  background: var(--bg); overflow-y: auto; overscroll-behavior: contain;
 }
-.ov-head { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; }
+html:has(.overlay) { overflow: hidden; }
+.ov-head {
+  position: sticky; top: 0; z-index: 1; flex: none; display: flex; align-items: center; justify-content: space-between;
+  padding: calc(var(--safe-top) + 0.5rem) 1rem 0.5rem; background: var(--bg);
+}
 .ov-title { font-size: 1.125rem; font-weight: 700; }
 .ov-body {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 0.75rem; padding: 1rem 1rem calc(1rem + var(--safe-bottom)); overflow: auto; text-align: center;
+  flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.75rem; padding: 1rem 1rem calc(1rem + var(--safe-bottom)); text-align: center;
 }
 .ov-img { max-width: 100%; height: auto; border-radius: 12px; }
 
@@ -138,6 +144,8 @@
 .ch-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
 .dh-stats { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 0.75rem; font-size: 0.8125rem; }
 .ch-read { color: var(--text2); }
+/* La gráfica del detalle usa el mismo dibujo y marco que la de Mercado (.mk-chart + .pc, ver priceChart). */
+.dh-chart.mk-chart .dh-stats { padding: 0 0.5rem 0.25rem; }
 
 .dh-list { padding: 0.25rem 1rem; }
 .drow {

@@ -1,7 +1,7 @@
 // Pantalla Mercado (el /p del bot): búsqueda por símbolo, top 5 de monedas más consultadas y tarjeta con los datos.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). El formato y las reglas puras viven en modules/market.js.
 import { ApiError, getMarket, getMarketChart, getMarketNews, getMarketTop, postPanorama } from "../modules/api.js";
-import { priceChart, seriesSparkline } from "../modules/charts.js";
+import { fitWidth, priceChart, seriesSparkline } from "../modules/charts.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
 import {
@@ -378,6 +378,7 @@ export function mount(ctx) {
       const svg = priceChart(series, {
         label: `Gráfica de ${state.symbol}, ${label}`,
         rangeId: state.range,
+        width: fitWidth(chartBox, 16), // 16 = relleno horizontal de .mk-chart
         onReadout: (r) => {
           read.textContent = r ? readoutText(r.time, r.value, state.range) : READ_HINT;
         },

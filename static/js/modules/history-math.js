@@ -203,3 +203,11 @@ export function nearestIndex(coords, x) {
   }
   return best;
 }
+
+/**
+ * Puntos diarios → serie [[ms, precio], ...] para dibujarlos con la gráfica de Mercado (priceChart).
+ * Cada día va a las 12:00 UTC: en Cuba (UTC-4 / UTC-5) sigue siendo ese mismo día, así que las fechas de los ejes cuadran.
+ */
+export function pointsToSeries(points) {
+  return cleanPoints(points).map((p) => [dayNumber(p.date) * DAY_MS + 12 * 3600 * 1000, p.rate]);
+}
