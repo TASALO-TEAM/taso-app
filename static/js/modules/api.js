@@ -110,6 +110,10 @@ export const getMyStats = (window) => apiFetch(`/me/stats?window=${encodeURIComp
 // Novedades del equipo (P5): solo lectura, sin parámetros del usuario.
 export const getMessages = () => apiFetch("/messages");
 export const deletePriceAlert = (id) => apiFetch(`/alerts/price/${encodeURIComponent(id)}`, { method: "DELETE" });
+// Alertas de precio cripto propias de la app (las revisa el checker del servidor). La dirección (sube/baja) la deduce el servidor.
+export const getMarketAlerts = () => apiFetch("/alerts/market");
+export const createMarketAlert = (symbol, target) => apiFetch("/alerts/market", { method: "POST", body: { symbol, target } });
+export const deleteMarketAlert = (id) => apiFetch(`/alerts/market/${encodeURIComponent(id)}`, { method: "DELETE" });
 export const putImageAlert = (alertTime, formatType, enabled) =>
   apiFetch("/alerts/image", { method: "PUT", body: { alert_time: alertTime, format_type: formatType, enabled } });
 export const deleteImageAlert = () => apiFetch("/alerts/image", { method: "DELETE" });

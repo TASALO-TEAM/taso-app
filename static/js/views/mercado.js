@@ -1,6 +1,6 @@
 // Pantalla Mercado (el /p del bot): búsqueda por símbolo, top 5 de monedas más consultadas y tarjeta con los datos.
 // Sin innerHTML (todo por h()/icon()); sin estilos en línea (CSP). El formato y las reglas puras viven en modules/market.js.
-import { ApiError, getMarket, getMarketChart, getMarketNews, getMarketTop, postPanorama } from "../modules/api.js";
+import { ApiError, createMarketAlert, getMarket, getMarketChart, getMarketNews, getMarketTop, postPanorama } from "../modules/api.js";
 import { fitWidth, priceChart, seriesSparkline } from "../modules/charts.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import * as fmt from "../modules/format.js";
@@ -25,6 +25,7 @@ import {
   usd,
 } from "../modules/market.js";
 import { load, save } from "../modules/storage.js";
+import { fmtPrice } from "../modules/alerts.js";
 import { newsCarousel } from "../modules/news-carousel.js";
 import { cleanNews } from "../modules/news.js";
 import { serverNow } from "../modules/clock.js";
@@ -450,6 +451,75 @@ export function mount(ctx) {
     );
   }
 
+  // ---------- Crear alerta de precio (S10 F4) ----------
+  // Un borrador por moneda: el campo no se pierde cuando la vista se repinta con datos nuevos. La dirección (sube/baja) la
+  // decide el servidor comparando con el precio de ahora; aquí solo se manda el símbolo y el precio objetivo.
+  const alertUi = new Map(); // símbolo → { value, status: "idle" | "saving" | "ok" | "error", message }
+
+  function alertCard(m) {
+    const ui = alertUi.get(m.symbol) || { value: "", status: "idle", message: "" };
+    alertUi.set(m.symbol, ui);
+    const head = h("div", { class: "mk-head" }, h("h2", { class: "card-title", text: "Crear alerta" }), h("span", { class: "mk-src", text: "Telegram" }));
+    if (ctx.session && ctx.session.loggedIn === false) {
+      return h(
+        "section",
+        { class: "card mk-card", "aria-label": "Crear alerta" },
+        head,
+        h("p", { class: "mk-ai-hint", text: "Las alertas son para quienes han iniciado sesión." }),
+        h("a", { class: "btn", href: "#/perfil", text: "Iniciar sesión" }),
+      );
+    }
+    const msg = h("p", { class: "mk-ai-hint" });
+    const input = h("input", {
+      type: "text", inputmode: "decimal", autocomplete: "off", class: "date-input mk-alert-input", value: ui.value,
+      placeholder: "Precio objetivo en USD", "aria-label": `Precio objetivo de ${m.symbol} en dólares`,
+      onInput: (e) => { ui.value = e.target.value; },
+      onKeydown: (e) => { if (e.key === "Enter") submit(); },
+    });
+    const btn = h("button", { type: "button", class: "btn", onClick: () => submit() });
+    function paint() {
+      const saving = ui.status === "saving";
+      btn.disabled = saving;
+      btn.textContent = saving ? "Creando…" : "Crear alerta";
+      msg.className = ui.status === "error" ? "mk-err" : "mk-ai-hint";
+      msg.setAttribute("role", ui.status === "error" ? "alert" : "status");
+      msg.textContent = ui.message;
+      msg.hidden = !ui.message;
+    }
+    async function submit() {
+      if (ui.status === "saving") return;
+      ui.status = "saving";
+      ui.message = "";
+      paint();
+      try {
+        const res = await createMarketAlert(m.symbol, ui.value);
+        const a = res && res.alert;
+        ui.status = "ok";
+        ui.value = "";
+        input.value = "";
+        ui.message = a
+          ? `Listo: te aviso por Telegram cuando ${m.symbol} ${a.direction === "BELOW" ? "baje a" : "suba a"} $${fmtPrice(a.target)}. La ves en Perfil › Mis avisos.`
+          : "Listo: alerta creada.";
+      } catch (e) {
+        ui.status = "error";
+        ui.message =
+          e instanceof ApiError && e.status === 0 ? "Sin conexión. Inténtalo de nuevo cuando vuelva."
+          : e instanceof ApiError && e.status === 401 ? "Tu sesión caducó. Entra de nuevo desde Perfil."
+          : (e && e.message) || "No se pudo crear la alerta.";
+      }
+      paint();
+    }
+    paint();
+    return h(
+      "section",
+      { class: "card mk-card", "aria-label": "Crear alerta" },
+      head,
+      h("p", { class: "mk-ai-hint", text: `Te aviso por Telegram cuando ${m.symbol} llegue al precio que elijas.` }),
+      h("div", { class: "mk-alert-row" }, input, btn),
+      msg,
+    );
+  }
+
   function coinCard(m) {
     const chg = changes(m);
     const rows = detailRows(m);
@@ -496,6 +566,7 @@ export function mount(ctx) {
         rows.length ? h("dl", { class: "mk-rows mk-grid" }, rows.map(row)) : null,
       ),
       panoramaCard(m),
+      alertCard(m),
       extra.length
         ? h(
             "section",

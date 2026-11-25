@@ -3,12 +3,12 @@
 // línea (CSP). Las horas se piden y se muestran en hora de Cuba; año y Spotlight se guardan en UTC (D7).
 // La lógica pura (conversión de horas, textos de estado, mensajes de error) vive en modules/alerts.js.
 import {
-  addSpotlightHour, ApiError, deleteImageAlert, deletePriceAlert, deleteSpotlightHour, deleteYearAlert, getAlerts,
-  putImageAlert, putYearAlert,
+  addSpotlightHour, ApiError, deleteImageAlert, deleteMarketAlert, deletePriceAlert, deleteSpotlightHour, deleteYearAlert,
+  getAlerts, getMarketAlerts, putImageAlert, putYearAlert,
 } from "../modules/api.js";
 import {
   cubaHourToUtc, DST_NOTE, dstChangeSoon, errorMessage, fmtPrice, hourLabel, HOUR_OPTIONS, imageStatus, PRESET_HOURS,
-  priceLine, priceStatus, spotlightStatus, utcHourToCuba, yearStatus,
+  marketAlertLine, priceLine, priceStatusAll, spotlightStatus, utcHourToCuba, yearStatus,
 } from "../modules/alerts.js";
 import { h, icon, ICONS } from "../modules/dom.js";
 import { serverNow } from "../modules/clock.js";
@@ -47,9 +47,10 @@ export function mount(ctx) {
       render();
     }
     try {
-      const res = await getAlerts();
+      // Las alertas de cripto propias de la app van aparte: si fallan, el resto de la pantalla sigue funcionando.
+      const [res, market] = await Promise.all([getAlerts(), getMarketAlerts().catch(() => null)]);
       if (!alive) return;
-      data = res;
+      data = { ...res, market: market && market.ok ? market : { ok: false } };
       loadError = null;
     } catch (e) {
       if (!alive) return;
@@ -78,7 +79,7 @@ export function mount(ctx) {
 
   // ---------- Resumen ----------
   const SECTIONS = [
-    { key: "price", title: "Alertas de precio", sub: "Cripto: te aviso cuando cruza un precio", status: () => priceStatus(data.price), open: () => openPrice() },
+    { key: "price", title: "Alertas de precio", sub: "Cripto: te aviso cuando cruza un precio", status: () => priceStatusAll(data.price, data.market), open: () => openPrice() },
     { key: "image", title: "Imagen de El Toque", sub: "Las tasas en imagen, cada día a tu hora", status: () => imageStatus(data.image), open: () => openImage() },
     { key: "year", title: "Año y frase del día", sub: "El avance del año y una frase", status: () => yearStatus(data.year, now), open: () => openYear() },
     { key: "spotlight", title: "Spotlight diario", sub: "El resumen del mercado, hasta 2 veces al día", status: () => spotlightStatus(data.spotlight, now), open: () => openSpotlight() },
@@ -281,18 +282,41 @@ export function mount(ctx) {
 
   // ----- Precio -----
   function openPrice() {
-    if (!data.price.ok) return openUnavailable("Alertas de precio");
+    if (!data.price.ok && !data.market.ok) return openUnavailable("Alertas de precio");
     const p = makePanel("Alertas de precio");
     p.rerender = () => {
-      if (!data.price.ok) return;
-      const items = data.price.items;
+      const items = data.price.ok ? data.price.items : [];
+      const mine = data.market.ok ? data.market.alerts : [];
       p.content.replaceChildren(
-        items.length === 0
-          ? h("p", { class: "empty", text: "No tienes alertas de precio activas." })
-          : h("div", { class: "flist" }, items.map(priceRow)),
-        h("div", { class: "note", text: "Para crear una alerta nueva usa /alert en el bot. Crearlas desde aquí llegará con la sección Mercado." }),
+        ...(data.market.ok
+          ? [h("h3", { class: "card-title", text: "Desde la app" }), mine.length === 0 ? h("p", { class: "empty", text: "No tienes alertas de cripto." }) : h("div", { class: "flist" }, mine.map(marketRow))]
+          : [h("div", { class: "notice", role: "status", text: "No se pudieron cargar tus alertas de cripto ahora mismo." })]),
+        ...(data.price.ok
+          ? (items.length ? [h("h3", { class: "card-title", text: "Del bot" }), h("div", { class: "flist" }, items.map(priceRow))] : [])
+          : [h("div", { class: "notice", role: "status", text: "Las alertas del bot no están disponibles ahora mismo." })]),
+        h("div", { class: "note", text: "Para crear una alerta, abre una moneda en Mercado y pulsa «Crear alerta». También puedes usar /alert en el bot." }),
       );
     };
+    const marketRow = (a) =>
+      h(
+        "div",
+        { class: "card arow", dataset: { id: `m${a.id}` } },
+        h("div", { class: "arow-main" }, h("div", { class: "card-title", text: a.symbol }), h("div", { class: "sub", text: marketAlertLine(a) })),
+        h("button", { type: "button", class: "icon-btn", "aria-label": `Borrar la alerta de ${a.symbol}`, onClick: () => removeMarket(a) }, icon(...ICONS.trash)),
+      );
+    async function removeMarket(a) {
+      if (p.busy || !(await confirmAction(`¿Borrar la alerta de ${a.symbol}?`))) return;
+      const ok = await mutate(p, noControl, async () => {
+        await deleteMarketAlert(a.id);
+        data.market = { ...data.market, alerts: data.market.alerts.filter((x) => x.id !== a.id) };
+      });
+      if (ok) {
+        render();
+        p.rerender();
+      } else {
+        load(true); // p. ej. la alerta ya no existía: se vuelve a leer la lista real
+      }
+    }
     const priceRow = (a) =>
       h(
         "div",

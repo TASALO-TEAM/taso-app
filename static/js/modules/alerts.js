@@ -94,3 +94,22 @@ export function fmtPrice(value) {
   const decimals = abs >= 1 ? 2 : abs >= 0.01 ? 4 : 8;
   return value.toFixed(decimals).replace(/\.?0+$/, "").replace(".", ",");
 }
+
+/** Texto de una alerta de precio cripto propia de la app (activa o ya disparada). */
+export function marketAlertLine(alert, fmt = fmtPrice) {
+  if (alert.status === "TRIGGERED") {
+    const got = `$${fmt(alert.triggered_price)}`;
+    return alert.notified ? `Se cumplió: llegó a ${got}` : `Se cumplió a ${got} · aviso por enviar`;
+  }
+  const base = `${alert.direction === "ABOVE" ? "Sube a" : "Baja a"} $${fmt(alert.target)}`;
+  return Number.isFinite(alert.price_at_creation) ? `${base} · al crear: $${fmt(alert.price_at_creation)}` : base;
+}
+
+/** Resumen de «Alertas de precio» = las del bot (taso-api) + las activas propias de la app. Si ninguna fuente carga: no disponible. */
+export function priceStatusAll(bot, market) {
+  const botOk = Boolean(bot && bot.ok);
+  const marketOk = Boolean(market && market.ok);
+  if (!botOk && !marketOk) return { text: "No disponible", tone: "warn" };
+  const n = (botOk ? bot.items.length : 0) + (marketOk ? market.alerts.filter((a) => a.status === "ACTIVE").length : 0);
+  return n === 0 ? { text: "Sin alertas", tone: "off" } : { text: n === 1 ? "1 activa" : `${n} activas`, tone: "on" };
+}

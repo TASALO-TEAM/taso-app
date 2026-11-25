@@ -592,3 +592,8 @@ a.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px
   .chip:hover, .seg-btn:hover:not([aria-pressed="true"]) { color: var(--text); }
   .mk-news-btn:hover:not(:disabled) { background: rgb(14 22 33 / 0.85); }
 }
+
+/* Mercado: crear alerta de precio (campo + botón en una fila; el campo se encoge antes que el botón) */
+.mk-stack .mk-alert-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.mk-stack .mk-alert-input { flex: 1 1 auto; min-width: 0; }
+.mk-stack .mk-alert-row .btn { flex: 0 0 auto; white-space: nowrap; }
